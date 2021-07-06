@@ -45,8 +45,10 @@ To install the bleeding edge (development) version, use:
 pip install git+https://github.com/ContextLab/data-wrangler.git
 ```
 
-## Use
+# Use
 
+
+## The `wrangle` function
 For numerical data (stored in `array`-like, `DataFrame`-like, or `Series`-like objects, or lists thereof), the `wrangle` function will (by default) transform the dataset as follows:
   - Convert `array`-like and `Series`-like objects into `DataFrame`s
   - If the data are passed in as a list, return the resulting list of converted `DataFrame`s
@@ -62,4 +64,23 @@ data = <LOAD IN YOUR MIXED-FORMATTED DATASET>
 wrangled_data = dw.wrangle(data) # wrangled_data is either a DataFrame or a list of DataFrames
 ```
 
+## The `generalizer` decorator
+
+## Inferring missing data
+
+## Handling text data
+
+### `scikit-learn` models
+
+### `hugging-face` models
+
+### Downloading supported text corpora
+
+## Adding support for new datatypes
+
+### Writing an `is_<DATATYPE>` function
+
+### Writing a `wrangle_<DATATYPE>` function
+
+# Contributing
 
