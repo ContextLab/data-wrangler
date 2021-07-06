@@ -23,8 +23,8 @@ One package can't accomodate every foreseeable format or input source, but `data
   - A `wrangle_<datatype>` function, which should take in an object of the given type or format and return a `pandas` `DataFrame` with numerical entries
 
 Currently supported datatypes are limited to:
-  - `array` objects
-  - `DataFrame` objects
+  - `array`-like objects
+  - `DataFrame`-like or `Series`-like objects
   - text data (text is embedded using cutting-edge [natural language processing](https://en.wikipedia.org/wiki/Word_embedding) models)
 or lists of mixtures of the above.
 
@@ -47,5 +47,19 @@ pip install git+https://github.com/ContextLab/data-wrangler.git
 
 ## Use
 
-(fill this in...)
+For numerical data (stored in `array`-like, `DataFrame`-like, or `Series`-like objects, or lists thereof), the `wrangle` function will (by default) transform the dataset as follows:
+  - Convert `array`-like and `Series`-like objects into `DataFrame`s
+  - If the data are passed in as a list, return the resulting list of converted `DataFrame`s
+  - If the data are passed as a single `array`-like, `DataFrame`-like, `Series`-like objct, return the resulting converted `DataFrame`
+
+Using the function in this way is simple:
+
+```python
+import datawrangler as dw
+
+data = <LOAD IN YOUR MIXED-FORMATTED DATASET>
+
+wrangled_data = dw.wrangle(data) # wrangled_data is either a DataFrame or a list of DataFrames
+```
+
 
