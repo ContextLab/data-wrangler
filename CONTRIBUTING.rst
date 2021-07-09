@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs [here](https://github.com/ContextLab/data-wrangler/issues).
+Report bugs here: https://github.com/ContextLab/data-wrangler/issues
 
 If you are reporting a bug, please include:
 
@@ -45,7 +45,7 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue [here](https://github.com/ContextLab/data-wrangler/issues).
+The best way to send feedback is to file an issue here: https://github.com/ContextLab/data-wrangler/issues
 
 If you are proposing a feature:
 
@@ -59,7 +59,7 @@ Get Started!
 
 Ready to contribute? Here's how to set up `datawrangler` for local development.
 
-1. Fork the [`data-wrangler` repo on GitHub](https://github.com/ContextLab/data-wrangler).
+1. Fork the `data-wrangler` repo on GitHub: https://github.com/ContextLab/data-wrangler
 2. Clone your fork locally::
 
     $ git clone git@github.com:your_name_here/data-wrangler.git
