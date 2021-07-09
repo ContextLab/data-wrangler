@@ -1,1 +1,2 @@
-"""Unit test package for datawrangler."""
+from datawrangler import datawrangler as dw
+

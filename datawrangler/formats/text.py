@@ -1,21 +1,14 @@
 import six
 import numpy as np
-import os
-import warnings
-from sklearn.feature_extraction import text
-from sklearn import decomposition
-from flair import embeddings
 from flair.data import Sentence
 from datasets import load_dataset, get_dataset_config_names, list_datasets
-import requests
-import io
 
 from array import is_array, wrangle_array
 from dataframe import is_dataframe
 from null import is_empty
-from ...core.configurator import get_default_options
-from ...data.io import load
-from ...decorate import apply_defaults
+from ..core.configurator import get_default_options
+from ..io import load
+from ..decorate import apply_defaults, list_generalizer
 
 defaults = get_default_options()
 
@@ -39,15 +32,15 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     def get_formatter(s):
         return s[s.find('_'):(s.rfind('_') + 1)]
 
-    # hypertools corpora
-    hypertools_corpora = {
+    # corpora
+    corpora = {
         'minipedia': '1mRNAZlTbZzSvV3tAQfSjNm587xdYKVkX',
         'neurips': '1Qo61vh2P3Rpb9PM1lyXb5M2iw7uB03uY',
         'sotus': '1uKJtxs-C0KDM2my0K6W2p0jCF6howg1y',
         'khan': '1KPhKxQlQrZHSPlCgky7K2bsfHlvJK039'}
 
-    if dataset_name in hypertools_corpora.keys():
-        return load(hypertools_corpora[dataset_name])['corpus']
+    if dataset_name in corpora.keys():
+        return load(corpora[dataset_name])['corpus']
 
     # Hugging-Face Corpus
     try:
@@ -118,6 +111,18 @@ def is_text(x):
     if type(x) == list:
         return np.all([is_text(t) for t in x])
     return (type(x) in six.string_types) or (type(x) == np.str_)
+
+
+@list_generalizer
+def load_text(fname):
+    if not type(fname) in six.string_types:
+        return None
+
+    # noinspection PyBroadException
+    try:
+        return load(fname, dtype='txt')
+    except:
+        return fname
 
 
 def to_str_list(x, encoding='utf-8'):

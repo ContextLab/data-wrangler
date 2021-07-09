@@ -1,13 +1,10 @@
 import warnings
-import six
-import sys
 import numpy as np
 import pandas as pd
 from ppca import PPCA
-from .data.format import wrangle
+from format import wrangle
 from .core.configurator import get_default_options
 
-from umap import UMAP
 import sklearn.decomposition as decomposition
 import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text

@@ -5,14 +5,12 @@ import pandas as pd
 from formats.dataframe import is_dataframe, is_multiindex_dataframe, array_like, wrangle_dataframe
 from formats.array import is_array, wrangle_array
 from formats.image import is_image, wrangle_image
-from formats.sound import is_sound, wrangle_sound
-from formats.nifti import is_nifti, wrangle_nifti
 from formats.text import is_text, wrangle_text
 from formats.null import is_null, wrangle_null
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
-format_checkers = ['dataframe', 'array', 'image', 'sound', 'nifti', 'text', 'null']
+format_checkers = ['dataframe', 'array', 'image', 'text', 'null']
 
 
 def wrangle(x, return_dtype=False, **kwargs):

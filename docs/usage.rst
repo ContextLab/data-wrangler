@@ -4,4 +4,4 @@ Usage
 
 To use datawrangler in a project::
 
-    import datawrangler
+    import datawrangler as dw

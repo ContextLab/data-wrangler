@@ -10,7 +10,8 @@ with open('README.md') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+with open('requirements.txt') as requirements_file:
+    requirements = requirements_file.read()
 
 test_requirements = ['pytest>=3', ]
 
@@ -38,7 +39,7 @@ setup(
     packages=find_packages(include=['datawrangler', 'datawrangler.*']),
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/jeremymanning/datawrangler',
+    url='https://github.com/ContextLab/data-wrangler',
     version='0.1.0',
     zip_safe=False,
 )
