@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Contextual Dynamics Lab <contextualdynamics@gmail.com>
+* Jeremy Manning <jeremy.manning@gmail.com>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+Want to help? Contribute something and we'll add you to the list!  Take a look at the [issues list](https://github.com/ContextLab/data-wrangler/issues) if you'd like some recommended places to start.
