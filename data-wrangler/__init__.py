@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+"""Top-level package for datawrangler."""
 
-from .core.configurator import __version__
-from .data.format import wrangle
+__author__ = """Contextual Dynamics Lab"""
+__email__ = 'contextualdynamics@gmail.com'
+__version__ = '0.1.0'
