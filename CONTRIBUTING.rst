@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/jeremymanning/datawrangler/issues.
+Report bugs [here](https://github.com/ContextLab/data-wrangler/issues).
 
 If you are reporting a bug, please include:
 
@@ -45,29 +45,29 @@ articles, and such.
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/jeremymanning/datawrangler/issues.
+The best way to send feedback is to file an issue [here](https://github.com/ContextLab/data-wrangler/issues).
 
 If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
 * Remember that this is a volunteer-driven project, and that contributions
-  are welcome :)
+  are welcome!
 
 Get Started!
 ------------
 
 Ready to contribute? Here's how to set up `datawrangler` for local development.
 
-1. Fork the `datawrangler` repo on GitHub.
+1. Fork the [`data-wrangler` repo on GitHub](https://github.com/ContextLab/data-wrangler).
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/datawrangler.git
+    $ git clone git@github.com:your_name_here/data-wrangler.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv datawrangler
-    $ cd datawrangler/
+    $ mkvirtualenv data-wrangler
+    $ cd data-wrangler/
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -103,7 +103,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.com/jeremymanning/datawrangler/pull_requests
+   https://travis-ci.com/ContextLab/data-wrangler/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
