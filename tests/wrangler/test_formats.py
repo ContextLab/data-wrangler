@@ -28,9 +28,9 @@ def test_dataframe_like():
 
 
 def test_wrangle_dataframe():
-    assert df.format.is_dataframe(df.format.wrangle_dataframe(data))
+    assert dw.format.is_dataframe(dw.format.wrangle_dataframe(data))
 
-    df = df.format.wrangle_dataframe(data)
+    df = dw.format.wrangle_dataframe(data)
     assert df.index.name == 'ByTwos'
     assert np.all(df['FirstDim'] == np.arange(1, 8))
     assert np.all(df['SecondDim'] == np.arange(2, 16, 2))
