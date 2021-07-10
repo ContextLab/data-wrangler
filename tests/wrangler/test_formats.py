@@ -72,8 +72,37 @@ def test_wrangle_image():
     assert np.min(df.values) == 12
     assert np.isclose(np.mean(df.values), 1152.193)
 
+
+def test_load_text():
+    text = dw.io.load(text_file).split('\n')
+    assert text[0] == 'O give me a home where the buffaloes roam'
+    assert text[-1] == 'And the skies are not cloudy all day'
+
+
+def test_is_text():
+    assert dw.formats.is_text(text_file)
+    assert not dw.formats.is_text(img_file)
+    assert not dw.formats.is_text(data_file)
+
+
+def test_get_corpus():
+    # test sotus corpus (small)
+
+    # test small hugging face corpus: cbt/raw
+    pass
+
+
+
+def test_wrangle_text():
+    # scikit-learn CountVectorizer
+
+    # scikit-learn CountVectorizer + LatentDirichletAllocation
+
+    # Hugging Face
+    pass
+
+
 # TODO:
-#   - is_text
 #   - wrangle text with various models and corpora
 #   - other text functions
 #   - is_null
@@ -83,3 +112,6 @@ def test_wrangle_image():
 #   - ppca
 #   - interpolation
 #   - helper functions
+#   - divide tests into separate files:
+#      - one per datatype
+#      - one per additional function beyond datatype-specific formatting

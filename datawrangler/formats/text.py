@@ -52,10 +52,14 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
                            f'Available configurations: {", ".join(get_dataset_config_names(data_name))}')
 
     corpus = []
+    content_keys = ['text', 'content']
+
     for k in data.keys():
-        for document in data[k].data['text']:
-            corpus.append(' '.join([w if '_' not in w else w.replace(get_formatter(w), ' ')
-                                    for w in str(document).split()]))
+        for c in content_keys:
+            if c in data[k].data.column_names:
+                for document in data[k].data[c]:
+                    corpus.append(' '.join([w if '_' not in w else w.replace(get_formatter(w), ' ')
+                                            for w in str(document).split()]))
     return corpus
 
 
@@ -107,10 +111,14 @@ def apply_text_model(x, text, *args, return_model=False, **kwargs):
         raise RuntimeError('Cannot apply text model: {model}')
 
 
-def is_text(x):
+def is_text(x, force_literal=False):
     if type(x) == list:
         return np.all([is_text(t) for t in x])
-    return (type(x) in six.string_types) or (type(x) == np.str_)
+    if (type(x) in six.string_types) or (type(x) == np.str_):
+        if not force_literal and os.path.exists(x):
+            return is_text(load_text(x), force_literal=True)
+        else:
+            return True
 
 
 @list_generalizer
