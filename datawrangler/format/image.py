@@ -2,9 +2,9 @@ import six
 from matplotlib import pyplot as plt
 
 from .array import wrangle_array
-from .dataframe import array_like
-from ..io import get_extension, load_remote
-from ..helpers import btwn
+from ..util import array_like
+from ..io.io import get_extension
+from ..util.helpers import btwn
 
 
 def get_image(img):

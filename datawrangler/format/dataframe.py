@@ -1,12 +1,6 @@
-import numpy as np
 import pandas as pd
-import modin
-import six
-import os
-from array import is_array
 
-from ..io import get_extension, load_remote, load_dataframe
-from ..helpers import dataframe_like
+from ..util import load_dataframe, dataframe_like
 
 
 def is_dataframe(x):

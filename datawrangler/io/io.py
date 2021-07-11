@@ -3,7 +3,7 @@ import os
 import requests
 import dill
 
-from .core.configurator import get_default_options
+from ..core.configurator import get_default_options
 
 defaults = get_default_options()
 
@@ -99,5 +99,3 @@ def get_extension(fname):
     if '.' in f:
         return f[f.rfind('.') + 1:].lower()
     return None
-
-

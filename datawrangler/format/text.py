@@ -3,9 +3,9 @@ import numpy as np
 from flair.data import Sentence
 from datasets import load_dataset, get_dataset_config_names, list_datasets
 
-from array import is_array, wrangle_array
-from dataframe import is_dataframe
-from null import is_empty
+from .array import is_array, wrangle_array
+from .dataframe import is_dataframe
+from .null import is_empty
 from ..core.configurator import get_default_options
 from ..io import load
 from ..decorate import apply_defaults, list_generalizer

@@ -2,13 +2,13 @@ import warnings
 import numpy as np
 import pandas as pd
 from ppca import PPCA
-from format import wrangle
-from .core.configurator import get_default_options
-
 import sklearn.decomposition as decomposition
 import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text
 import sklearn.mixture as mixture
+
+from ..format.format import wrangle
+from ..core.configurator import get_default_options
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names

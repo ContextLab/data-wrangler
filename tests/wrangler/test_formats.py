@@ -2,7 +2,6 @@
 
 """Tests for `datawrangler` package."""
 
-import pytest
 import datawrangler as dw
 import numpy as np
 import pandas as pd
@@ -74,7 +73,7 @@ def test_wrangle_image():
 
 
 def test_load_text():
-    text = dw.io.load(text_file).split('\n')
+    text = datawrangler.io.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
