@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import modin
 import six
+import warnings
 
 from ..io.io import get_extension
 from ..format.array import is_array
