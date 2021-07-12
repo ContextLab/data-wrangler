@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import modin
 import six
 import warnings
 
@@ -18,7 +17,7 @@ def btwn(x, a, b):
     return np.all(x >= a) and np.all(b <= b)
 
 
-def dataframe_like(x):
+def dataframe_like(x, debug=False):
     required_attributes = ['values', 'index', 'columns', 'shape', 'stack', 'unstack', 'loc', 'iloc', 'size', 'copy',
                            'head', 'tail', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
                            'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
@@ -28,13 +27,14 @@ def dataframe_like(x):
                            'pad', 'droplevel', 'pivot', 'pivot_table', 'squeeze', 'melt', 'join', 'merge']
     for r in required_attributes:
         if not hasattr(x, r):
-            print(f'missing method: {r}')
+            if debug:
+                print(f'missing method: {r}')
             return False
     return True
 
 
 def array_like(x):
-    return is_array(x) or is_dataframe(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, modin.Series])
+    return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
 
 
 def load_dataframe(x, extension=None, **kwargs):

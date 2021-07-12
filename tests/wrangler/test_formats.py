@@ -65,16 +65,16 @@ def test_is_image():
 
 
 def test_wrangle_image():
-    df = dw.formats.wrangle_image(img_file)
+    df = dw.format.wrangle_image(img_file)
     assert df.shape == (1400, 5760)
-    assert dw.formats.is_dataframe(df)
+    assert dw.format.is_dataframe(df)
     assert np.max(df.values) == 248
     assert np.min(df.values) == 12
     assert np.isclose(np.mean(df.values), 1152.193)
 
 
 def test_load_text():
-    text = datawrangler.io.io.load(text_file).split('\n')
+    text = dw.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 

@@ -1,10 +1,9 @@
 import six
+import numpy as np
 from matplotlib import pyplot as plt
 
 from .array import wrangle_array
-from ..util import array_like
-from ..io.io import get_extension
-from ..util.helpers import btwn
+from ..util import array_like, btwn
 
 
 def get_image(img):
@@ -18,9 +17,7 @@ def get_image(img):
             return False
 
     if type(img) in six.string_types:
-        ext = get_extension(img)
-        if ext.lower in plt.gcf().canvas.get_supported_filetypes().keys():
-            return plt.imread(img)  # also handles remote images
+        return plt.imread(img)  # also handles remote images
 
     if array_like(img):
         if valid_image_values(img):
