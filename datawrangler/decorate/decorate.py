@@ -1,4 +1,5 @@
 import warnings
+import functools
 import numpy as np
 import pandas as pd
 from ppca import PPCA
@@ -12,8 +13,9 @@ from ..core.configurator import get_default_options
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names
+# note: this is NOT a decorator-- it's a helper function used to seed functions for the module_checker decorator
 def import_sklearn_models(module):
-    models = [d for d in dir(module) if hasattr(eval(f'module.{d}'), 'fit_transform')]
+    models = [d for d in dir(module) if hasattr(getattr(module, d), 'fit_transform')]
     for m in models:
         exec(f'from {module.__name__} import {m}', globals())
     return models

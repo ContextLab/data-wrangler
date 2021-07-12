@@ -6,3 +6,4 @@ __version__ = '0.1.0'
 
 
 from .format import wrangle
+from .decorate.decorate import funnel
