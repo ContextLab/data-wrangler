@@ -218,18 +218,3 @@ def stack_apply(data, **kwargs):
     assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
     return algorithm(data, **kwargs)
 
-
-# add in default keyword arguments (and values) specified in config.ini based on the function name
-def apply_defaults(f):
-    if f.__name__ in defaults.keys():
-        default_args = defaults[f.__name__]
-    else:
-        default_args = {}
-
-    @functools.wraps(f)
-    def wrapped(*args, **kwargs):
-        for k, v in kwargs:
-            default_args[k] = v
-        return f(*args, **default_args)
-
-    return wrapped

@@ -7,9 +7,8 @@ from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
 from .null import is_empty
 
-from ..core.configurator import get_default_options
+from ..core.configurator import get_default_options, apply_defaults
 from ..io import load
-from ..decorate import apply_defaults, list_generalizer
 
 defaults = get_default_options()
 
@@ -122,8 +121,10 @@ def is_text(x, force_literal=False):
             return True
 
 
-@list_generalizer
 def load_text(fname):
+    if type(fname) is list:
+        return [load_text(f) for f in fname]
+
     if not type(fname) in six.string_types:
         return None
 

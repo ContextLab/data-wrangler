@@ -1,3 +1,4 @@
+from .format import wrangle
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe, wrangle_dataframe, is_multiindex_dataframe
 from .image import is_image, wrangle_image
