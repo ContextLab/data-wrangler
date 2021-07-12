@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 import os
 
-data_file = os.path.join('..resources', 'testdata.csv')
-img_file = os.path.join('..resources', 'wrangler.jpg')
-text_file = os.path.join('..resources', 'home_on_the_range.txt')
+data_file = os.path.join('..', 'resources', 'testdata.csv')
+img_file = os.path.join('..', 'resources', 'wrangler.jpg')
+text_file = os.path.join('..', 'resources', 'home_on_the_range.txt')
 
 data = pd.read_csv(data_file, index_col=0)
 
@@ -51,7 +51,7 @@ def test_wrangle_array():
 
 
 def test_get_image():
-    img = dw.formats.get_image(img_file)
+    img = dw.format.image.get_image(img_file)
     assert img is not None
     assert img.shape == (1400, 1920, 3)
     assert np.max(img) == 248

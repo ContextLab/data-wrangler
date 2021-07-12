@@ -3,6 +3,9 @@ import pandas as pd
 import modin
 import six
 
+from ..io.io import get_extension
+from ..format.array import is_array
+
 
 def btwn(x, a, b):
     assert np.isscalar(a), ValueError(f'lower limit must be scalar (given: {type(a)}')
@@ -16,8 +19,8 @@ def btwn(x, a, b):
 
 def dataframe_like(x):
     required_attributes = ['values', 'index', 'columns', 'shape', 'stack', 'unstack', 'loc', 'iloc', 'size', 'copy',
-                           'head', 'tail', 'lat', 'at', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
-                           'get', 'isin', 'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
+                           'head', 'tail', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
+                           'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
                            'pow', 'dot', 'radd', 'rsub', 'rmul', 'rdiv', 'rtruediv', 'rfloordiv', 'rmod', 'rpow',
                            'lt', 'gt', 'le', 'ge', 'ne', 'eq', 'apply', 'groupby', 'rolling', 'expanding', 'abs',
                            'filter', 'drop', 'drop_duplicates', 'backfill', 'bfill', 'ffill', 'fillna', 'interpolate',
