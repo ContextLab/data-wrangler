@@ -1,3 +1,10 @@
+import six
+import warnings
+import pandas as pd
+
+from .extension_handler import get_extension
+
+
 def load_dataframe(x, extension=None, **kwargs):
     if type(x) in six.string_types:
         if extension is None:
@@ -37,7 +44,7 @@ def load_dataframe(x, extension=None, **kwargs):
         else:
             warnings.warn(f'cannot determine filetype: {x}')
             return None
-    elif dataframe_like(x):
+    elif all([d in type(x).__module__.lower() for d in ['pandas', 'frame']]):
         return x
     else:
         return None

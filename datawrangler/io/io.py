@@ -40,7 +40,7 @@ def load_remote(url, params=None):
     return response.content
 
 
-def load(x, base_url='https://docs.google.com/uc?export=download', dtype='pickle', **kwargs):
+def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, **kwargs):
     # noinspection PyShadowingNames
     def helper(fname, **helper_kwargs):
         if dtype == 'pickle':

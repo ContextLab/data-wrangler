@@ -74,7 +74,7 @@ def test_wrangle_image():
 
 
 def test_load_text():
-    text = dw.zoo.text.load_text(text_file).split('\n')
+    text = dw.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
@@ -100,6 +100,7 @@ def test_wrangle_text():
     # Hugging Face
     pass
 
+test_is_text()
 
 # TODO:
 #   - wrangle text with various models and corpora

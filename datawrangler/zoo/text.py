@@ -119,23 +119,9 @@ def is_text(x, force_literal=False):
     if (type(x) in six.string_types) or (type(x) == np.str_):
         if os.path.exists(x):
             if not force_literal:
-                return is_text(load_text(x), force_literal=True)
+                return is_text(load(x), force_literal=True)
         return True
     return False
-
-
-def load_text(fname):
-    if type(fname) is list:
-        return [load_text(f) for f in fname]
-
-    if not type(fname) in six.string_types:
-        return None
-
-    # noinspection PyBroadException
-    try:
-        return load(fname, dtype='txt')
-    except:
-        return fname
 
 
 def to_str_list(x, encoding='utf-8'):
