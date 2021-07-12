@@ -16,21 +16,21 @@ data = pd.read_csv(data_file, index_col=0)
 
 
 def test_is_dataframe():
-    assert dw.format.is_dataframe(data)
-    assert dw.format.is_dataframe(pd.DataFrame(np.zeros([10, 3])))
-    assert not dw.format.is_dataframe(img_file)
-    assert not dw.format.is_dataframe(text_file)
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(pd.DataFrame(np.zeros([10, 3])))
+    assert not dw.zoo.is_dataframe(img_file)
+    assert not dw.zoo.is_dataframe(text_file)
 
 
 def test_dataframe_like():
-    assert dw.format.dataframe_like(data)
-    assert not dw.format.dataframe_like(img_file)
+    assert dw.zoo.dataframe_like(data)
+    assert not dw.zoo.dataframe_like(img_file)
 
 
 def test_wrangle_dataframe():
-    assert dw.format.is_dataframe(dw.format.wrangle_dataframe(data))
+    assert dw.zoo.is_dataframe(dw.zoo.wrangle_dataframe(data))
 
-    df = dw.format.wrangle_dataframe(data)
+    df = dw.zoo.wrangle_dataframe(data)
     assert df.index.name == 'ByTwos'
     assert np.all(df['FirstDim'] == np.arange(1, 8))
     assert np.all(df['SecondDim'] == np.arange(2, 16, 2))
@@ -40,19 +40,19 @@ def test_wrangle_dataframe():
 
 
 def test_is_array():
-    assert dw.format.is_array(data.values)
-    assert not dw.format.is_array(img_file)
-    assert not dw.format.is_array(text_file)
+    assert dw.zoo.is_array(data.values)
+    assert not dw.zoo.is_array(img_file)
+    assert not dw.zoo.is_array(text_file)
 
 
 def test_wrangle_array():
-    df = dw.format.wrangle_array(data.values)
-    assert dw.format.is_dataframe(df)
+    df = dw.zoo.wrangle_array(data.values)
+    assert dw.zoo.is_dataframe(df)
     assert df.shape == (7, 5)
 
 
 def test_get_image():
-    img = dw.format.image.get_image(img_file)
+    img = dw.zoo.image.get_image(img_file)
     assert img is not None
     assert img.shape == (1400, 1920, 3)
     assert np.max(img) == 248
@@ -61,28 +61,28 @@ def test_get_image():
 
 
 def test_is_image():
-    assert dw.format.is_image(img_file)
+    assert dw.zoo.is_image(img_file)
 
 
 def test_wrangle_image():
-    df = dw.format.wrangle_image(img_file)
+    df = dw.zoo.wrangle_image(img_file)
     assert df.shape == (1400, 5760)
-    assert dw.format.is_dataframe(df)
+    assert dw.zoo.is_dataframe(df)
     assert np.max(df.values) == 248
     assert np.min(df.values) == 12
-    assert np.isclose(np.mean(df.values), 1152.193)
+    assert np.isclose(np.mean(df.values), 152.193)
 
 
 def test_load_text():
-    text = dw.io.load(text_file).split('\n')
+    text = dw.zoo.text.load_text(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
 
 def test_is_text():
-    assert dw.formats.is_text(text_file)
-    assert not dw.formats.is_text(img_file)
-    assert not dw.formats.is_text(data_file)
+    assert dw.zoo.is_text(text_file)
+    assert not dw.zoo.is_text(img_file)
+    assert not dw.zoo.is_text(data_file)
 
 
 def test_get_corpus():

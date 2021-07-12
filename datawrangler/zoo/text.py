@@ -1,4 +1,5 @@
 import six
+import os
 import numpy as np
 from flair.data import Sentence
 from datasets import load_dataset, get_dataset_config_names, list_datasets
@@ -9,6 +10,7 @@ from .null import is_empty
 
 from ..core.configurator import get_default_options, apply_defaults
 from ..io import load
+from ..io.io import get_extension
 
 defaults = get_default_options()
 
@@ -115,10 +117,11 @@ def is_text(x, force_literal=False):
     if type(x) == list:
         return np.all([is_text(t) for t in x])
     if (type(x) in six.string_types) or (type(x) == np.str_):
-        if not force_literal and os.path.exists(x):
-            return is_text(load_text(x), force_literal=True)
-        else:
-            return True
+        if os.path.exists(x):
+            if not force_literal:
+                return is_text(load_text(x), force_literal=True)
+        return True
+    return False
 
 
 def load_text(fname):

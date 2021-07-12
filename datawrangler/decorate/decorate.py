@@ -8,7 +8,7 @@ import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text
 import sklearn.mixture as mixture
 
-from ..format.format import wrangle
+from ..zoo.format import wrangle
 from ..core.configurator import get_default_options
 
 

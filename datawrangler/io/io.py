@@ -1,9 +1,12 @@
-from hashlib import blake2b as hasher
 import os
 import requests
 import dill
+from hashlib import blake2b as hasher
+from matplotlib import pyplot as plt
 
 from ..core.configurator import get_default_options
+from .panda_handler import load_dataframe
+from .extension_handler import get_extension
 
 defaults = get_default_options()
 
@@ -51,12 +54,18 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype='pickle
                 if len(data.keys()) == 1:
                     return data[list(data.keys())[0]]
             return data
-        elif get_extension(fname) == 'txt':
-            with open(fname, 'r') as f:
-                return '\n'.join(f.readlines())
         else:
-
-            raise ValueError(f'Unknown datatype: {dtype}')
+            ext = get_extension(fname)
+            if ext == 'txt':
+                with open(fname, 'r') as f:
+                    return '\n'.join(f.readlines())
+            elif ext in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
+                         'spss', 'sql', 'gbq', 'stata', 'pkl']:
+                return load_dataframe(fname)
+            elif ext in plt.gcf().canvas.get_supported_filetypes().keys():
+                return plt.imread(fname)
+            else:
+                raise ValueError(f'Unknown datatype: {dtype}')
 
     assert type(x) is str, IOError('cannot interpret non-string filename')
     fname = get_local_fname(x)
@@ -93,9 +102,3 @@ def save(x, obj, dtype=None, **kwargs):
     else:
         raise ValueError(f'cannot save object (specified dtype: {dtype}; observed type: {type(obj)})')
 
-
-def get_extension(fname):
-    _, f = os.path.split(fname)
-    if '.' in f:
-        return f[f.rfind('.') + 1:].lower()
-    return None

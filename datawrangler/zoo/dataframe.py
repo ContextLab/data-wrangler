@@ -1,6 +1,7 @@
 import pandas as pd
 
-from ..util import load_dataframe, dataframe_like
+from ..util import dataframe_like
+from ..io import load_dataframe
 
 
 def is_dataframe(x):
@@ -9,8 +10,13 @@ def is_dataframe(x):
     else:
         if dataframe_like(x):
             return True
-        data = load_dataframe(x)
-        return data is not None
+
+        # noinspection PyBroadException
+        try:
+            data = load_dataframe(x)
+            return data is not None
+        except:
+            return False
 
 
 def is_multiindex_dataframe(x):

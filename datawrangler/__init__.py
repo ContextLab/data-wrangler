@@ -5,5 +5,5 @@ __email__ = 'contextualdynamics@gmail.com'
 __version__ = '0.1.0'
 
 
-from .format import wrangle
+from .zoo import wrangle
 from .decorate.decorate import funnel
