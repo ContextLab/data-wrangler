@@ -59,7 +59,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
             ext = get_extension(fname)
             if ext == 'txt':
                 with open(fname, 'r') as f:
-                    return '\n'.join(f.readlines())
+                    return ''.join(f.readlines())
             elif ext in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
                          'spss', 'sql', 'gbq', 'stata', 'pkl']:
                 return load_dataframe(fname)

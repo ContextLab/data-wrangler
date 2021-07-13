@@ -2,13 +2,16 @@ import six
 import os
 import numpy as np
 from flair.data import Sentence
+from flair import embeddings
 from datasets import load_dataset, get_dataset_config_names, list_datasets
+from sklearn.feature_extraction import text
+from sklearn import decomposition
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
 from .null import is_empty
 
-from ..core.configurator import get_default_options, apply_defaults
+from ..core.configurator import get_default_options, apply_defaults, update_dict
 from ..io import load
 from ..io.io import get_extension
 
@@ -72,8 +75,13 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, **kwargs):
     if type(x) is list:
         models = []
-        for i in x:
-            text, m = apply_text_model(i, text, *args, mode=mode, return_model=True, **kwargs)
+        for i, v in enumerate(x):
+            if (i < len(x) - 1) and ('transform' not in mode):
+                temp_mode = 'fit_transform'
+            else:
+                temp_mode = mode
+
+            text, m = apply_text_model(v, text, *args, mode=temp_mode, return_model=True, **kwargs)
             models.append(m)
 
         if return_model:
@@ -81,13 +89,17 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         else:
             return text
     elif type(x) is dict:
-        assert all([hasattr(x, k) for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {x}')
+        assert all([k in x.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {x}')
         return apply_text_model(x['model'], text, *[*x['args'], *args], mode=mode, return_model=return_model,
-                                **{**x['kwargs'], **kwargs})
+                                **update_dict(x['kwargs'], kwargs))
 
-    if callable(x):
+    # user-specified function OR scikit-learn (style) model OR hugging-face (style) model
+    if callable(x) or \
+            (hasattr(x, 'fit') and hasattr(x, 'transform') and hasattr(x, 'fit_transform')) or \
+            hasattr(x, 'embed'):
         if return_model:
-            return x(text), {'model': x, 'args': args, 'kwargs': kwargs}
+            return x(text), {'model': x['model'], 'args': [*x['args'], *args],
+                             'kwargs': update_dict(x['kwargs'], kwargs)}
         return x(text)
 
     model, parent = get_text_model(x)
@@ -96,10 +108,10 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
 
     if hasattr(model, 'fit') and hasattr(model, 'transform') and hasattr(model, 'fit_transform'):  # scikit-learn model
         assert mode in ['fit', 'transform', 'fit_transform']
-        model = apply_defaults(model(*args, **kwargs))
+        model = apply_defaults(model)(*args, **kwargs)
 
         m = getattr(model, mode)
-        transformed_text = m(text)
+        transformed_text = m(text, *args, **kwargs)
         if return_model:
             return transformed_text, {'model': model, 'args': args, 'kwargs': kwargs}
         return transformed_text
@@ -119,7 +131,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         else:
             embedding_kwargs = {}
 
-        model = apply_defaults(model(*embedding_args, **embedding_kwargs))
+        model = apply_defaults(model)(*embedding_args, **embedding_kwargs)
         wrapped_text = Sentence(text, **kwargs)
         model.embed(wrapped_text)
 

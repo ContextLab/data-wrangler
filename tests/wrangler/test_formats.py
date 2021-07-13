@@ -74,7 +74,7 @@ def test_wrangle_image():
 
 
 def test_load_text():
-    text = dw.io.load(text_file).split('\n\n')
+    text = dw.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
@@ -116,13 +116,14 @@ def test_get_corpus():
 
 def test_wrangle_text():
     # scikit-learn CountVectorizer
-    text = [dw.io.load(text_file).split('\n\n')]
+    text = [dw.io.load(text_file).split('\n')]
     cv = dw.wrangle(text)
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
 
     # Hugging Face
     pass
+
 
 test_wrangle_text()
 
