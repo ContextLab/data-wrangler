@@ -8,6 +8,9 @@ from ..util import array_like, btwn
 
 def get_image(img):
     def valid_image_values(x):
+        if not hasattr(x, 'dtype'):
+            return False
+
         dtype = str(x.dtype)
         if 'int' in dtype:
             return btwn(x, 0, 255)

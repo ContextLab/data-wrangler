@@ -1,6 +1,7 @@
 import os
 import requests
 import dill
+import numpy as np
 from hashlib import blake2b as hasher
 from matplotlib import pyplot as plt
 
@@ -17,7 +18,7 @@ def get_local_fname(x, digest_size=10):
 
     h = hasher(digest_size=digest_size)
     h.update(x.encode('ascii'))
-    return os.path.join(eval(defaults['data']['datadir']), h.hexdigest() + '.hyp')
+    return os.path.join(eval(defaults['data']['datadir']), h.hexdigest() + '.dw')
 
 
 def get_confirm_token(response):

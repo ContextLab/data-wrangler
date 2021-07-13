@@ -74,7 +74,7 @@ def test_wrangle_image():
 
 
 def test_load_text():
-    text = dw.io.load(text_file).split('\n')
+    text = dw.io.load(text_file).split('\n\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
@@ -87,20 +87,44 @@ def test_is_text():
 
 def test_get_corpus():
     # test sotus corpus (small)
+    sotus = dw.zoo.text.get_corpus('sotus')
+    assert sotus[0].split('\n')[0] == 'Mr. Speaker, Mr. President, and distinguished Members of the House and ' \
+                                      'Senate, honored guests, and fellow citizens:'
+    assert sotus[0].split('\n')[-1] == 'Thank you. God bless you, and God bless America.'
+    assert sotus[-1].split('\n')[0] == "Thank you very much. Mr. Speaker, Mr. Vice President, Members of Congress, " \
+                                       "the First Lady of the United States, and citizens of America: Tonight, " \
+                                       "as we mark the conclusion of our celebration of Black History Month, " \
+                                       "we are reminded of our Nation's path towards civil rights and the work that " \
+                                       "still remains to be done. Recent threats targeting Jewish community centers " \
+                                       "and vandalism of Jewish cemeteries, as well as last week's shooting in " \
+                                       "Kansas City, remind us that while we may be a nation divided on policies, " \
+                                       "we are a country that stands united in condemning hate and evil in all of " \
+                                       "its very ugly forms."
+    assert sotus[-1].split('\n')[-1] == ''
+    assert len(sotus) == 29
 
     # test small hugging face corpus: cbt/raw
-    pass
+    cbt = dw.zoo.text.get_corpus('cbt', 'raw')
+    assert cbt[0][:100] == 'CHAPTER I. -LCB- Chapter heading picture : p1.jpg -RCB- How the Fairies were not Invited ' \
+                           'to Court . '
+    assert cbt[0][-104:] == "occasionally Rosalind would say , `` I do believe , my dear , that you are really as " \
+                            "clever as ever ! ''"
+    assert len(cbt[0]) == 98440
+    assert len(cbt[100]) == 417432
+    assert len(cbt) == 108
 
 
 def test_wrangle_text():
     # scikit-learn CountVectorizer
+    text = [dw.io.load(text_file).split('\n\n')]
+    cv = dw.wrangle(text)
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
 
     # Hugging Face
     pass
 
-test_is_text()
+test_wrangle_text()
 
 # TODO:
 #   - wrangle text with various models and corpora

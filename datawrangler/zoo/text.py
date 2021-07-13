@@ -34,7 +34,7 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     def get_formatter(s):
         return s[s.find('_'):(s.rfind('_') + 1)]
 
-    # corpora
+    # built-in corpora
     corpora = {
         'minipedia': '1mRNAZlTbZzSvV3tAQfSjNm587xdYKVkX',
         'neurips': '1Qo61vh2P3Rpb9PM1lyXb5M2iw7uB03uY',
@@ -42,7 +42,10 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
         'khan': '1KPhKxQlQrZHSPlCgky7K2bsfHlvJK039'}
 
     if dataset_name in corpora.keys():
-        return load(corpora[dataset_name])['corpus']
+        print(f'downloading corpus: {dataset_name}')
+        corpus = load(corpora[dataset_name], dtype='numpy')['corpus']
+        print('done!')
+        return corpus
 
     # Hugging-Face Corpus
     try:
@@ -66,21 +69,46 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 
 
 # noinspection PyShadowingNames
-def apply_text_model(x, text, *args, return_model=False, **kwargs):
+def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, **kwargs):
+    if type(x) is list:
+        models = []
+        for i in x:
+            text, m = apply_text_model(i, text, *args, mode=mode, return_model=True, **kwargs)
+            models.append(m)
+
+        if return_model:
+            return text, models
+        else:
+            return text
+    elif type(x) is dict:
+        assert all([hasattr(x, k) for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {x}')
+        return apply_text_model(x['model'], text, *[*x['args'], *args], mode=mode, return_model=return_model,
+                                **{**x['kwargs'], **kwargs})
+
     if callable(x):
+        if return_model:
+            return x(text), {'model': x, 'args': args, 'kwargs': kwargs}
         return x(text)
 
     model, parent = get_text_model(x)
     if (model is None) or (parent is None):
         raise RuntimeError(f'unknown text processing module: {x}')
 
-    if hasattr(model, 'fit_transform'):  # scikit-learn model
+    if hasattr(model, 'fit') and hasattr(model, 'transform') and hasattr(model, 'fit_transform'):  # scikit-learn model
+        assert mode in ['fit', 'transform', 'fit_transform']
         model = apply_defaults(model(*args, **kwargs))
-        transformed_text = model.fit_transform(text)
+
+        m = getattr(model, mode)
+        transformed_text = m(text)
         if return_model:
             return transformed_text, {'model': model, 'args': args, 'kwargs': kwargs}
         return transformed_text
     elif hasattr(model, 'embed'):        # flair model
+        if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
+            if return_model:
+                return text, {'model': model, 'args': args, 'kwargs': kwargs}
+            return text
+
         if 'embedding_args' in kwargs.keys():
             embedding_args = kwargs.pop('embedding_args', None)
         else:
@@ -148,71 +176,47 @@ def to_str_list(x, encoding='utf-8'):
         raise Exception('Unsupported data type: {type(x)}')
 
 
-# noinspection PyShadowingNames
-def text_vectorizer(text, return_model=False, **kwargs):
-    # noinspection PyUnboundLocalVariable
-    if ('model' not in kwargs.keys()) or (model is None):
-        if return_model:
-            return text, {'model': [], 'args': [], 'kwargs': kwargs}
-        else:
-            return text
+def wrangle_text(text, return_model=False, **kwargs):
+
+    if 'model' in kwargs.keys():
+        model = text_embedding_kwargs.pop('model', None)
     else:
-        model = kwargs.pop('model', None)
-        return apply_text_model(model, text, *args, return_model=return_model, **kwargs)
+        model = eval(defaults['text']['model'])
 
-
-def wrangle_text(data, return_model=False, **kwargs):
-    if 'vectorize_kwargs' in kwargs.keys():
-        vectorize_kwargs = kwargs.pop('vectorize_kwargs', None)
-    else:
-        vectorize_kwargs = {}
-
-    if 'text_embedding_kwargs' in kwargs.keys():
-        text_embedding_kwargs = kwargs.pop('text_embedding_kwargs', None)
-    else:
-        text_embedding_kwargs = {}
-
-    if 'model' in text_embedding_kwargs.keys():
-        embedding_model = text_embedding_kwargs.pop('model', None)
-    else:
-        embedding_model = defaults['text']['model']
-
-    if 'corpus_name' in kwargs.keys():
-        corpus = kwargs.pop('corpus_name', None)
+    if 'corpus' in kwargs.keys():
+        corpus = kwargs.pop('corpus', None)
     else:
         corpus = None
 
-    if 'config_name' in kwargs.keys():
-        config_name = kwargs.pop('config_name', None)
+    if 'config' in kwargs.keys():
+        config = kwargs.pop('config', None)
     else:
-        config_name = None
+        config = None
+
+    if 'array_args' in kwargs.keys():
+        array_args = kwargs.pop('array_args', None)
+    else:
+        array_args = {}
 
     if corpus is not None:
-        corpus = get_corpus(dataset_name=corpus, config_name=config_name)
-        corpus_text_vecs, corpus_vec_model = text_vectorizer(corpus, return_model=True, **vectorize_kwargs)
-
-        assert hasattr(corpus_vec_model, 'transform'), NotImplementedError('model re-training is only supported for'
-                                                                           'scikit-learn models')
-
-        _, corpus_embedding_model = apply_text_model(corpus_text_vecs, embedding_model, return_model=True, **kwargs)
-
-        text_vecs = apply_text_model(corpus_vec_model.transform, data)
-        text_embeddings, embedding_model = apply_text_model(corpus_embedding_model, text_vecs, **kwargs)
-
+        corpus = get_corpus(dataset_name=corpus, config_name=config)
     else:
-        text_vecs, vec_model = text_vectorizer(data, return_model=True, **vectorize_kwargs)
-        text_embeddings, embedding_model = text_embedder(embedding_model, text_vecs, return_model=True,
-                                                         **text_embedding_kwargs)
+        corpus = get_corpus(dataset_name=eval(defaults['text']['corpus']),
+                            config_name=eval(defaults['text']['corpus_config']))
 
-    df, df_model = wrangle_array(text_embeddings, return_model=True, **kwargs)
+    # train model on corpus
+    _, model = apply_text_model(model, corpus, mode='fit', return_model=True, **kwargs)
+
+    if type(model) is not list:
+        model = [model]
+
+    # apply model to text
+    embedded_text = apply_text_model(model, text, mode='transform', return_model=False, **kwargs)
+
+    # turn array into dataframe
+    df, df_model = wrangle_array(embedded_text, return_model=True, **array_args)
 
     if return_model:
-        steps = ['vec', 'embedding', 'df']
-        model = {'model': [], 'args': [], 'kwargs': {}}
-        for s in steps:
-            model['model'].append(eval(f'{s}_model'))
-            model['args'].append(eval(f'{s}_model["args"]'))
-            model['kwargs'].append(eval(f'{s}_model["kwargs"]'))
-        return df, model
+        return df, [*model, df_model]
     else:
         return df

@@ -1,12 +1,16 @@
 from configparser import ConfigParser
 from pkg_resources import get_distribution
+import os
 
 import functools
 
 __version__ = get_distribution('datawrangler')
 
 
-def get_default_options(fname='config.ini'):
+def get_default_options(fname=None):
+    if fname is None:
+        fname = os.path.join(os.path.dirname(__file__), 'config.ini')
+
     config = ConfigParser()
     config.read(fname)
     return config

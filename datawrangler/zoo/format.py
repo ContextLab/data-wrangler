@@ -30,17 +30,17 @@ def wrangle(x, return_dtype=False, **kwargs):
             deep_kwargs[f'{f}_kwargs'] = kwargs.pop(f'{f}_kwargs', None)
 
     # noinspection PyUnusedLocal,PyShadowingNames
-    def to_dataframe(y):
+    def to_dataframe(y, deep_kwargs, **kwargs):
         dtype = None
         wrangled = pd.DataFrame()
         for fc in format_checkers:
             if eval(f'is_{fc}(y)'):
-                wrangled = eval(f'wrangle_{fc}(y, **deep_kwargs[{fc}])')
+                wrangled = eval(f'wrangle_{fc}(y, **deep_kwargs["{fc}"], **kwargs)')
                 dtype = fc
         return wrangled, dtype
 
     if type(x) == list:
-        dfs = [to_dataframe(i) for i in x]
+        dfs = [to_dataframe(i, deep_kwargs, **kwargs) for i in x]
         wrangled = [dfs[0] for _ in dfs]
         dtypes = [dfs[1] for _ in dfs]
     else:
