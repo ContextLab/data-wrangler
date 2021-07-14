@@ -116,10 +116,17 @@ def test_get_corpus():
 
 def test_wrangle_text():
     # scikit-learn CountVectorizer
-    text = [dw.io.load(text_file).split('\n')]
-    cv = dw.wrangle(text)
+    text_kwargs = {'model': 'CountVectorizer'}
+    text = dw.io.load(text_file).split('\n')
+    cv = dw.wrangle(text, text_kwargs=text_kwargs)
+    assert cv.shape == (24, 1220)
+    assert np.max(np.max(cv)) == 1
+    assert np.min(np.min(cv)) == 0
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
+    text_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation']}
+    lda = dw.wrangle(text, text_kwargs=text_kwargs)
+    assert lda.shape == (24, 50)
 
     # Hugging Face
     pass
@@ -140,3 +147,4 @@ test_wrangle_text()
 #   - divide tests into separate files:
 #      - one per datatype
 #      - one per additional function beyond datatype-specific formatting
+#   - depth

@@ -97,10 +97,18 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
     if callable(x) or \
             (hasattr(x, 'fit') and hasattr(x, 'transform') and hasattr(x, 'fit_transform')) or \
             hasattr(x, 'embed'):
+
+        if hasattr(x, 'fit') and hasattr(x, 'transform') and hasattr(x, 'fit_transform'):   # scikit-learn model
+            assert mode in ['fit', 'transform', 'fit_transform']
+            m = getattr(x, mode)
+        elif hasattr(x, 'embed'):                                                             # hugging-face model
+            m = getattr(x, 'embed')
+        else:                                                                                # user-specified function
+            m = x
+
         if return_model:
-            return x(text), {'model': x['model'], 'args': [*x['args'], *args],
-                             'kwargs': update_dict(x['kwargs'], kwargs)}
-        return x(text)
+            return m(text), {'model': x, 'args': args, 'kwargs': kwargs}
+        return m(text)
 
     model, parent = get_text_model(x)
     if (model is None) or (parent is None):
@@ -188,10 +196,11 @@ def to_str_list(x, encoding='utf-8'):
         raise Exception('Unsupported data type: {type(x)}')
 
 
+# noinspection PyShadowingNames
 def wrangle_text(text, return_model=False, **kwargs):
 
     if 'model' in kwargs.keys():
-        model = text_embedding_kwargs.pop('model', None)
+        model = kwargs.pop('model', None)
     else:
         model = eval(defaults['text']['model'])
 
@@ -211,7 +220,8 @@ def wrangle_text(text, return_model=False, **kwargs):
         array_args = {}
 
     if corpus is not None:
-        corpus = get_corpus(dataset_name=corpus, config_name=config)
+        if not ((type(corpus) is list) and is_text(corpus)):
+            corpus = get_corpus(dataset_name=corpus, config_name=config)
     else:
         corpus = get_corpus(dataset_name=eval(defaults['text']['corpus']),
                             config_name=eval(defaults['text']['corpus_config']))

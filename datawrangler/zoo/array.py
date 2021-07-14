@@ -6,6 +6,9 @@ def is_array(x):
 
 
 def wrangle_array(data, return_model=False, **kwargs):
+    if ('sparse' in str(type(data))) and hasattr(data, 'toarray'):
+        data = data.toarray()
+
     if return_model:
         return pd.DataFrame(data, **kwargs), {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
     return pd.DataFrame(data, **kwargs)

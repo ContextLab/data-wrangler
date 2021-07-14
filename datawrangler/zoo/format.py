@@ -7,7 +7,8 @@ from .array import is_array, wrangle_array
 from .image import is_image, wrangle_image
 from .text import is_text, wrangle_text
 from .null import is_null, wrangle_null
-from ..util import array_like
+from ..util import array_like, depth
+from ..core import update_dict
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
@@ -25,26 +26,38 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     deep_kwargs = {}
     for f in format_checkers:
-        deep_kwargs[f] = {}
-        if f'{f}_kwargs' in kwargs.keys():
-            deep_kwargs[f'{f}_kwargs'] = kwargs.pop(f'{f}_kwargs', None)
+        deep_kwargs[f] = kwargs.pop(f'{f}_kwargs', {})
+        deep_kwargs[f] = update_dict(kwargs, deep_kwargs[f])
+
+    pre_fit = {f: False for f in format_checkers}
 
     # noinspection PyUnusedLocal,PyShadowingNames
-    def to_dataframe(y, deep_kwargs, **kwargs):
+    def to_dataframe(y):
         dtype = None
         wrangled = pd.DataFrame()
         for fc in format_checkers:
             if eval(f'is_{fc}(y)'):
-                wrangled = eval(f'wrangle_{fc}(y, **deep_kwargs["{fc}"], **kwargs)')
+                wrangler = eval(f'wrangle_{fc}')
+                if not pre_fit[fc]:
+                    return_model = ('return_model' in deep_kwargs[fc].keys()) and deep_kwargs[fc]['return_model']
+                    deep_kwargs[fc]['return_model'] = True
+                    wrangled, model = wrangler(y, **deep_kwargs[fc])
+
+                    deep_kwargs[fc][model] = model
+                    deep_kwargs[fc]['return_model'] = return_model
+                    pre_fit[fc] = True
+                else:
+                    wrangled = wrangler(y, **deep_kwargs[fc])
                 dtype = fc
+                break
         return wrangled, dtype
 
-    if type(x) == list:
-        dfs = [to_dataframe(i, deep_kwargs, **kwargs) for i in x]
+    if ((not is_text(x)) and (type(x) == list)) or (is_text(x) and (type(x) == list) and (depth(x) > 1)):
+        dfs = [to_dataframe(i) for i in x]
         wrangled = [dfs[0] for _ in dfs]
         dtypes = [dfs[1] for _ in dfs]
     else:
-        wrangled, dtypes = to_dataframe(x)
+        wrangled, dtypes = to_dataframe(x, deep_kwargs, **kwargs)
 
     if return_dtype:
         return wrangled, dtypes

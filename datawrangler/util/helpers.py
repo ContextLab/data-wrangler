@@ -35,3 +35,13 @@ def dataframe_like(x, debug=False):
 
 def array_like(x):
     return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
+
+
+def depth(x):
+    if array_like(x):
+        if len(x) == 0:
+            return 1
+        else:
+            return 1 + np.max([depth(i) for i in x])
+    else:
+        return 0
