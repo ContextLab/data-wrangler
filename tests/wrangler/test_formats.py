@@ -114,25 +114,38 @@ def test_get_corpus():
     assert len(cbt) == 108
 
 
-def test_wrangle_text():
+def test_wrangle_text_sklearn():
+    text = dw.io.load(text_file).split('\n')
+
     # scikit-learn CountVectorizer
     text_kwargs = {'model': 'CountVectorizer'}
-    text = dw.io.load(text_file).split('\n')
     cv = dw.wrangle(text, text_kwargs=text_kwargs)
     assert cv.shape == (24, 1220)
-    assert np.max(np.max(cv)) == 1
-    assert np.min(np.min(cv)) == 0
+    assert dw.util.btwn(cv, 0, 1)
+
+    # check text split into two documents
+    i = 10
+    cv2 = dw.wrangle([text[:i], text[i:]], text_kwargs=text_kwargs)
+    assert np.allclose(cv[:i], cv2[0])
+    assert np.allclose(cv[i:], cv2[1])
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
     text_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation']}
     lda = dw.wrangle(text, text_kwargs=text_kwargs)
     assert lda.shape == (24, 50)
+    assert dw.util.btwn(lda, 0, 1)
+    assert np.allclose(lda.sum(axis=1), 1)
 
-    # Hugging Face
-    pass
+
+def test_wrangle_text_hugging_face():
+    text = dw.io.load(text_file).split('\n')
+
+    text_kwargs = {'model': {'model': 'WordEmbeddings', 'args': ['glove'], 'kwargs': {}}}
+    glove_embeddings = dw.wrangle(text, text_kwargs=text_kwargs)
+    assert glove_embeddings.shape == (24, 100)
 
 
-test_wrangle_text()
+test_wrangle_text_hugging_face()
 
 # TODO:
 #   - wrangle text with various models and corpora

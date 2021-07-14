@@ -101,8 +101,16 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         if hasattr(x, 'fit') and hasattr(x, 'transform') and hasattr(x, 'fit_transform'):   # scikit-learn model
             assert mode in ['fit', 'transform', 'fit_transform']
             m = getattr(x, mode)
-        elif hasattr(x, 'embed'):                                                             # hugging-face model
-            m = getattr(x, 'embed')
+        elif hasattr(x, 'embed'):                                                           # hugging-face model
+            embedding_args = kwargs.pop('embedding_args', {})
+            embedding_kwargs = kwargs.pop('embedding_kwargs', {})
+
+            m = getattr(x(*[*args, *embedding_args], **{**kwargs, **embedding_kwargs}), 'embed')
+
+            text = Sentence(text, **kwargs)
+
+            kwargs['embedding_args'] = embedding_args
+            kwargs['embedding_kwargs'] = embedding_kwargs
         else:                                                                                # user-specified function
             m = x
 

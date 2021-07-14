@@ -46,13 +46,18 @@ def apply_defaults(f):
 
     name = get_name(f)
     if name in defaults.keys():
-        default_args = {k: eval(v) for k, v in dict(defaults[name]).items()}
+        default_kwargs = {k: eval(v) for k, v in dict(defaults[name]).items() if k[:2] != '__'}
     else:
-        default_args = {}
+        default_kwargs = {}
+
+    default_args = [eval(v) for k, v in dict(defaults[name]).items() if k[:2] == '__']
 
     @functools.wraps(f)
     def wrapped_function(*args, **kwargs):
-        return f(*args, **update_dict(default_args, kwargs))
+        if len(args) > 0:
+            return f(*args, **update_dict(default_kwargs, kwargs))
+        else:
+            return f(*default_args, **update_dict(default_kwargs, kwargs))
     
     if callable(f):
         return wrapped_function
@@ -61,7 +66,7 @@ def apply_defaults(f):
 
         class WrappedClass(f):
             def __init__(self, *args, **kwargs):
-                kwargs = update_dict(default_args, kwargs)
+                kwargs = update_dict(default_kwargs, kwargs)
                 super().__init__(self, *args, **kwargs)
 
                 for a in functools.WRAPPER_ASSIGNMENTS:

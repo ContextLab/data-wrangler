@@ -25,8 +25,10 @@ def wrangle(x, return_dtype=False, **kwargs):
     """
 
     deep_kwargs = {}
-    for f in format_checkers: # FIXME
+    for f in format_checkers:
         deep_kwargs[f] = kwargs.pop(f'{f}_kwargs', {})
+
+    for f in format_checkers:
         deep_kwargs[f] = update_dict(kwargs, deep_kwargs[f])
 
     pre_fit = {f: False for f in format_checkers}
@@ -54,8 +56,8 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     if ((not is_text(x)) and (type(x) == list)) or (is_text(x) and (type(x) == list) and (depth(x) > 1)):
         dfs = [to_dataframe(i) for i in x]
-        wrangled = [dfs[0] for _ in dfs]
-        dtypes = [dfs[1] for _ in dfs]
+        wrangled = [d[0] for d in dfs]
+        dtypes = [d[1] for d in dfs]
     else:
         wrangled, dtypes = to_dataframe(x)
 
