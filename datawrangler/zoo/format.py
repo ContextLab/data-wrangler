@@ -8,11 +8,11 @@ from .image import is_image, wrangle_image
 from .text import is_text, wrangle_text
 from .null import is_null, wrangle_null
 from ..util import array_like, depth
-from ..core import update_dict
+from ..core import update_dict, get_default_options
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
-format_checkers = ['dataframe', 'array', 'image', 'text', 'null']
+format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 
 def wrangle(x, return_dtype=False, **kwargs):

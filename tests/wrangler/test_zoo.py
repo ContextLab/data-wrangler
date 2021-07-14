@@ -5,14 +5,8 @@
 import datawrangler as dw
 import numpy as np
 import pandas as pd
-import os
 
-resources = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'resources')
-data_file = os.path.join(resources, 'testdata.csv')
-img_file = os.path.join(resources, 'wrangler.jpg')
-text_file = os.path.join(resources, 'home_on_the_range.txt')
-
-data = pd.read_csv(data_file, index_col=0)
+from dataloader import resources, data_file, img_file, text_file, data
 
 
 def test_is_dataframe():

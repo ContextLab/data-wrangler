@@ -11,6 +11,8 @@ import sklearn.mixture as mixture
 from ..zoo.format import wrangle
 from ..core.configurator import get_default_options
 
+format_checkers = eval(get_default_options()['supported_formats']['types'])
+
 
 # import all model-like classes within a sklearn-like module; return a list of model names
 # note: this is NOT a decorator-- it's a helper function used to seed functions for the module_checker decorator
@@ -53,8 +55,12 @@ def list_generalizer(f):
 @list_generalizer
 def funnel(f):
     @functools.wraps(f)
-    def wrapped(data, **kwargs):
-        return f(wrangle(data, **kwargs), **kwargs)
+    def wrapped(data, *args, **kwargs):
+        wrangle_kwargs = {}
+        for fc in format_checkers:
+            wrangle_kwargs[fc] = kwargs.pop(f'{fc}_args', {})
+
+        return f(wrangle(data, **wrangle_kwargs), *args, **kwargs)
 
     return wrapped
 
