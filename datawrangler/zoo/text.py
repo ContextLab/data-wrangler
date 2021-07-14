@@ -236,9 +236,9 @@ def wrangle_text(text, return_model=False, **kwargs):
     embedded_text = apply_text_model(model, text, mode='transform', return_model=False, **kwargs)
 
     # turn array into dataframe
-    df, df_model = wrangle_array(embedded_text, return_model=True, **array_args)
+    df = wrangle_array(embedded_text, **array_args)
 
     if return_model:
-        return df, [*model, df_model]
+        return df, model
     else:
         return df

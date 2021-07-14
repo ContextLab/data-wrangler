@@ -25,7 +25,7 @@ def wrangle(x, return_dtype=False, **kwargs):
     """
 
     deep_kwargs = {}
-    for f in format_checkers:
+    for f in format_checkers: # FIXME
         deep_kwargs[f] = kwargs.pop(f'{f}_kwargs', {})
         deep_kwargs[f] = update_dict(kwargs, deep_kwargs[f])
 
@@ -43,7 +43,7 @@ def wrangle(x, return_dtype=False, **kwargs):
                     deep_kwargs[fc]['return_model'] = True
                     wrangled, model = wrangler(y, **deep_kwargs[fc])
 
-                    deep_kwargs[fc][model] = model
+                    deep_kwargs[fc]['model'] = model
                     deep_kwargs[fc]['return_model'] = return_model
                     pre_fit[fc] = True
                 else:
@@ -57,7 +57,7 @@ def wrangle(x, return_dtype=False, **kwargs):
         wrangled = [dfs[0] for _ in dfs]
         dtypes = [dfs[1] for _ in dfs]
     else:
-        wrangled, dtypes = to_dataframe(x, deep_kwargs, **kwargs)
+        wrangled, dtypes = to_dataframe(x)
 
     if return_dtype:
         return wrangled, dtypes

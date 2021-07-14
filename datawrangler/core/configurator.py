@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from pkg_resources import get_distribution
+from copy import copy
 import os
 import warnings
 import functools
@@ -17,7 +18,8 @@ def get_default_options(fname=None):
 
 
 def update_dict(template, updates):
-    for k, v in updates:
+    template = copy(template)
+    for k, v in updates.items():
         template[k] = v
     return template
 
