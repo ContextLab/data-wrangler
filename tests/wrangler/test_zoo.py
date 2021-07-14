@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tests for `datawrangler` package."""
+"""Tests for `datawrangler` package (format module)."""
 
 import datawrangler as dw
 import numpy as np
@@ -170,11 +170,28 @@ def test_wrangle_text_hugging_face():
     assert np.isclose(bert_embeddings.mean(axis=0).mean(axis=0), -0.018518)
 
 
+def test_is_null():
+    assert dw.zoo.is_null(None)
+    assert dw.zoo.is_null('')
+    assert dw.zoo.is_null([])
+    assert dw.zoo.is_null([[]])
+    assert dw.zoo.is_null([[], [[], [], [[], []]]])
+    assert not dw.zoo.is_null([1, 2, 3, 4, 5])
+    assert not dw.zoo.is_null('this should not be null')
+    assert not dw.zoo.is_null([[], 'neither should', [['this'], []]])
+
+
+def test_wrangle_null():
+    df = dw.wrangle(None)
+    assert dw.zoo.is_dataframe(df)
+    assert len(df) == 0
+
+
 # TODO:
 #   x wrangle text with various models and corpora
-#   - other text functions
-#   - is_null
-#   - wrangle_null
+#   x other text functions
+#   x is_null
+#   x wrangle_null
 #   - decorators
 #   - io
 #   - ppca

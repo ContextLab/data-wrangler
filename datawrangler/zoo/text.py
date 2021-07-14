@@ -10,7 +10,7 @@ from sklearn import decomposition
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
-from .null import is_empty
+from .null import is_null
 
 from ..core.configurator import get_default_options, apply_defaults, update_dict
 from ..io import load
@@ -196,7 +196,7 @@ def to_str_list(x, encoding='utf-8'):
     def to_string(s):
         if type(s) == str:
             return s
-        elif is_empty(s) or (s is None):
+        elif is_null(s):
             return ''
         elif type(s) in [bytes, np.bytes_]:
             return s.decode(encoding)
