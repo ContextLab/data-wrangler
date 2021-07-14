@@ -118,6 +118,8 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             return m(text), {'model': x, 'args': args, 'kwargs': kwargs}
         return m(text)
 
+    # FIXME: clean this up-- some of the code above is redundant with the code below; one version should be re-written
+    #  to call the other...
     model, parent = get_text_model(x)
     if (model is None) or (parent is None):
         raise RuntimeError(f'unknown text processing module: {x}')
