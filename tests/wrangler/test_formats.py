@@ -136,19 +136,42 @@ def test_wrangle_text_sklearn():
     assert dw.util.btwn(lda, 0, 1)
     assert np.allclose(lda.sum(axis=1), 1)
 
+    # scikit-learn TfidfVectorizer + NMF
+    text_kwargs = {'model': ['TfidfVectorizer', {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 25}}]}
+    nmf = dw.wrangle(text, text_kwargs=text_kwargs)
+    assert nmf.shape == (24, 25)
+    assert dw.util.btwn(nmf, 0, 1)
+
 
 def test_wrangle_text_hugging_face():
     text = dw.io.load(text_file).split('\n')
+    words = [s.split() for s in text]
 
-    text_kwargs = {'model': {'model': 'WordEmbeddings', 'args': ['glove'], 'kwargs': {}}}
-    glove_embeddings = dw.wrangle(text, text_kwargs=text_kwargs)
-    assert glove_embeddings.shape == (24, 100)
+    glove_kwargs = {'model': {'model': 'WordEmbeddings', 'args': ['glove'], 'kwargs': {}}}
+    glove_embeddings = dw.wrangle(words, text_kwargs=glove_kwargs)
+    assert len(glove_embeddings) == 24
+    assert all([a == b for a, b in zip([g.shape[0] for g in glove_embeddings], [len(w) for w in words])])
+    assert all(g.shape[1] == 100 for g in glove_embeddings)
+    assert np.allclose([g.values.mean() for g in glove_embeddings],
+                       [-0.0025757, -0.0095522, -0.0250349, -0.0261115, +0.0083214, -0.0095522,
+                        -0.0250349, -0.0261115, -0.0162621, -0.0142552, -0.0116034, -0.0279718,
+                        +0.0083214, -0.0095522, -0.0250349, -0.0261115, -0.0308725, -0.0095388,
+                        -0.0167642, -0.0208202, +0.0083214, -0.0095522, -0.0250349, -0.0261115])
 
+    gpt2_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['gpt2'], 'kwargs': {}}}
+    gpt2_embeddings = dw.wrangle(text, text_kwargs=gpt2_kwargs)
+    assert gpt2_embeddings.shape == (24, 768)
+    assert np.isclose(gpt2_embeddings.mean(axis=0).mean(axis=0), 0.399877)
 
-test_wrangle_text_hugging_face()
+    bert_kwargs = {'model': {'model': 'SentenceTransformerDocumentEmbeddings', 'args': ['bert-base-nli-mean-tokens'],
+                             'kwargs': {}}}
+    bert_embeddings = dw.wrangle(text, text_kwargs=bert_kwargs)
+    assert bert_embeddings.shape == (24, 768)
+    assert np.isclose(bert_embeddings.mean(axis=0).mean(axis=0), -0.018518)
+
 
 # TODO:
-#   - wrangle text with various models and corpora
+#   x wrangle text with various models and corpora
 #   - other text functions
 #   - is_null
 #   - wrangle_null
