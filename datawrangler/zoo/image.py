@@ -1,3 +1,4 @@
+import PIL
 import six
 import numpy as np
 from matplotlib import pyplot as plt
@@ -20,7 +21,10 @@ def get_image(img):
             return False
 
     if type(img) in six.string_types:
-        return plt.imread(img)  # also handles remote images
+        try:
+            return plt.imread(img)  # also handles remote images
+        except PIL.UnidentifiedImageError:
+            return None
 
     if array_like(img):
         if valid_image_values(img):

@@ -24,6 +24,15 @@ def is_multiindex_dataframe(x):
 
 
 def wrangle_dataframe(data, return_model=False, **kwargs):
+    load_kwargs = kwargs.pop('load_kwargs', {})
+
+    data = load_dataframe(data, **load_kwargs)
+    model = kwargs.pop('model', None)
+    if model is None:
+        model = {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
+
+    wrangled = model['model'](data, *model['args'], **model['kwargs'])
+
     if return_model:
-        return pd.DataFrame(data, **kwargs), {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
-    return pd.DataFrame(data, **kwargs)
+        return wrangled, model
+    return wrangled

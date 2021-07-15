@@ -181,15 +181,21 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         raise RuntimeError('Cannot apply text model: {model}')
 
 
-def is_text(x, force_literal=False):
+def get_text(x, force_literal=False):
     if type(x) == list:
-        return np.all([is_text(t) for t in x])
+        return [get_text(t) for t in x]
     if (type(x) in six.string_types) or (type(x) == np.str_):
         if os.path.exists(x):
             if not force_literal:
-                return is_text(load(x), force_literal=True)
-        return True
-    return False
+                return get_text(load(x), force_literal=True)
+        return x
+    return None
+
+
+def is_text(x):
+    if type(x) == list:
+        return all([is_text(i) for i in x])
+    return get_text(x) is not None
 
 
 def to_str_list(x, encoding='utf-8'):
@@ -218,6 +224,10 @@ def to_str_list(x, encoding='utf-8'):
 
 # noinspection PyShadowingNames
 def wrangle_text(text, return_model=False, **kwargs):
+    text = get_text(text)
+    if type(text) is not list:
+        text = [text]
+
     model = kwargs.pop('model', eval(defaults['text']['model']))
     corpus = kwargs.pop('corpus', None)
     config = kwargs.pop('config', None)

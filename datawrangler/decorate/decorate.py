@@ -58,7 +58,7 @@ def funnel(f):
     def wrapped(data, *args, **kwargs):
         wrangle_kwargs = {}
         for fc in format_checkers:
-            wrangle_kwargs[fc] = kwargs.pop(f'{fc}_args', {})
+            wrangle_kwargs[f'{fc}_kwargs'] = kwargs.pop(f'{fc}_kwargs', {})
 
         return f(wrangle(data, **wrangle_kwargs), *args, **kwargs)
 

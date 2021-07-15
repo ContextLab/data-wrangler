@@ -24,13 +24,18 @@ def test_dataframe_like():
 def test_wrangle_dataframe():
     assert dw.zoo.is_dataframe(dw.zoo.wrangle_dataframe(data))
 
-    df = dw.zoo.wrangle_dataframe(data)
-    assert df.index.name == 'ByTwos'
-    assert np.all(df['FirstDim'] == np.arange(1, 8))
-    assert np.all(df['SecondDim'] == np.arange(2, 16, 2))
-    assert np.all(df['ThirdDim'] == np.arange(3, 24, 3))
-    assert np.all(df['FourthDim'] == np.arange(4, 32, 4))
-    assert np.all(df['FifthDim'] == np.arange(5, 40, 5))
+    df1 = dw.zoo.wrangle_dataframe(data)
+    assert df1.index.name == 'ByTwos'
+    assert np.all(df1['FirstDim'] == np.arange(1, 8))
+    assert np.all(df1['SecondDim'] == np.arange(2, 16, 2))
+    assert np.all(df1['ThirdDim'] == np.arange(3, 24, 3))
+    assert np.all(df1['FourthDim'] == np.arange(4, 32, 4))
+    assert np.all(df1['FifthDim'] == np.arange(5, 40, 5))
+
+    df2 = dw.zoo.wrangle_dataframe(data_file, load_kwargs={'index_col': 0})
+    assert np.allclose(df1.values, df2.values)
+    assert np.allclose(df1.index.values, df2.index.values)
+    assert all([a == b for a, b in zip(df1.columns.to_list(), df2.columns.to_list())])
 
 
 def test_is_array():
@@ -56,6 +61,9 @@ def test_get_image():
 
 def test_is_image():
     assert dw.zoo.is_image(img_file)
+    assert not dw.zoo.is_image(data)
+    assert not dw.zoo.is_image(data_file)
+    assert not dw.zoo.is_image(text_file)
 
 
 def test_wrangle_image():

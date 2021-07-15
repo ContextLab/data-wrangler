@@ -16,3 +16,6 @@ ppca>=0.0.4
 sentence-transformers
 tokenizers>=0.10.1,<0.11
 transformers==4.8.2
+datawrangler>=0.1.0
+sklearn>=0.0
+Pillow>=8.1.0
