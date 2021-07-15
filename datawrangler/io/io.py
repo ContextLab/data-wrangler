@@ -63,6 +63,8 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
             elif ext in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
                          'spss', 'sql', 'gbq', 'stata', 'pkl']:
                 return load_dataframe(fname)
+            elif ext in ['npy', 'npz']:
+                return np.load(fname)
             elif ext in plt.gcf().canvas.get_supported_filetypes().keys():
                 return plt.imread(fname)
             else:

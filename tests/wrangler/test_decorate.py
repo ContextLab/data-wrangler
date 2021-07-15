@@ -22,6 +22,13 @@ def test_list_generalizer():
 
 # noinspection PyTypeChecker
 def test_funnel():
+    @dw.decorate.funnel
+    def g(x):
+        return x ** 2
+
+    assert int(g(3).values) == 9
+    assert list([i.values for i in g([3, 4, 5])]) == [9, 16, 25]
+
     # noinspection PyShadowingNames
     @dw.decorate.funnel
     def f(x):
