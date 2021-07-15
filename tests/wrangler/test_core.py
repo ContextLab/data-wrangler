@@ -8,7 +8,7 @@ import os
 
 from sklearn.feature_extraction.text import CountVectorizer
 
-from dataloader import resources, data_file, img_file, text_file, data
+from .dataloader import resources, data_file, img_file, text_file, data
 
 
 def test_get_default_options():

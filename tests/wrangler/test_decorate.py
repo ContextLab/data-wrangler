@@ -5,8 +5,9 @@
 import os
 import datawrangler as dw
 import pandas as pd
+import numpy as np
 
-from dataloader import resources, data_file, img_file, text_file, data
+from .dataloader import resources, data_file, img_file, text_file, data
 
 
 # noinspection PyTypeChecker
@@ -24,13 +25,28 @@ def test_funnel():
     # noinspection PyShadowingNames
     @dw.decorate.funnel
     def f(x):
-        return [x.index, x.columns]
+        return x
 
-    x = f([data_file, data, img_file, text_file])
-    pass
+    dataframe_kwargs = {'load_kwargs': {'index_col': 0}}
+    text_kwargs = {'model': 'StackedEmbeddings'}
+    wrangle_kwargs = {'return_dtype': True}
+    wrangled, inferred_dtypes = f([data_file, data, img_file, text_file],
+                                  dataframe_kwargs=dataframe_kwargs,
+                                  text_kwargs=text_kwargs,
+                                  wrangle_kwargs=wrangle_kwargs)
 
+    correct_dtypes = ['dataframe', 'dataframe', 'image', 'text']
+    assert all([i == c for i, c in zip(inferred_dtypes, correct_dtypes)])
 
-test_funnel()
+    assert np.allclose(wrangled[0].values, wrangled[1].values)
+
+    assert wrangled[2].shape == (1400, 5760)
+    assert np.isclose(wrangled[2].values.mean(), 152.193)
+    assert dw.util.btwn(wrangled[2], 12, 248)
+
+    assert wrangled[3].shape == (1, 4196)
+    assert dw.util.btwn(wrangled[3], -1, 1)
+    assert np.isclose(wrangled[3].values.mean(), 0.00449942)
 
 
 def test_fill_missing():

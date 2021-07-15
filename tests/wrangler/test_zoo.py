@@ -6,7 +6,7 @@ import datawrangler as dw
 import numpy as np
 import pandas as pd
 
-from dataloader import resources, data_file, img_file, text_file, data
+from .dataloader import resources, data_file, img_file, text_file, data
 
 
 def test_is_dataframe():
@@ -188,18 +188,3 @@ def test_wrangle_null():
     assert dw.zoo.is_dataframe(df)
     assert len(df) == 0
 
-
-# TODO:
-#   x wrangle text with various models and corpora
-#   x other text functions
-#   x is_null
-#   x wrangle_null
-#   - decorators
-#   - io
-#   - ppca
-#   - interpolation
-#   - helper functions
-#   - divide tests into separate files:
-#      - one per datatype
-#      - one per additional function beyond datatype-specific formatting
-#   - depth

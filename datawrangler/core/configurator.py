@@ -4,6 +4,8 @@ from copy import copy
 import os
 import warnings
 import functools
+from flair import embeddings  # used when applying default options
+
 
 __version__ = get_distribution('datawrangler')
 

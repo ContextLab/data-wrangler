@@ -56,7 +56,7 @@ def list_generalizer(f):
 def funnel(f):
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
-        wrangle_kwargs = {}
+        wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
         for fc in format_checkers:
             wrangle_kwargs[f'{fc}_kwargs'] = kwargs.pop(f'{fc}_kwargs', {})
 
