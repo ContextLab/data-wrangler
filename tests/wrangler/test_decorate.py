@@ -48,6 +48,8 @@ def test_funnel():
     assert dw.util.btwn(wrangled[3], -1, 1)
     assert np.isclose(wrangled[3].values.mean(), 0.00449942)
 
+    # TODO: also double check that funnel's decoration with list_generalizer is working as expected
+
 
 def test_fill_missing():
     pass
