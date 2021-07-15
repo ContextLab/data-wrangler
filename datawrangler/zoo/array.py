@@ -6,6 +6,14 @@ from ..io import load
 from ..core.configurator import update_dict
 
 
+def is_number(x):
+    if np.isscalar(x):
+        return np.isreal(x) or np.iscomplex(x)  # exclude single characters (non-numeric)
+    if type(x) is list:
+        return all([is_number(i) for i in x])
+    return False
+
+
 def is_array(x):
     if (not ('str' in str(type(x)))) and (type(x).__module__ == 'numpy'):
         return True
@@ -15,8 +23,11 @@ def is_array(x):
             if is_array(load(x)):
                 return True
         except:
-            if np.isscalar(x) or type(x) == list:
+            if type(x) == list:
+                return all([is_array(i) for i in x])
+            elif is_number(x):
                 return True
+
     return False
 
 
@@ -28,7 +39,7 @@ def wrangle_array(data, return_model=False, **kwargs):
             x = np.squeeze(x)
         return x
 
-    if np.isscalar(data) or (type(data) is list):
+    if is_number(data):
         data = np.array(data)
     elif (type(data) in six.string_types) and os.path.exists(data) and is_array(data):
         data = load(data)

@@ -36,10 +36,11 @@ def test_wrangle_dataframe(data, data_file):
     assert all([a == b for a, b in zip(df1.columns.to_list(), df2.columns.to_list())])
 
 
-def test_is_array(data, img_file, text_file):  # FIXME: is an image an array?  or not?
+def test_is_array(data, img_file, text_file, data_file):
     assert dw.zoo.is_array(data.values)
-    assert not dw.zoo.is_array(img_file)
+    assert dw.zoo.is_array(img_file)
     assert not dw.zoo.is_array(text_file)
+    assert not dw.zoo.is_array(data_file)
 
 
 def test_wrangle_array(data):

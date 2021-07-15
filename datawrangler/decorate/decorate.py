@@ -52,8 +52,8 @@ def list_generalizer(f):
 
 
 # coerce the data passed into the function into a pandas dataframe or a list of dataframes
-@list_generalizer
 def funnel(f):
+    @list_generalizer
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
         wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
