@@ -45,5 +45,5 @@ def is_image(data):
 def wrangle_image(data, **kwargs):
     img = get_image(data)
 
-    if img is not None:  # FIXME: use wrangle_array here...
-        return wrangle_array(np.hstack([img[:, :, i] for i in range(img.shape[2])]), **kwargs)
+    if img is not None:
+        return wrangle_array(img, **kwargs)

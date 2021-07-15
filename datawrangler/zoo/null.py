@@ -14,6 +14,11 @@ def is_null(data):
 
 def wrangle_null(data, return_model=False, **kwargs):
     x = pd.DataFrame()
+
+    model = kwargs.pop('model', pd.DataFrame)
+    if type(model) is not dict:
+        model = {'model': model, 'args': [], 'kwargs': kwargs}
+
     if return_model:
-        return x, {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
+        return x, model
     return x

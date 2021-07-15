@@ -30,6 +30,8 @@ def wrangle_dataframe(data, return_model=False, **kwargs):
     model = kwargs.pop('model', None)
     if model is None:
         model = {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
+    elif type(model) is not dict:
+        model = {'model': model, 'args': [], 'kwargs': kwargs}
 
     wrangled = model['model'](data, *model['args'], **model['kwargs'])
 

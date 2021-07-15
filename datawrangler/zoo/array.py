@@ -3,6 +3,7 @@ import numpy as np
 import six
 import os
 from ..io import load
+from ..core.configurator import update_dict
 
 
 def is_array(x):
@@ -37,6 +38,18 @@ def wrangle_array(data, return_model=False, **kwargs):
 
     data = stacker(np.atleast_2d(data))
 
+    model = kwargs.pop('model', pd.DataFrame)
+    if type(model) is dict:
+        assert all([k in model.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'Invalid model: {model}')
+        model_args = model['args']
+        model_kwargs = update_dict(model['kwargs'], kwargs)
+        model = model['model']
+    else:
+        model_args = []
+        model_kwargs = kwargs
+
+    wrangled = model(data, *model_args, **model_kwargs)
+
     if return_model:
-        return pd.DataFrame(data, **kwargs), {'model': pd.DataFrame, 'args': [], 'kwargs': kwargs}
-    return pd.DataFrame(data, **kwargs)
+        return wrangled, {'model': model, 'args': model_args, 'kwargs': model_kwargs}
+    return wrangled
