@@ -6,22 +6,20 @@ import datawrangler as dw
 import numpy as np
 import pandas as pd
 
-from .dataloader import resources, data_file, img_file, text_file, data
 
-
-def test_is_dataframe():
+def test_is_dataframe(data, img_file, text_file):
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(pd.DataFrame(np.zeros([10, 3])))
     assert not dw.zoo.is_dataframe(img_file)
     assert not dw.zoo.is_dataframe(text_file)
 
 
-def test_dataframe_like():
+def test_dataframe_like(data, img_file):
     assert dw.zoo.dataframe_like(data)
     assert not dw.zoo.dataframe_like(img_file)
 
 
-def test_wrangle_dataframe():
+def test_wrangle_dataframe(data, data_file):
     assert dw.zoo.is_dataframe(dw.zoo.wrangle_dataframe(data))
 
     df1 = dw.zoo.wrangle_dataframe(data)
@@ -38,19 +36,19 @@ def test_wrangle_dataframe():
     assert all([a == b for a, b in zip(df1.columns.to_list(), df2.columns.to_list())])
 
 
-def test_is_array():  # FIXME: is an image an array?  or not?
+def test_is_array(data, img_file, text_file):  # FIXME: is an image an array?  or not?
     assert dw.zoo.is_array(data.values)
     assert not dw.zoo.is_array(img_file)
     assert not dw.zoo.is_array(text_file)
 
 
-def test_wrangle_array():
+def test_wrangle_array(data):
     df = dw.zoo.wrangle_array(data.values)
     assert dw.zoo.is_dataframe(df)
     assert df.shape == (7, 5)
 
 
-def test_get_image():
+def test_get_image(img_file):
     img = dw.zoo.image.get_image(img_file)
     assert img is not None
     assert img.shape == (1400, 1920, 3)
@@ -59,14 +57,14 @@ def test_get_image():
     assert np.isclose(np.mean(img), 152.193)
 
 
-def test_is_image():
+def test_is_image(img_file, data, data_file, text_file):
     assert dw.zoo.is_image(img_file)
     assert not dw.zoo.is_image(data)
     assert not dw.zoo.is_image(data_file)
     assert not dw.zoo.is_image(text_file)
 
 
-def test_wrangle_image():
+def test_wrangle_image(img_file):
     df = dw.zoo.wrangle_image(img_file)
     assert df.shape == (1400, 5760)
     assert dw.zoo.is_dataframe(df)
@@ -75,13 +73,13 @@ def test_wrangle_image():
     assert np.isclose(np.mean(df.values), 152.193)
 
 
-def test_load_text():
+def test_load_text(text_file):
     text = dw.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'
     assert text[-1] == 'And the skies are not cloudy all day'
 
 
-def test_is_text():
+def test_is_text(text_file, img_file, data_file):
     assert dw.zoo.is_text(text_file)
     assert not dw.zoo.is_text(img_file)
     assert not dw.zoo.is_text(data_file)
@@ -116,7 +114,7 @@ def test_get_corpus():
     assert len(cbt) == 108
 
 
-def test_wrangle_text_sklearn():
+def test_wrangle_text_sklearn(text_file):
     text = dw.io.load(text_file).split('\n')
 
     # scikit-learn CountVectorizer
@@ -145,7 +143,7 @@ def test_wrangle_text_sklearn():
     assert dw.util.btwn(nmf, 0, 1)
 
 
-def test_wrangle_text_hugging_face():
+def test_wrangle_text_hugging_face(text_file):
     text = dw.io.load(text_file).split('\n')
     words = [s.split() for s in text]
 

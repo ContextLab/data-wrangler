@@ -8,8 +8,6 @@ import os
 
 from sklearn.feature_extraction.text import CountVectorizer
 
-from .dataloader import resources, data_file, img_file, text_file, data
-
 
 def test_get_default_options():
     defaults = dw.core.get_default_options()

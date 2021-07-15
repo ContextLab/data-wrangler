@@ -7,8 +7,6 @@ import datawrangler as dw
 import pandas as pd
 import numpy as np
 
-from .dataloader import resources, data_file, img_file, text_file, data
-
 
 # noinspection PyTypeChecker
 def test_list_generalizer():
@@ -21,7 +19,7 @@ def test_list_generalizer():
 
 
 # noinspection PyTypeChecker
-def test_funnel():
+def test_funnel(data_file, data, img_file, text_file):
     @dw.decorate.funnel
     def g(x):
         return x ** 2
