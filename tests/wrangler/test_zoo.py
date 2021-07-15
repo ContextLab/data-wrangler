@@ -38,7 +38,7 @@ def test_wrangle_dataframe():
     assert all([a == b for a, b in zip(df1.columns.to_list(), df2.columns.to_list())])
 
 
-def test_is_array():
+def test_is_array():  # FIXME: is an image an array?  or not?
     assert dw.zoo.is_array(data.values)
     assert not dw.zoo.is_array(img_file)
     assert not dw.zoo.is_array(text_file)
@@ -187,4 +187,3 @@ def test_wrangle_null():
     df = dw.wrangle(None)
     assert dw.zoo.is_dataframe(df)
     assert len(df) == 0
-
