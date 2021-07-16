@@ -13,6 +13,7 @@ import sklearn.impute as impute
 from ..zoo import wrangle
 from ..zoo.text import is_sklearn_model
 from ..core import get_default_options, apply_defaults, update_dict
+from ..util import pandas_stack, pandas_unstack
 
 
 defaults = get_default_options()
@@ -225,45 +226,6 @@ def stack_handler(apply_stacked=False, return_override=False):
     return decorator
 
 
-# ensure that the named algorithm is contained within the list of approved algorithms of the given type
-def module_checker(modules=None, alg_list=None):
-    if modules is None:
-        modules = []
-    if alg_list is None:
-        alg_list = []
-
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(data, **kwargs):
-            if 'algorithm' not in kwargs.keys():
-                algorithm = defaults[f.__name__]['algorithm']
-            else:
-                algorithm = kwargs.pop('algorithm', None)
-
-            if is_text(algorithm):
-                # security check to prevent executing arbitrary code
-                verified = False
-                if len(alg_list) > 0:
-                    assert any([algorithm in eval(f'{a}_models') for a in alg_list]), f'Unknown {f.__name__} ' \
-                                                                                      f'algorithm: {algorithm}'
-                    verified = True
-                if not verified:
-                    assert algorithm in eval(f'{f.__name__}_models'), f'Unknown {f.__name__} algorithm: {algorithm}'
-                algorithm = eval(algorithm)
-
-            # make sure a function from the appropriate module is being passed
-            if len(modules) > 0:
-                assert any([m in algorithm.__module__ for m in modules]), f'Unknown {f.__name__} ' \
-                                                                          f'algorithm: {algorithm.__name__}'
-
-            kwargs['algorithm'] = algorithm
-            return f(data, **kwargs)
-
-        return wrapped
-
-    return decorator
-
-
 # unstack the data, apply the given function, then re-stack if needed
 @stack_handler(apply_stacked=False)
 def unstack_apply(data, **kwargs):
@@ -276,4 +238,3 @@ def unstack_apply(data, **kwargs):
 def stack_apply(data, **kwargs):
     assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
     return algorithm(data, **kwargs)
-

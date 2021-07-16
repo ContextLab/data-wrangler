@@ -98,14 +98,6 @@ def test_interpolate(data):
     assert dw.zoo.is_dataframe(recovered_data3)
 
 
-def test_stack_handler():
-    pass
-
-
-def test_module_checker():
-    pass
-
-
 def test_unstack_apply():
     pass
 

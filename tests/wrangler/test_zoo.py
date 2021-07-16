@@ -137,6 +137,9 @@ def test_wrangle_text_sklearn(text_file):
     assert dw.util.btwn(lda, 0, 1)
     assert np.allclose(lda.sum(axis=1), 1)
 
+    lda2 = dw.wrangle(text)
+    assert lda2.shape == lda.shape
+
     # scikit-learn TfidfVectorizer + NMF
     text_kwargs = {'model': ['TfidfVectorizer', {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 25}}]}
     nmf = dw.wrangle(text, text_kwargs=text_kwargs)
