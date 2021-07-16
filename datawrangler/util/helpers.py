@@ -39,8 +39,8 @@ def array_like(x):
 
 def depth(x):
     if array_like(x):
-        if len(x) == 0:
-            return 1
+        if np.isscalar(x) or (len(x) == 0):
+            return 0
         else:
             return 1 + np.max([depth(i) for i in x])
     else:

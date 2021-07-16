@@ -20,18 +20,20 @@ def test_list_generalizer():
 
 # noinspection PyTypeChecker
 def test_funnel(data_file, data, img_file, text_file):
+    @dw.decorate.list_generalizer
     @dw.decorate.funnel
     def g(x):
         return x.pow(2)
 
     assert int(g(3).values) == 9
     assert list([int(i.values) for i in g([3, 4, 5])]) == [9, 16, 25]
+    assert g(np.array([1, 2, 3])).values.tolist() == [[1, 4, 9]]
 
     # noinspection PyShadowingNames
     @dw.decorate.funnel
     def f(x):
-        assert dw.zoo.is_dataframe(x[0])
-        assert dw.zoo.is_text(x[1])
+        assert dw.zoo.is_dataframe(x[0][0])
+        assert dw.zoo.is_text(x[1][0])
         return x
 
     dataframe_kwargs = {'load_kwargs': {'index_col': 0}}
@@ -47,15 +49,15 @@ def test_funnel(data_file, data, img_file, text_file):
 
     assert np.allclose(wrangled[0].values, wrangled[1].values)
 
-    assert wrangled[2].shape == (1400, 5760)
-    assert np.isclose(wrangled[2].values.mean(), 152.193)
-    assert dw.util.btwn(wrangled[2], 12, 248)
+    assert np.allclose(wrangled[0].values, wrangled[2].values)
 
-    assert wrangled[3].shape == (1, 4196)
-    assert dw.util.btwn(wrangled[3], -1, 1)
-    assert np.isclose(wrangled[3].values.mean(), 0.00449942)
+    assert wrangled[3].shape == (1400, 5760)
+    assert np.isclose(wrangled[3].values.mean(), 152.193)
+    assert dw.util.btwn(wrangled[3], 12, 248)
 
-    # TODO: also double check that funnel's decoration with list_generalizer is working as expected
+    assert wrangled[4].shape == (1, 4196)
+    assert dw.util.btwn(wrangled[4], -1, 1)
+    assert np.isclose(wrangled[4].values.mean(), 0.00449942)
 
 
 def test_fill_missing():

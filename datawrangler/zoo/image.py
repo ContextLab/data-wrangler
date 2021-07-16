@@ -1,5 +1,6 @@
 import PIL
 import six
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -20,7 +21,7 @@ def get_image(img):
         else:
             return False
 
-    if type(img) in six.string_types:
+    if (type(img) in six.string_types) and os.path.exists(img):
         try:
             return plt.imread(img)  # also handles remote images
         except PIL.UnidentifiedImageError:

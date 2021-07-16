@@ -11,6 +11,7 @@ import sklearn.mixture as mixture
 from ..zoo.format import wrangle
 from ..core.configurator import get_default_options
 
+
 format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 
@@ -53,7 +54,6 @@ def list_generalizer(f):
 
 # coerce the data passed into the function into a pandas dataframe or a list of dataframes
 def funnel(f):
-    @list_generalizer
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
         wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
