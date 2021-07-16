@@ -18,7 +18,7 @@ def get_local_fname(x, digest_size=10):
 
     h = hasher(digest_size=digest_size)
     h.update(x.encode('ascii'))
-    return os.path.join(eval(defaults['data']['datadir']), h.hexdigest() + '.dw')
+    return os.path.join(defaults['data']['datadir'], h.hexdigest() + '.dw')
 
 
 def get_confirm_token(response):

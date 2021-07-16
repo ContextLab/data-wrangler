@@ -2,17 +2,21 @@ import warnings
 import functools
 import numpy as np
 import pandas as pd
-from ppca import PPCA
 import sklearn.decomposition as decomposition
 import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text
 import sklearn.mixture as mixture
 
-from ..zoo.format import wrangle
-from ..core.configurator import get_default_options
+from sklearn.experimental import enable_iterative_imputer
+import sklearn.impute as impute
+
+from ..zoo import wrangle
+from ..zoo.text import is_sklearn_model
+from ..core import get_default_options, apply_defaults, update_dict
 
 
-format_checkers = eval(get_default_options()['supported_formats']['types'])
+defaults = get_default_options()
+format_checkers = defaults['supported_formats']['types']
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names
@@ -24,20 +28,69 @@ def import_sklearn_models(module):
     return models
 
 
+def get_sklearn_model(x):
+    if is_sklearn_model(x):
+        return x  # already a valid model
+    elif type(x) is dict:
+        if hasattr(x, 'model'):
+            return get_sklearn_model(x['model'])
+        else:
+            return None
+    elif type(x) is str:
+        # noinspection PyBroadException
+        try:
+            return get_sklearn_model(eval(x))
+        except:
+            pass
+    return None
+
+
+# FIXME: this code is partially duplicated from zoo.text.apply_text-model
+def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=False, **kwargs):
+    assert mode in ['fit', 'transform', 'fit_transform']
+    if type(model) is list:
+        models = []
+        for i, m in enumerate(model):
+            if (i < len(model) - 1) and ('transform' not in mode):
+                temp_mode = 'fit_transform'
+            else:
+                temp_mode = mode
+
+            data, m = apply_sklearn_model(m, data, *args, mode=temp_mode, return_model=True, **kwargs)
+            models.append(m)
+
+        if return_model:
+            return data, models
+        else:
+            return data
+    elif type(model) is dict:
+        assert all([k in model.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {model}')
+        return apply_sklearn_model(model['model'], data, *[*model['args'], *args], mode=mode, return_model=return_model,
+                                   **update_dict(model['kwargs'], kwargs))
+
+    model = get_sklearn_model(model)
+    if model is None:
+        raise RuntimeError(f'unsupported model: {model}')
+    model = apply_defaults(model)(*args, **kwargs)
+
+    m = getattr(model, mode)
+    transformed_data = m(data)
+    if return_model:
+        return transformed_data, {'model': model, 'args': args, 'kwargs': kwargs}
+    return transformed_data
+
+
 reduce_models = ['UMAP']
 reduce_models.extend(import_sklearn_models(decomposition))
 reduce_models.extend(import_sklearn_models(manifold))
 
-mixture_models = import_sklearn_models(mixture)
-mixture_models.extend(['LatentDirichletAllocation', 'NMF'])
-
 text_vectorizers = import_sklearn_models(text)
+
+impute_models = import_sklearn_models(impute)
 
 # source: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
 interpolation_models = ['linear', 'time', 'index', 'pad', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'spline',
                         'barycentric', 'polynomial']
-
-defaults = get_default_options()
 
 
 # make a function work for either a single object or a list of objects by calling the function on each element
@@ -65,34 +118,31 @@ def funnel(f):
     return wrapped
 
 
-# helper function for filling in missing data (not a decorator)
-@funnel
-def fill_missing(data, **kwargs):
-    if 'interp_kwargs' in kwargs.keys():
-        interp_kwargs = kwargs.pop('interp_kwargs', None)
-    else:
-        interp_kwargs = {}
-
-    if len(interp_kwargs) == 0:
-        return data
-
-    if ('apply_ppca' in interp_kwargs.keys()) and interp_kwargs['apply_ppca']:
-        covariance_model = PPCA()
-        covariance_model.fit(data.values)
-        data.values = covariance_model.transform()
-    interp_kwargs.pop('apply_ppca', None)
-
-    if len(interp_kwargs) == 0:
-        return data
-    else:
-        return data.interpolate(**interp_kwargs)
-
-
-# fill in missing data by applying PPCA (to fill in isolated missing entries within a row) and then by interpolating
+# fill in missing data by imputing and/or interpolating
 def interpolate(f):
+    @funnel
+    def fill_missing(data, return_model=False, **kwargs):
+        impute_kwargs = kwargs.pop('impute_kwargs', {})
+
+        if impute_kwargs:
+            model = impute_kwargs.pop('model', defaults['impute']['model'])
+            data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
+        else:
+            model = None
+
+        if kwargs:
+            kwargs = update_dict(defaults['interpolate'], kwargs)
+            data = data.interpolate(**kwargs)
+
+        if return_model:
+            return data, {'model': model, 'args': [], 'kwargs': kwargs}
+        else:
+            return data
+
     @functools.wraps(f)
     def wrapped(data, **kwargs):
-        return f(fill_missing(data, **kwargs), **kwargs)
+        interp_kwargs = kwargs.pop('interp_kwargs', {})
+        return f(fill_missing(data, **interp_kwargs), **kwargs)
 
     return wrapped
 

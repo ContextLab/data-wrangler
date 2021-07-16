@@ -60,7 +60,24 @@ def test_funnel(data_file, data, img_file, text_file):
     assert np.isclose(wrangled[4].values.mean(), 0.00449942)
 
 
-def test_fill_missing():
+def test_fill_missing(data):
+    # test imputing
+    impute_test = data.copy()
+    impute_test.loc[4, 'SecondDim'] = np.nan
+    impute_test.loc[8, 'FourthDim'] = np.nan
+
+    @dw.decorate.interpolate
+    def f(x):
+        return x
+
+    recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
+    assert np.allclose(data.values, recovered_data1)
+
+    # test interpolation
+    interp_test = data.copy()
+    interp_test.loc[5] = np.nan
+    recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
+
     pass
 
 
