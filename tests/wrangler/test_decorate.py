@@ -60,7 +60,7 @@ def test_funnel(data_file, data, img_file, text_file):
     assert np.isclose(wrangled[4].values.mean(), 0.00449942)
 
 
-def test_fill_missing(data):
+def test_interpolate(data):
     # test imputing
     impute_test = data.copy()
     impute_test.loc[4, 'SecondDim'] = np.nan
@@ -71,18 +71,31 @@ def test_fill_missing(data):
         return x
 
     recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
-    assert np.allclose(data.values, recovered_data1)
+    assert np.allclose(data, recovered_data1)
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data1)
 
     # test interpolation
     interp_test = data.copy()
     interp_test.loc[5] = np.nan
     recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
+    assert np.allclose(data, recovered_data2)
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data2)
 
-    pass
+    # impute + interpolate
+    impute_interp_test = data.copy()
+    impute_interp_test.loc[2, 'ThirdDim'] = np.nan
+    impute_interp_test.loc[0, 'FourthDim'] = np.nan
+    impute_interp_test.loc[8, 'FifthDim'] = np.nan
+    impute_interp_test.loc[4] = np.nan
 
-
-def test_interpolate():
-    pass
+    recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
+                                                           'method': 'pchip'})
+    assert np.allclose(recovered_data3.values[~np.isnan(impute_interp_test)],
+                       data.values[~np.isnan(impute_interp_test)])
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data3)
 
 
 def test_stack_handler():

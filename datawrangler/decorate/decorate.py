@@ -126,7 +126,8 @@ def interpolate(f):
 
         if impute_kwargs:
             model = impute_kwargs.pop('model', defaults['impute']['model'])
-            data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
+            imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
+            data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
         else:
             model = None
 
