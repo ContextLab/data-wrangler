@@ -1,5 +1,6 @@
-Welcome to datawrangler's documentation!
+DataWrangler 🤠
 ======================================
+ wrangle your messy data into consistent well-organized formats!
 
 .. toctree::
    :maxdepth: 2
@@ -7,8 +8,7 @@ Welcome to datawrangler's documentation!
 
    readme
    installation
-   usage
-   modules
+   api
    contributing
    authors
    history

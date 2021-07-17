@@ -7,6 +7,17 @@ from ..core.configurator import update_dict
 
 
 def is_number(x):
+    """
+    Internal function-- return whether an object is a numerical scalar
+
+    Parameters
+    ----------
+    x: the object to test
+
+    Returns
+    -------
+    True of x is a real or complex scalar and False otherwise
+    """
     if np.isscalar(x):
         return np.isreal(x) or np.iscomplex(x)  # exclude single characters (non-numeric)
     if type(x) is list:
@@ -15,6 +26,17 @@ def is_number(x):
 
 
 def is_array(x):
+    """
+    Return True if and only if is an Array, or a file that can be loaded into an Array.
+
+    Parameters
+    ----------
+    x: an object, file path, URL, or Google ID
+
+    Returns
+    -------
+    Whether (or not) x is an array (or if it points to an array)
+    """
     if (not ('str' in str(type(x)))) and (type(x).__module__ == 'numpy'):
         return True
     else:
@@ -32,6 +54,28 @@ def is_array(x):
 
 
 def wrangle_array(data, return_model=False, **kwargs):
+    """
+    Turn an Array into a Pandas DataFrame
+
+    Parameters
+    ----------
+    data: an Array (or path to an Array)
+    return_model: if True, return a function for casting an Array into a DataFrame (along with the resulting DataFrame).
+       Default: False
+    kwargs: a list of keyword arguments:
+       - 'model': a callable function or constructor, or a dictionary containing the following keys:
+         - 'model': a callable function or constructor
+         - 'args': a list of arguments to pass to the function (in addition to data)
+         - 'kwargs': a list of keyword arguments to pass to the function
+         default: pandas.DataFrame
+       - all other keyword arguments are passed to the model (or constructor).  These can be used to change how the
+         DataFrame is created (e.g., passing columns=['one', 'two', 'three'] will change the column names of the
+         resulting DataFrame, assuming the "model" is pandas.DataFrame).
+
+    Returns
+    -------
+    The resulting DataFrame
+    """
     def stacker(x):
         while x.ndim >= 3:
             last_dim = x.ndim - 1
@@ -51,6 +95,7 @@ def wrangle_array(data, return_model=False, **kwargs):
 
     model = kwargs.pop('model', pd.DataFrame)
     if type(model) is dict:
+        # noinspection PyArgumentList
         assert all([k in model.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'Invalid model: {model}')
         model_args = model['args']
         model_kwargs = update_dict(model['kwargs'], kwargs)

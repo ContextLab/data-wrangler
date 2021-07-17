@@ -5,9 +5,13 @@ Credits
 Development Lead
 ----------------
 
-* Jeremy Manning <jeremy.manning@gmail.com>
+* Jeremy Manning <jeremy.r.manning@dartmouth.edu>
 
 Contributors
 ------------
 
-Want to help? Contribute something and we'll add you to the list!  Take a look at the [issues list](https://github.com/ContextLab/data-wrangler/issues) if you'd like some recommended places to start.
+* Contextual Dynamics Lab <http://www.context-lab.com>
+
+Want to help? Contribute something and we'll add you to the list!
+
+Take a look at the issues list if you'd like some recommended places to start: https://github.com/ContextLab/data-wrangler/issues

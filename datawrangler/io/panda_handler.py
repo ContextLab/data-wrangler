@@ -6,6 +6,24 @@ from .extension_handler import get_extension
 
 
 def load_dataframe(x, extension=None, debug=False, **kwargs):
+    """
+    An internal function for handling the variety of data types supported by Pandas
+
+    Parameters
+    ----------
+    x: a string (filename or URL) or DataFrame
+    extension: optional argument for specifying the filetype (e.g., 'csv', 'xls', etc.).  If no extension is specified,
+      by default the extension will be inferred automatically from the filename.  The following data types are
+      supported: https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
+    debug: internal flag used for debugging (prints a warning message if filetype cannot be inferred automatically);
+      default: False.
+    kwargs: any additional keyword arguments are passed directly to the relevant Pandas function for reading in the
+      inferred data type.
+
+    Returns
+    -------
+    A DataFrame containing the file's contents
+    """
     if type(x) in six.string_types:
         if extension is None:
             extension = get_extension(x)

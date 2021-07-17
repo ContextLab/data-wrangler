@@ -168,10 +168,10 @@ def test_wrangle_text_hugging_face(text_file):
                         +0.0083214, -0.0095522, -0.0250349, -0.0261115, -0.0308725, -0.0095388,
                         -0.0167642, -0.0208202, +0.0083214, -0.0095522, -0.0250349, -0.0261115])
 
-    gpt2_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['gpt2'], 'kwargs': {}}}
-    gpt2_embeddings = dw.wrangle(text, text_kwargs=gpt2_kwargs)
-    assert gpt2_embeddings.shape == (24, 768)
-    assert np.isclose(gpt2_embeddings.mean(axis=0).mean(axis=0), 0.399877)
+    distilbert_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['distilbert-base-uncased'], 'kwargs': {}}}
+    distilbert_embeddings = dw.wrangle(text, text_kwargs=distilbert_kwargs)
+    assert distilbert_embeddings.shape == (24, 768)
+    assert np.isclose(distilbert_embeddings.mean(axis=0).mean(axis=0), -0.0088198)
 
     bert_kwargs = {'model': {'model': 'SentenceTransformerDocumentEmbeddings', 'args': ['bert-base-nli-mean-tokens'],
                              'kwargs': {}}}
