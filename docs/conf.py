@@ -19,6 +19,7 @@
 #
 import os
 import sys
+import sphinx_readable_theme
 
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -32,7 +33,7 @@ import datawrangler
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -84,7 +85,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme_path = [sphinx_readable_theme.get_html_theme_path()]
+html_theme = 'readable'
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
@@ -151,6 +153,6 @@ texinfo_documents = [
      'datawrangler Documentation',
      author,
      'datawrangler',
-     'One line description of project.',
+     'Achieve your data wrangling dreams!',
      'Miscellaneous'),
 ]

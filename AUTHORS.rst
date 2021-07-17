@@ -5,10 +5,12 @@ Credits
 Development Lead
 ----------------
 
-* Jeremy Manning <jeremy.manning@gmail.com>
+* Jeremy Manning <jeremy.r.manning@dartmouth.edu>
 
 Contributors
 ------------
+
+* Contextual Dynamics Lab <http://www.context-lab.com>
 
 Want to help? Contribute something and we'll add you to the list!
 
