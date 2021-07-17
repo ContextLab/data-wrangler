@@ -23,9 +23,17 @@ def test_dataframe_like(data, data_file, img_file, text_file):
 def test_array_like(data, data_file, img_file, text_file):
     assert dw.util.array_like(data)
     assert dw.util.array_like(data_file)
+
     assert dw.util.array_like(img_file)
+
     assert not dw.util.array_like(text_file)
+    assert not dw.util.array_like('test')
+
     assert dw.util.array_like(data.values)
+    assert dw.util.array_like([])
+    assert dw.util.array_like([1, 2, 3])
+    assert dw.util.array_like(['one', 'two', 'three'])
+    assert dw.util.array_like(np.arange(10))
 
 
 def test_depth():

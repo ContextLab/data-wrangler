@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import six
 import warnings
+import os
 
+from ..io import load
 from ..io.extension_handler import get_extension
 from ..zoo.array import is_array
 
@@ -33,7 +35,9 @@ def dataframe_like(x, debug=False):
     return True
 
 
-def array_like(x):
+def array_like(x, force_literal=False):
+    if (type(x) is str) and (not force_literal) and os.path.exists(x):
+        return array_like(load(x), force_literal=True)
     return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
 
 

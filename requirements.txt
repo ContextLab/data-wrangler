@@ -4,7 +4,6 @@ scipy>=1.0.0
 numpy>=1.10.4
 requests>=2.25.1
 six>=1.15.0
-modin>=0.10.0
 pytest>=5.4.1
 setuptools>=49.6.0
 flair~=0.8.0.post1

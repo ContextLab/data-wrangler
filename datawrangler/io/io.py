@@ -39,7 +39,10 @@ def load_remote(url, params=None):
         params['confirm'] = token
         response = session.get(url, params=params, stream=True)
 
-    return response.content
+    if get_extension(url) in ['txt']:
+        return response.text
+    else:
+        return response.content
 
 
 def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, **kwargs):
@@ -76,13 +79,13 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
     if os.path.exists(fname):
         return helper(fname, **kwargs)
     else:
-        # noinspection PyBroadException
-        try:     # is x a Google ID?
-            data = load_remote(base_url, params={'id': x})
-        except:  # is x another URL?
-            if x.startswith('http'):
-                data = load_remote(x)
-            else:
+        if x.startswith('http'):
+            data = load_remote(x)
+        else:
+            # noinspection PyBroadException
+            try:     # is x a Google ID?
+                data = load_remote(base_url, params={'id': x})
+            except:
                 raise IOError('cannot find data at source: {x}')
         save(x, data, dtype=dtype)
         return load(x, dtype=dtype, **kwargs)
