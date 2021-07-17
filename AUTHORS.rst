@@ -10,4 +10,6 @@ Development Lead
 Contributors
 ------------
 
-Want to help? Contribute something and we'll add you to the list!  Take a look at the [issues list](https://github.com/ContextLab/data-wrangler/issues) if you'd like some recommended places to start.
+Want to help? Contribute something and we'll add you to the list!
+
+Take a look at the issues list if you'd like some recommended places to start: https://github.com/ContextLab/data-wrangler/issues
