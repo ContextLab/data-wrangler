@@ -12,7 +12,7 @@ from ..core import update_dict, get_default_options
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
-format_checkers = eval(get_default_options()['supported_formats']['types'])
+format_checkers = get_default_options()['supported_formats']['types']
 
 
 def wrangle(x, return_dtype=False, **kwargs):
@@ -54,6 +54,8 @@ def wrangle(x, return_dtype=False, **kwargs):
                 break
         return wrangled, dtype
 
+    # FIXME: make sure we get the same answers if the default text model is vs. isn't specified...looks like
+    #  the format of the results is different
     if ((not is_text(x)) and (type(x) == list)) or (is_text(x) and (type(x) == list) and (depth(x) > 1)):
         dfs = [to_dataframe(i) for i in x]
         wrangled = [d[0] for d in dfs]

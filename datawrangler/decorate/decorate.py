@@ -2,17 +2,24 @@ import warnings
 import functools
 import numpy as np
 import pandas as pd
-from ppca import PPCA
 import sklearn.decomposition as decomposition
 import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text
 import sklearn.mixture as mixture
 
-from ..zoo.format import wrangle
-from ..core.configurator import get_default_options
+from sklearn.experimental import enable_iterative_imputer
+import sklearn.impute as impute
+
+from ..zoo import wrangle
+from ..zoo.text import is_sklearn_model
+from ..zoo.dataframe import is_dataframe, is_multiindex_dataframe
+from ..zoo.array import is_array
+from ..core import get_default_options, apply_defaults, update_dict
+from ..util.helpers import depth
 
 
-format_checkers = eval(get_default_options()['supported_formats']['types'])
+defaults = get_default_options()
+format_checkers = defaults['supported_formats']['types']
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names
@@ -24,20 +31,69 @@ def import_sklearn_models(module):
     return models
 
 
+def get_sklearn_model(x):
+    if is_sklearn_model(x):
+        return x  # already a valid model
+    elif type(x) is dict:
+        if hasattr(x, 'model'):
+            return get_sklearn_model(x['model'])
+        else:
+            return None
+    elif type(x) is str:
+        # noinspection PyBroadException
+        try:
+            return get_sklearn_model(eval(x))
+        except:
+            pass
+    return None
+
+
+# FIXME: this code is partially duplicated from zoo.text.apply_text-model
+def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=False, **kwargs):
+    assert mode in ['fit', 'transform', 'fit_transform']
+    if type(model) is list:
+        models = []
+        for i, m in enumerate(model):
+            if (i < len(model) - 1) and ('transform' not in mode):
+                temp_mode = 'fit_transform'
+            else:
+                temp_mode = mode
+
+            data, m = apply_sklearn_model(m, data, *args, mode=temp_mode, return_model=True, **kwargs)
+            models.append(m)
+
+        if return_model:
+            return data, models
+        else:
+            return data
+    elif type(model) is dict:
+        assert all([k in model.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {model}')
+        return apply_sklearn_model(model['model'], data, *[*model['args'], *args], mode=mode, return_model=return_model,
+                                   **update_dict(model['kwargs'], kwargs))
+
+    model = get_sklearn_model(model)
+    if model is None:
+        raise RuntimeError(f'unsupported model: {model}')
+    model = apply_defaults(model)(*args, **kwargs)
+
+    m = getattr(model, mode)
+    transformed_data = m(data)
+    if return_model:
+        return transformed_data, {'model': model, 'args': args, 'kwargs': kwargs}
+    return transformed_data
+
+
 reduce_models = ['UMAP']
 reduce_models.extend(import_sklearn_models(decomposition))
 reduce_models.extend(import_sklearn_models(manifold))
 
-mixture_models = import_sklearn_models(mixture)
-mixture_models.extend(['LatentDirichletAllocation', 'NMF'])
-
 text_vectorizers = import_sklearn_models(text)
+
+impute_models = import_sklearn_models(impute)
 
 # source: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
 interpolation_models = ['linear', 'time', 'index', 'pad', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'spline',
                         'barycentric', 'polynomial']
-
-defaults = get_default_options()
 
 
 # make a function work for either a single object or a list of objects by calling the function on each element
@@ -65,164 +121,149 @@ def funnel(f):
     return wrapped
 
 
-# helper function for filling in missing data (not a decorator)
-@funnel
-def fill_missing(data, **kwargs):
-    if 'interp_kwargs' in kwargs.keys():
-        interp_kwargs = kwargs.pop('interp_kwargs', None)
-    else:
-        interp_kwargs = {}
-
-    if len(interp_kwargs) == 0:
-        return data
-
-    if ('apply_ppca' in interp_kwargs.keys()) and interp_kwargs['apply_ppca']:
-        covariance_model = PPCA()
-        covariance_model.fit(data.values)
-        data.values = covariance_model.transform()
-    interp_kwargs.pop('apply_ppca', None)
-
-    if len(interp_kwargs) == 0:
-        return data
-    else:
-        return data.interpolate(**interp_kwargs)
-
-
-# fill in missing data by applying PPCA (to fill in isolated missing entries within a row) and then by interpolating
+# fill in missing data by imputing and/or interpolating
 def interpolate(f):
+    @funnel
+    def fill_missing(data, return_model=False, **kwargs):
+        impute_kwargs = kwargs.pop('impute_kwargs', {})
+
+        if impute_kwargs:
+            model = impute_kwargs.pop('model', defaults['impute']['model'])
+            imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
+            data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
+        else:
+            model = None
+
+        if kwargs:
+            kwargs = update_dict(defaults['interpolate'], kwargs)
+            data = data.interpolate(**kwargs)
+
+        if return_model:
+            return data, {'model': model, 'args': [], 'kwargs': kwargs}
+        else:
+            return data
+
     @functools.wraps(f)
     def wrapped(data, **kwargs):
-        return f(fill_missing(data, **kwargs), **kwargs)
+        interp_kwargs = kwargs.pop('interp_kwargs', {})
+        return f(fill_missing(data, **interp_kwargs), **kwargs)
 
     return wrapped
 
 
-# intercept data passed to a function by stacking (or unstacking) the dataframes, applying the given function,
-# and then inverting the stack/unstack operation (unless return_override is True)
-def stack_handler(apply_stacked=False, return_override=False):
-    # noinspection PyUnusedLocal
-    @interpolate
-    def format_interp_stack_extract(data, keys=None, **kwargs):
-        stacked_data = pandas_stack(data, keys=keys)
-        vals = stacked_data.values
-        return vals, stacked_data
+@funnel
+def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False, copy=True, ignore_index=False,
+                 levels=None):
+    """
+    Take a list of DataFrames with the same number of columns and (optionally)
+    a list of names (of the same length as the original list; default:
+    range(len(x))).  Return a single MultiIndex DataFrame where the original
+    DataFrames are stacked vertically, with the data names as their level 1
+    indices and their original indices as their level 2 indices.
 
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(data, **kwargs):
-            def returner(x, rmodel=None, rreturn_model=False):
-                if rreturn_model:
-                    return rmodel, x
-                else:
-                    return x
+    INPUTS
+    data: data in any format supported by datawrangler
 
-            if 'keys' not in kwargs.keys():
-                kwargs['keys'] = None
+    Also takes all keyword arguments from pandas.concat except axis, join, join_axes
 
-            if 'stack' not in kwargs.keys():
-                kwargs['stack'] = False
+    All other keyword arguments (if any) are passed to funnel
 
-            return_model = (not return_override) and ('return_model' in kwargs.keys()) and kwargs['return_model']
-            if not return_model:
-                kwargs.pop('return_model', None)
+    OUTPUTS
+    a single MultiIndex DataFrame
+    """
 
-            keys = kwargs.pop('keys', None)
-            stack = kwargs.pop('stack', None)
+    if is_multiindex_dataframe(data):
+        return data
+    elif is_dataframe(data):
+        data = [data]
+    elif len(data) == 0:
+        return None
 
-            vals, stacked_data = format_interp_stack_extract(data, keys=keys, **kwargs)
-            unstacked_data = pandas_unstack(stacked_data)
+    assert len(np.unique([d.shape[1] for d in data])) == 1, 'All DataFrames must have the same number of columns'
+    for i, d1 in enumerate(data):
+        template = d1.columns.values
+        for d2 in data[(i + 1):]:
+            assert np.all([(c in template) for c in d2.columns.values]), 'All DataFrames must have the same columns'
 
-            # ignore sklearn warnings...this should be written more responsibly :)
-            warnings.simplefilter('ignore')
+    if keys is None:
+        keys = np.arange(len(data), dtype=int)
 
-            if apply_stacked:
-                transformed = f(stacked_data, **kwargs)
-                if return_override:
-                    return transformed
+    assert is_array(keys) or (type(keys) == list), f'keys must be None or a list or array of length len(data)'
+    assert len(keys) == len(data), f'keys must be None or a list or array of length len(data)'
 
-                if return_model:
-                    model, transformed = transformed
-                else:
-                    model = None
+    if names is None:
+        names = ['ID', *[f'ID{i}' for i in range(1, len(data[0].index.names))], None]
 
-                transformed = pd.DataFrame(data=transformed, index=stacked_data.index,
-                                           columns=np.arange(transformed.shape[1]))
-                if stack:
-                    return returner(transformed, rmodel=model, rreturn_model=return_model)
-                else:
-                    return returner(pandas_unstack(transformed), rmodel=model, rreturn_model=return_model)
-            else:
-                transformed = f([x.values for x in unstacked_data], **kwargs)
-                if return_override:
-                    return transformed
-
-                if return_model:
-                    model, transformed = transformed
-                else:
-                    model = None
-
-                if stack:
-                    return returner(pd.DataFrame(data=np.vstack(transformed), index=stacked_data.index), rmodel=model,
-                                    rreturn_model=return_model)
-                else:
-                    return returner(
-                        [pd.DataFrame(data=v, index=unstacked_data[i].index) for i, v in enumerate(transformed)],
-                        rmodel=model, rreturn_model=return_model)
-
-        return wrapped
-
-    return decorator
+    return pd.concat(data, axis=0, join='outer', names=names, keys=keys,
+                     verify_integrity=verify_integrity, sort=sort, copy=copy,
+                     ignore_index=ignore_index, levels=levels)
 
 
-# ensure that the named algorithm is contained within the list of approved algorithms of the given type
-def module_checker(modules=None, alg_list=None):
-    if modules is None:
-        modules = []
-    if alg_list is None:
-        alg_list = []
+def pandas_unstack(x):
+    if not is_multiindex_dataframe(x):
+        if is_dataframe(x):
+            return x
+        else:
+            raise Exception(f'Unsupported datatype: {type(x)}')
 
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(data, **kwargs):
-            if 'algorithm' not in kwargs.keys():
-                algorithm = defaults[f.__name__]['algorithm']
-            else:
-                algorithm = kwargs.pop('algorithm', None)
+    names = list(x.index.names)
+    grouper = 'ID'
+    if not (grouper in names):
+        names[0] = grouper
+    elif not (names[0] == grouper):
+        for i in np.arange(
+                len(names)):    # trying n things other than 'ID'; one must be outside of the n-1 remaining names
+            next_grouper = f'{grouper}{i}'
+            if not (next_grouper in names):
+                names[0] = next_grouper
+                grouper = next_grouper
+                break
+    assert names[0] == grouper, 'Unstacking error'
 
-            if is_text(algorithm):
-                # security check to prevent executing arbitrary code
-                verified = False
-                if len(alg_list) > 0:
-                    assert any([algorithm in eval(f'{a}_models') for a in alg_list]), f'Unknown {f.__name__} ' \
-                                                                                      f'algorithm: {algorithm}'
-                    verified = True
-                if not verified:
-                    assert algorithm in eval(f'{f.__name__}_models'), f'Unknown {f.__name__} algorithm: {algorithm}'
-                algorithm = eval(algorithm)
-
-            # make sure a function from the appropriate module is being passed
-            if len(modules) > 0:
-                assert any([m in algorithm.__module__ for m in modules]), f'Unknown {f.__name__} ' \
-                                                                          f'algorithm: {algorithm.__name__}'
-
-            kwargs['algorithm'] = algorithm
-            return f(data, **kwargs)
-
-        return wrapped
-
-    return decorator
+    x.index.rename(names, inplace=True)
+    return [d[1].set_index(d[1].index.get_level_values(1)) for d in list(x.groupby(grouper))]
 
 
-# unstack the data, apply the given function, then re-stack if needed
-@stack_handler(apply_stacked=False)
-def unstack_apply(data, **kwargs):
-    assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
-    return algorithm(data, **kwargs)
+def apply_stacked(f):
+
+    @funnel
+    def wrapped(data, *args, **kwargs):
+        stack_result = is_multiindex_dataframe(data)
+
+        stacked_data = pandas_stack(data)
+        transformed = f(stacked_data, *args, **kwargs)
+
+        if (not stack_result) and (('return_model' in kwargs.keys()) and kwargs['return_model']):
+            transformed[0] = pandas_unstack(transformed[0])
+        return transformed
+
+    return wrapped
 
 
-# stack the data, apply the given function, then unstack if needed
-@stack_handler(apply_stacked=True)
-def stack_apply(data, **kwargs):
-    assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
-    return algorithm(data, **kwargs)
+def apply_unstacked(f):
 
+    @funnel
+    def wrapped(data, *args, **kwargs):
+        stack_result = is_multiindex_dataframe(data)
+
+        unstacked_data = pandas_unstack(data)
+        # noinspection PyArgumentList
+        transformed = list_generalizer(f)(unstacked_data, *args, **kwargs)
+
+        return_model = kwargs.pop('return_model', False)
+        if return_model:
+            # noinspection PyTypeChecker
+            model = [t[1] for t in transformed]
+            # noinspection PyTypeChecker
+            transformed = [t[0] for t in transformed]
+
+        if stack_result:
+            transformed = pandas_stack(transformed)
+
+        if return_model:
+            # noinspection PyUnboundLocalVariable
+            return transformed, model
+        else:
+            return transformed
+
+    return wrapped

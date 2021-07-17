@@ -132,6 +132,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
     if model is None:
         raise RuntimeError(f'unsupported text processing module: {x}')
 
+    # noinspection DuplicatedCode
     if is_sklearn_model(model):
         assert mode in ['fit', 'transform', 'fit_transform']
 
@@ -228,7 +229,7 @@ def wrangle_text(text, return_model=False, **kwargs):
     if type(text) is not list:
         text = [text]
 
-    model = kwargs.pop('model', eval(defaults['text']['model']))
+    model = kwargs.pop('model', defaults['text']['model'])
     corpus = kwargs.pop('corpus', None)
     config = kwargs.pop('config', None)
     array_args = kwargs.pop('array_args', {})
@@ -241,8 +242,8 @@ def wrangle_text(text, return_model=False, **kwargs):
             if not ((type(corpus) is list) and is_text(corpus)):
                 corpus = get_corpus(dataset_name=corpus, config_name=config)
         else:
-            corpus = get_corpus(dataset_name=eval(defaults['text']['corpus']),
-                                config_name=eval(defaults['text']['corpus_config']))
+            corpus = get_corpus(dataset_name=defaults['text']['corpus'],
+                                config_name=defaults['text']['corpus_config'])
 
         # train model on corpus
         _, model = apply_text_model(model, corpus, mode='fit', return_model=True, **kwargs)

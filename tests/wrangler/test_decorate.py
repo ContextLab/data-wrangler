@@ -60,25 +60,71 @@ def test_funnel(data_file, data, img_file, text_file):
     assert np.isclose(wrangled[4].values.mean(), 0.00449942)
 
 
-def test_fill_missing():
-    pass
+def test_interpolate(data):
+    # test imputing
+    impute_test = data.copy()
+    impute_test.loc[4, 'SecondDim'] = np.nan
+    impute_test.loc[8, 'FourthDim'] = np.nan
+
+    @dw.decorate.interpolate
+    def f(x):
+        return x
+
+    recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
+    assert np.allclose(data, recovered_data1)
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data1)
+
+    # test interpolation
+    interp_test = data.copy()
+    interp_test.loc[5] = np.nan
+    recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
+    assert np.allclose(data, recovered_data2)
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data2)
+
+    # impute + interpolate
+    impute_interp_test = data.copy()
+    impute_interp_test.loc[2, 'ThirdDim'] = np.nan
+    impute_interp_test.loc[0, 'FourthDim'] = np.nan
+    impute_interp_test.loc[8, 'FifthDim'] = np.nan
+    impute_interp_test.loc[4] = np.nan
+
+    recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
+                                                           'method': 'pchip'})
+    assert np.allclose(recovered_data3.values[~np.isnan(impute_interp_test)],
+                       data.values[~np.isnan(impute_interp_test)])
+    assert dw.zoo.is_dataframe(data)
+    assert dw.zoo.is_dataframe(recovered_data3)
 
 
-def test_interpolate():
-    pass
+def test_apply_unstacked(data):
+    i = 3
+    data1 = data.iloc[:i]
+    data2 = data.iloc[i:]
+    stacked_data = dw.stack([data1, data2])
+
+    assert np.allclose(dw.stack(stacked_data), data)
+
+    @dw.decorate.apply_unstacked
+    def f(x):
+        return x.mean(axis=0)
+
+    means = f(stacked_data)
+    assert dw.zoo.is_multiindex_dataframe(means)
+    assert np.allclose(means.iloc[0], data1.mean(axis=0))
+    assert np.allclose(means.iloc[1], data2.mean(axis=0))
 
 
-def test_stack_handler():
-    pass
+def test_apply_stacked(data):
+    i = 4
+    data1 = data.iloc[:i]
+    data2 = data.iloc[i:]
 
+    @dw.decorate.apply_stacked
+    def f(x):
+        return x.mean(axis=0)
 
-def test_module_checker():
-    pass
-
-
-def test_unstack_apply():
-    pass
-
-
-def test_stack_apply():
-    pass
+    # noinspection PyTypeChecker
+    means = f([data1, data2])
+    assert np.allclose(means, data.mean(axis=0))
