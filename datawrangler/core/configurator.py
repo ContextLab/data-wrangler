@@ -12,6 +12,18 @@ __version__ = get_distribution('datawrangler')
 
 
 def get_default_options(fname=None):
+    """
+    Parse a config.ini file
+
+    Parameters
+    ----------
+    fname: absolute-path filename for the config.ini file (default: data-wrangler/datawrangler/core/config.ini)
+
+    Returns
+    -------
+    A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
+    arguments
+    """
     if fname is None:
         fname = os.path.join(os.path.dirname(__file__), 'config.ini')
 
@@ -28,6 +40,19 @@ def get_default_options(fname=None):
 
 
 def update_dict(template, updates):
+    """
+    Replace a template dictionary's values with new values defined in a second "updates" dictionary.
+
+    Parameters
+    ----------
+    template: default keys and values to use (if not specified in the "updates" dictionary)
+    updates: new values to use (and/or new keys to add to the resulting dictionary)
+
+    Returns
+    -------
+    A new dictionary containing the union of the keys/values in template and updates, with preference given to
+    the updates dictionary
+    """
     template = copy(template)
     for k, v in updates.items():
         template[k] = v
@@ -43,6 +68,17 @@ if not os.path.exists(defaults['data']['datadir']):
 # add in default keyword arguments (and values) specified in config.ini based on the function or class name
 # can also be used as a decorator
 def apply_defaults(f):
+    """
+    Replace a function's default arguments and keyword arguments with defaults specified in config.ini
+
+    Parameters
+    ----------
+    f: a function
+
+    Returns
+    -------
+    a function replacing and un-specified arguments with the defaults defined in config.ini
+    """
     def get_name(func):
         if hasattr(func, '__name__'):
             return func.__name__

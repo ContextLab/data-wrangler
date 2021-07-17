@@ -14,6 +14,18 @@ img_types = plt.gcf().canvas.get_supported_filetypes().keys();
 
 
 def get_local_fname(x, digest_size=10):
+    """
+    Internal data-wrangler function for generating filenames for saved datasets
+
+    Parameters
+    ----------
+    x: a string containing some data
+    digest_size: length of the hash to compute (default: 10)
+
+    Returns
+    -------
+    The absolute path of the location where the given information should be stored.
+    """
     if os.path.exists(x):
         return x
 
@@ -46,6 +58,34 @@ def load_remote(url, params=None):
 
 
 def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, **kwargs):
+    """
+    Load local or remote files in a wide range of formats
+
+    Parameters
+    ----------
+    x: a string containing a URL, document ID (e.g., a Google object's ID), or file path
+    base_url: a template URL used to download objects specified using only their ID.
+      Default: 'https://docs.google.com/uc?export=download' (supports Google IDs)
+    dtype: Optional argument for specifying how the data should be loaded; can be one of:
+      - 'pickle': use the dill library to load in pickled objects and functions
+      - 'numpy': treat the dataset as a .npy or .npz file
+      - None (default): attempt to determine the filetype automatically based on the URL or file extension.  The
+        following filetypes are supported:
+          - txt files: treated as plain text
+          - any filetype supported by the Pandas library:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
+          - any image filetype supported by the Matplotlib library; for a full list see:
+            matplotlib.pyplot.gcf().canvas.get_supported_filetypes()
+    kwargs: any additional keyword arguments are passed to whatever function is selected to load in the dataset.  For
+      example, when loading in a csv file (a Pandas-compatible format), passing the keyword argument index_col=0 will
+      tell Pandas to interpret the first (0) column as the resulting DataFrame's index when loading the file's contents
+      into a DataFrame.
+
+    Returns
+    -------
+    The retrieved data.  Remote files will be cached (saved) locally to disk for faster loading if/when the same
+    address or ID is used to load the file again at a later time.
+    """
     # noinspection PyShadowingNames
     def helper(fname, **helper_kwargs):
         if dtype == 'pickle':
@@ -92,6 +132,25 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
 
 
 def save(x, obj, dtype=None, **kwargs):
+    """
+    Save data to disk.
+
+    Parameters
+    ----------
+    x: the file's original path, URL, or ID (used to create a hash to define a new filename)
+    obj: the data to store to disk
+    dtype: optional argument specifying how to store the data; can be one of:
+      - 'pickle': use the dill library to pickle the object
+      - 'numpy': save the objects as a compressed (.npz-formatted) numpy file
+      - None (default): determine the filetype automatically; if x is passed in as bytes, write x directly to disk. If
+        x is a string, treat x as text.
+    kwargs: any additional keyword arguments are passed to dill.dump (if dtype == 'pickle') or numpy.savez (if
+        dtype == 'numpy').  For any other datatype, additional keyword arguments are ignored.
+
+    Returns
+    -------
+    None.
+    """
     assert type(x) is str, IOError('cannot interpret non-string filename')
     fname = get_local_fname(x)
 

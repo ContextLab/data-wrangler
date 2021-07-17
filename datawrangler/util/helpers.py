@@ -10,6 +10,19 @@ from ..zoo.array import is_array
 
 
 def btwn(x, a, b):
+    """
+    Return True if and only if the values in the given Array are between the given bounds (inclusive)
+
+    Parameters
+    ----------
+    x: a numeric scalar or Array
+    a: lower bound-- a numeric scalar or an Array of the same shape as x
+    b: upper bound-- a numeric scalar or an Array of the same shape as x
+
+    Returns
+    -------
+
+    """
     assert np.isscalar(a), ValueError(f'lower limit must be scalar (given: {type(a)}')
     assert np.isscalar(b), ValueError(f'upper limit must be scalar (given: {type(b)}')
 
@@ -20,6 +33,18 @@ def btwn(x, a, b):
 
 
 def dataframe_like(x, debug=False):
+    """
+    Determine whether an object can be treated as a Pandas DataFrame for wrangling purposes
+
+    Parameters
+    ----------
+    x: the object
+    debug: internal flag (default: False) that prints out why an object is *not* dataframe like
+
+    Returns
+    -------
+    True (if the object can be treated like a DataFrame) or False otherwise
+    """
     required_attributes = ['values', 'index', 'columns', 'shape', 'stack', 'unstack', 'loc', 'iloc', 'size', 'copy',
                            'head', 'tail', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
                            'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
@@ -36,12 +61,36 @@ def dataframe_like(x, debug=False):
 
 
 def array_like(x, force_literal=False):
+    """
+    Determine whether an object can be treated as a Numpy Array for wrangling purposes
+
+    Parameters
+    ----------
+    x: the object
+    force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether they
+      may refer to files, URLs, or Google IDs (if force_literal == False).  Default: False
+
+    Returns
+    -------
+    True (if the object can be treated like an Array) or False otherwise
+    """
     if (type(x) is str) and (not force_literal) and os.path.exists(x):
         return array_like(load(x), force_literal=True)
     return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
 
 
 def depth(x):
+    """
+    Determine the maximum depth of a list or array (i.e., maximum amount of nesting, across all elements)
+
+    Parameters
+    ----------
+    x: an array-like object
+
+    Returns
+    -------
+    The depth of the object
+    """
     if array_like(x):
         if np.isscalar(x) or (len(x) == 0):
             return 0

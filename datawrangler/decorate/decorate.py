@@ -25,6 +25,18 @@ format_checkers = defaults['supported_formats']['types']
 # import all model-like classes within a sklearn-like module; return a list of model names
 # note: this is NOT a decorator-- it's a helper function used to seed functions for the module_checker decorator
 def import_sklearn_models(module):
+    """
+    Given a Python module object, import all of the scikit-learn-style models it contains (i.e., all objects with
+    fit_transform methods) into the workspace
+
+    Parameters
+    ----------
+    module: a Python module object (e.g. sklearn.decomposition)
+
+    Returns
+    -------
+    a list of valid models contained in the module
+    """
     models = [d for d in dir(module) if hasattr(getattr(module, d), 'fit_transform')]
     for m in models:
         exec(f'from {module.__name__} import {m}', globals())
@@ -32,6 +44,22 @@ def import_sklearn_models(module):
 
 
 def get_sklearn_model(x):
+    """
+    Wrangle a scikit-learn model into a consistent format
+
+    Parameters
+    ----------
+    x: a callable scikit-learn model, a string containing a scikit-learn model's name (e.g.,
+    'LatentDirichletAllocation'), or a dictionary with the following keys:
+      - 'model': a callable scikit-learn model or a string containing a scikit-learn model's name
+      - 'args': a list of arguments to pass to the model (this list will be pre-pended with the data the model is
+        applied to)
+      - 'kwargs': a list of keyword arguments to pass to the model
+
+    Returns
+    -------
+    A callable scikit-learn model
+    """
     if is_sklearn_model(x):
         return x  # already a valid model
     elif type(x) is dict:
@@ -50,6 +78,26 @@ def get_sklearn_model(x):
 
 # FIXME: this code is partially duplicated from zoo.text.apply_text-model
 def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=False, **kwargs):
+    """
+    Apply one or more scikit-learn models to a dataset
+
+    Parameters
+    ----------
+    model: a scikit-learn model (as defined in the *get_sklearn_model* description), or a list of models to be applied
+           in sequence
+    data: a dataset (array or DataFrame)
+    args: other arguments to pass to the model (after data)
+    mode: one of 'fit', 'transform', or 'fit_transform' (default: 'fit_transform'); uses scikit-learn syntax
+    return_model: if True, both the (potentially transformed) data *and* the fitted model (or list of fitted models)
+          are returned.  If False, only the (potentially transformed) data is returned.  Default: False
+    kwargs: other keyword arguments to pass to *all* of the scikit-learn models (in addition to any model-specific
+          keyword arguments)
+
+    Returns
+    -------
+    Either the (potentially transformed) dataset (if return_model == False) or a tuple containing the
+    transformed dataset (first element) and the fitted model(s) (second element), if return_model == True.
+    """
     assert mode in ['fit', 'transform', 'fit_transform']
     if type(model) is list:
         models = []
@@ -96,20 +144,42 @@ interpolation_models = ['linear', 'time', 'index', 'pad', 'nearest', 'zero', 'sl
                         'barycentric', 'polynomial']
 
 
-# make a function work for either a single object or a list of objects by calling the function on each element
 def list_generalizer(f):
+    """
+    A decorator that makes a function work for either a single object or a list of objects by calling the function on
+    each element
+
+    Parameters
+    ----------
+    f: the function to decorate, of the form f(data, *args, **kwargs).
+
+    Returns
+    -------
+    A decorated function that supports lists of data objects (rather than only non-list data objects)
+    """
     @functools.wraps(f)
-    def wrapped(data, **kwargs):
+    def wrapped(data, *args, **kwargs):
         if type(data) == list:
-            return [f(d, **kwargs) for d in data]
+            return [f(d, *args, **kwargs) for d in data]
         else:
-            return f(data, **kwargs)
+            return f(data, *args, **kwargs)
 
     return wrapped
 
 
-# coerce the data passed into the function into a pandas dataframe or a list of dataframes
 def funnel(f):
+    """
+    A decorator that coerces any data passed into the function into a pandas DataFrame or a list of DataFrames
+
+    Parameters
+    ----------
+    f: a function of the form f(data, *args, **kwargs) that assumes data is either a DataFrame or a list of
+       DataFrames
+
+    Returns
+    -------
+    A decorated function the supports any wrangle-able data format
+    """
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
         wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
@@ -121,8 +191,25 @@ def funnel(f):
     return wrapped
 
 
-# fill in missing data by imputing and/or interpolating
 def interpolate(f):
+    """
+    A decorator that fills in missing data by imputing and/or interpolating missing values
+    Parameters
+    ----------
+    f: a function of the form f(data, *args, **kwargs) that assumes the data are formatted as either a DataFrame or
+       a list of DataFrames, with no missing (numpy.nan) values
+
+    Returns
+    -------
+    A decorated function that supports any wrangle-able datatype.  Pass in the following keyword arguments to fill in
+    missing data:
+      impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
+          {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model* function.
+      any other keywords are passed to pandas.DataFrame.interpolate; e.g. method='linear' will apply linear
+          interpolation to fill in missing values.  A full list of supported arguments may be found here:
+          https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+          If no other keyword arguments are specified, no interpolation is performed.
+    """
     @funnel
     def fill_missing(data, return_model=False, **kwargs):
         impute_kwargs = kwargs.pop('impute_kwargs', {})
@@ -144,9 +231,9 @@ def interpolate(f):
             return data
 
     @functools.wraps(f)
-    def wrapped(data, **kwargs):
+    def wrapped(data, *args, **kwargs):
         interp_kwargs = kwargs.pop('interp_kwargs', {})
-        return f(fill_missing(data, **interp_kwargs), **kwargs)
+        return f(fill_missing(data, *args, **interp_kwargs), **kwargs)
 
     return wrapped
 
@@ -200,6 +287,19 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
 
 
 def pandas_unstack(x):
+    """
+    Turn a MultiIndex DataFrame into a list of DataFrames, using the unique top-level index values to divide the data.
+    If the dataset is a "regular" (non-MultiIndex) DataFrame, it is returned as a list with a single element,
+    containing the un-modified DataFrame
+
+    Parameters
+    ----------
+    x: a single DataFrame or MultiIndex DataFrame
+
+    Returns
+    -------
+    A list of one or more DataFrames
+    """
     if not is_multiindex_dataframe(x):
         if is_dataframe(x):
             return x
@@ -225,6 +325,25 @@ def pandas_unstack(x):
 
 
 def apply_stacked(f):
+    """
+    Decorate a function to adjust how it handles data as follows:
+      - Wrangle the data into DataFrames (the resulting DataFrames must all have the same number of columns).
+        MultiIndex DataFrames are also supported (and can represent already-stacked datasets)
+      - Vertically concatenate the wrangled data
+      - Apply the function to the "stacked" dataset, treating the combined data as a "single" DataFrame
+      - If the original dataset was provided in "unstacked" format, unstack the result into a list of DataFrames
+      - Return the resulting (stacked or unstacked) DataFrame(s)
+
+    Parameters
+    ----------
+    f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
+       single DataFrame as output.
+
+    Returns
+    -------
+    A decorated function that supports any wrangle-able data types, applies the original function to the full
+    list of datasets simultaneously, and then returns the result(s) as a new DataFrame or list of DataFrames.
+    """
 
     @funnel
     def wrapped(data, *args, **kwargs):
@@ -241,6 +360,24 @@ def apply_stacked(f):
 
 
 def apply_unstacked(f):
+    """
+    Decorate a function to adjust how it handles data as follows:
+      - Wrangle the data into a list of DataFrames.  MultiIndex DataFrames are also supported (and can represent stacked
+        datasets)
+      - Apply the function (individually) to each DataFrame in the resulting list
+      - If the original dataset was provided in "stacked" format, stack the result into a MultiIndex DataFrame
+      - Return the resulting (stacked or unstacked) DataFrame(s)
+
+    Parameters
+    ----------
+    f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
+       single DataFrame as output.
+
+    Returns
+    -------
+    A decorated function that supports any wrangle-able data types, applies the original function to the full
+    list of datasets separately, and then returns the result(s) as a new DataFrame or list of DataFrames.
+    """
 
     @funnel
     def wrapped(data, *args, **kwargs):
