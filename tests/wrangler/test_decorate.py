@@ -98,9 +98,33 @@ def test_interpolate(data):
     assert dw.zoo.is_dataframe(recovered_data3)
 
 
-def test_unstack_apply():
-    pass
+def test_apply_unstacked(data):
+    i = 3
+    data1 = data.iloc[:i]
+    data2 = data.iloc[i:]
+    stacked_data = dw.stack([data1, data2])
+
+    assert np.allclose(dw.stack(stacked_data), data)
+
+    @dw.decorate.apply_unstacked
+    def f(x):
+        return x.mean(axis=0)
+
+    means = f(stacked_data)
+    assert dw.zoo.is_multiindex_dataframe(means)
+    assert np.allclose(means.iloc[0], data1.mean(axis=0))
+    assert np.allclose(means.iloc[1], data2.mean(axis=0))
 
 
-def test_stack_apply():
-    pass
+def test_apply_stacked(data):
+    i = 4
+    data1 = data.iloc[:i]
+    data2 = data.iloc[i:]
+
+    @dw.decorate.apply_stacked
+    def f(x):
+        return x.mean(axis=0)
+
+    # noinspection PyTypeChecker
+    means = f([data1, data2])
+    assert np.allclose(means, data.mean(axis=0))

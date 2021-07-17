@@ -1,1 +1,1 @@
-from .decorate import list_generalizer, funnel, interpolate, stack_apply, unstack_apply
+from .decorate import list_generalizer, funnel, interpolate, apply_stacked, apply_unstacked

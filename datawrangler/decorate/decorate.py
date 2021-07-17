@@ -12,7 +12,10 @@ import sklearn.impute as impute
 
 from ..zoo import wrangle
 from ..zoo.text import is_sklearn_model
+from ..zoo.dataframe import is_dataframe, is_multiindex_dataframe
+from ..zoo.array import is_array
 from ..core import get_default_options, apply_defaults, update_dict
+from ..util.helpers import depth
 
 
 defaults = get_default_options()
@@ -218,99 +221,49 @@ def pandas_unstack(x):
     assert names[0] == grouper, 'Unstacking error'
 
     x.index.rename(names, inplace=True)
-    unstacked = [d[1].set_index(d[1].index.get_level_values(1)) for d in list(x.groupby(grouper))]
-    if len(unstacked) == 1:
-        return unstacked[0]
-    else:
-        return unstacked
+    return [d[1].set_index(d[1].index.get_level_values(1)) for d in list(x.groupby(grouper))]
 
 
-# intercept data passed to a function by stacking (or unstacking) the dataframes, applying the given function,
-# and then inverting the stack/unstack operation (unless return_override is True)
-def stack_handler(apply_stacked=False, return_override=False):
-    # noinspection PyUnusedLocal
-    @interpolate
-    def format_interp_stack_extract(data, keys=None, **kwargs):
-        stacked_data = pandas_stack(data, keys=keys)
-        vals = stacked_data.values
-        return vals, stacked_data
+def apply_stacked(f):
 
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(data, **kwargs):
-            def returner(x, rmodel=None, rreturn_model=False):
-                if rreturn_model:
-                    return rmodel, x
-                else:
-                    return x
+    @funnel
+    def wrapped(data, *args, **kwargs):
+        stack_result = is_multiindex_dataframe(data)
 
-            if 'keys' not in kwargs.keys():
-                kwargs['keys'] = None
+        stacked_data = pandas_stack(data)
+        transformed = f(stacked_data, *args, **kwargs)
 
-            if 'stack' not in kwargs.keys():
-                kwargs['stack'] = False
+        if (not stack_result) and (('return_model' in kwargs.keys()) and kwargs['return_model']):
+            transformed[0] = pandas_unstack(transformed[0])
+        return transformed
 
-            return_model = (not return_override) and ('return_model' in kwargs.keys()) and kwargs['return_model']
-            if not return_model:
-                kwargs.pop('return_model', None)
-
-            keys = kwargs.pop('keys', None)
-            stack = kwargs.pop('stack', None)
-
-            vals, stacked_data = format_interp_stack_extract(data, keys=keys, **kwargs)
-            unstacked_data = pandas_unstack(stacked_data)
-
-            # ignore sklearn warnings...this should be written more responsibly :)
-            warnings.simplefilter('ignore')
-
-            if apply_stacked:
-                transformed = f(stacked_data, **kwargs)
-                if return_override:
-                    return transformed
-
-                if return_model:
-                    model, transformed = transformed
-                else:
-                    model = None
-
-                transformed = pd.DataFrame(data=transformed, index=stacked_data.index,
-                                           columns=np.arange(transformed.shape[1]))
-                if stack:
-                    return returner(transformed, rmodel=model, rreturn_model=return_model)
-                else:
-                    return returner(pandas_unstack(transformed), rmodel=model, rreturn_model=return_model)
-            else:
-                transformed = f([x.values for x in unstacked_data], **kwargs)
-                if return_override:
-                    return transformed
-
-                if return_model:
-                    model, transformed = transformed
-                else:
-                    model = None
-
-                if stack:
-                    return returner(pd.DataFrame(data=np.vstack(transformed), index=stacked_data.index), rmodel=model,
-                                    rreturn_model=return_model)
-                else:
-                    return returner(
-                        [pd.DataFrame(data=v, index=unstacked_data[i].index) for i, v in enumerate(transformed)],
-                        rmodel=model, rreturn_model=return_model)
-
-        return wrapped
-
-    return decorator
+    return wrapped
 
 
-# unstack the data, apply the given function, then re-stack if needed
-@stack_handler(apply_stacked=False)
-def unstack_apply(data, **kwargs):
-    assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
-    return algorithm(data, **kwargs)
+def apply_unstacked(f):
 
+    @funnel
+    def wrapped(data, *args, **kwargs):
+        stack_result = is_multiindex_dataframe(data)
 
-# stack the data, apply the given function, then unstack if needed
-@stack_handler(apply_stacked=True)
-def stack_apply(data, **kwargs):
-    assert 'algorithm' in kwargs.keys(), 'must specify algorithm'
-    return algorithm(data, **kwargs)
+        unstacked_data = pandas_unstack(data)
+        # noinspection PyArgumentList
+        transformed = list_generalizer(f)(unstacked_data, *args, **kwargs)
+
+        return_model = kwargs.pop('return_model', False)
+        if return_model:
+            # noinspection PyTypeChecker
+            model = [t[1] for t in transformed]
+            # noinspection PyTypeChecker
+            transformed = [t[0] for t in transformed]
+
+        if stack_result:
+            transformed = pandas_stack(transformed)
+
+        if return_model:
+            # noinspection PyUnboundLocalVariable
+            return transformed, model
+        else:
+            return transformed
+
+    return wrapped

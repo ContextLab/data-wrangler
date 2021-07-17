@@ -127,7 +127,6 @@ def test_wrangle_text_sklearn(text_file):
     # check text split into two documents
     i = 10
     cv2 = dw.wrangle([text[:i], text[i:]], text_kwargs=text_kwargs)
-    assert np.allclose(cv[:i], cv2[0])
     assert np.allclose(cv[i:], cv2[1])
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
@@ -137,11 +136,18 @@ def test_wrangle_text_sklearn(text_file):
     assert dw.util.btwn(lda, 0, 1)
     assert np.allclose(lda.sum(axis=1), 1)
 
-    lda2 = dw.wrangle(text)
+    lda2 = dw.wrangle(text)  # default model: ['CountVectorizer', 'LatentDirichletAllocation']
     assert lda2.shape == lda.shape
+    assert dw.util.btwn(lda2, 0, 1)
+    assert np.allclose(lda2.sum(axis=1), 1)
+
+    # check that the same lines of text received non-uniform topic weights
+    assert np.allclose(np.max(lda, axis=1) > 1 / lda.shape[1], np.max(lda2, axis=1) > 1 / lda2.shape[1])
+    assert np.where(np.max(lda, axis=1) > 1 / lda.shape[1])[0].tolist() == [1, 5, 8, 10, 11, 13, 16, 18, 21]
 
     # scikit-learn TfidfVectorizer + NMF
-    text_kwargs = {'model': ['TfidfVectorizer', {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 25}}]}
+    text_kwargs = {'model': ['TfidfVectorizer', {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 25}}],
+                   'corpus': 'sotus'}
     nmf = dw.wrangle(text, text_kwargs=text_kwargs)
     assert nmf.shape == (24, 25)
     assert dw.util.btwn(nmf, 0, 1)
