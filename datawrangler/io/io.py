@@ -10,6 +10,7 @@ from .panda_handler import load_dataframe
 from .extension_handler import get_extension
 
 defaults = get_default_options()
+img_types = plt.gcf().canvas.get_supported_filetypes().keys();
 
 
 def get_local_fname(x, digest_size=10):
@@ -18,7 +19,7 @@ def get_local_fname(x, digest_size=10):
 
     h = hasher(digest_size=digest_size)
     h.update(x.encode('ascii'))
-    return os.path.join(defaults['data']['datadir'], h.hexdigest() + '.dw')
+    return os.path.join(defaults['data']['datadir'], h.hexdigest() + '.' + get_extension(x))
 
 
 def get_confirm_token(response):
@@ -65,7 +66,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                 return load_dataframe(fname)
             elif ext in ['npy', 'npz']:
                 return np.load(fname)
-            elif ext in plt.gcf().canvas.get_supported_filetypes().keys():
+            elif ext in img_types:
                 return plt.imread(fname)
             else:
                 raise ValueError(f'Unknown datatype: {dtype}')
@@ -104,4 +105,3 @@ def save(x, obj, dtype=None, **kwargs):
         np.savez(fname, obj, **kwargs)
     else:
         raise ValueError(f'cannot save object (specified dtype: {dtype}; observed type: {type(obj)})')
-
