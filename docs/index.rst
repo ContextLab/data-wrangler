@@ -3,7 +3,7 @@ DataWrangler 🤠
  wrangle your messy data into consistent well-organized formats!
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    readme
