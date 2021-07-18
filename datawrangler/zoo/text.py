@@ -26,11 +26,11 @@ def is_sklearn_model(x):
 
     Parameters
     ----------
-    x: the object to test
+    :param x: the object to test
 
     Returns
     -------
-    True if x contains "transform", "fit", and "fit_transform" methods and False otherwise.
+    :return: True if x contains "transform", "fit", and "fit_transform" methods and False otherwise.
     """
     return hasattr(x, 'transform') and hasattr(x, 'fit') and hasattr(x, 'fit_transform')
 
@@ -41,11 +41,11 @@ def is_hugging_face_model(x):
 
     Parameters
     ----------
-    x: the object to test
+    :param x: the object to test
 
     Returns
     -------
-    True if x contains an "embed" method, and False otherwise.
+    :return: True if x contains an "embed" method, and False otherwise.
     """
     return hasattr(x, 'embed')
 
@@ -57,11 +57,11 @@ def robust_is_sklearn_model(x):
 
     Parameters
     ----------
-    x: a to-be-tested model object or a string
+    :param x: a to-be-tested model object or a string
 
     Returns
     -------
-    True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform" methods and
+    :return: True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform" methods and
     False otherwise.
     """
     x = get_text_model(x)
@@ -74,11 +74,11 @@ def robust_is_hugging_face_model(x):
     hugging-face model when checked with this function, because 'WordEmbeddings' is defined in the flair.embeddings
     module and contains an "embed" method.
     ----------
-    x: a to-be-tested model object or a string
+    :param x: a to-be-tested model object or a string
 
     Returns
     -------
-    True if x (or the hugging-face module x evaluates to) contains an "embed" method and False otherwise.
+    :return: True if x (or the hugging-face module x evaluates to) contains an "embed" method and False otherwise.
     """
     x = get_text_model(x)
     return is_hugging_face_model(x)
@@ -92,12 +92,13 @@ def get_text_model(x):
 
     Parameters
     ----------
-    x: an object to turn into a valid scikit-learn or hugging-face model (e.g., an already-valid model or a string)
+    :param x: an object to turn into a valid scikit-learn or hugging-face model (e.g., an already-valid model or a
+      string)
 
     Returns
     -------
-    A valid scikit-learn or hugging-face model (or None if no model matching the given description can be found)
-
+    :return: A valid scikit-learn or hugging-face model (or None if no model matching the given description can be
+      found)
     """
     if is_sklearn_model(x) or is_hugging_face_model(x):
         return x  # already a valid model
@@ -136,8 +137,8 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
         - 'khan': transcripts of (most) Khan Academy YouTube videos
       - Any hugging-face corpus; for a full list see https://huggingface.co/datasets
         Note that downloading hugging-face corpora also requires specifying a config_name
-    :param config_name: configuration name or description for hugging-face corpora.  This argument is ignored if dataset_name
-      is set to one of the data-wrangler corpora described above.
+    :param config_name: configuration name or description for hugging-face corpora.  This argument is ignored if dataset
+      name is set to one of the data-wrangler corpora described above.
 
     Returns
     -------
@@ -189,6 +190,68 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 
 # noinspection PyShadowingNames
 def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, **kwargs):
+    """
+    Apply a scikit-learn or hugging-face text embedding model to one or more text datasets.  Scikit-learn models are
+    trained on the specified corpus and then applied to all datasets.  All Hugging-Face models are pre-trained.
+
+    Parameters
+    ----------
+    :param x: the model to apply.  Supported models include:
+      - Scikit-learn models.  The recommended pipeline is to specify a feature extraction model (for turning text into
+        a number-of-documents by number-of-features matrix), and then to apply a matrix decomposition or embedding model
+        (for turning the features matrix into text embeddings).  When models are passed as a list, each model is applied
+        in succession to the output of the previous model.  The pipeline is first fit to the provided corpus, and then
+        applied to the given text.  Default: ['CountVectorizer', 'LatentDirichletAllocation']
+        - All scikit-learn text feature extraction models are supported; for a full list see
+            https://scikit-learn.org/stable/modules/classes.html#module-sklearn.feature_extraction.text
+            These may be passed either as callable modules (e.g., sklearn.feature_extraction.text.CountVectorizer) or
+            as strings (e.g., 'CountVectorizer').  Default options for each model are defined in config.ini.
+        - All scikit-learn matrix decomposition models are supported; for a full list see
+            https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition
+            These may be passed either as callable modules (e.g., sklearn.decomposition.NMF) or as strings (e.g.,
+            'NMF').  Default options for each model are defined in config.ini.
+      - Hugging-face models.  These take raw text as input and produce text embeddings as output.  Hugging-face models
+          are specified using dictionaries containing the following keys:
+            - 'model': the type of embedding to use-- any flair embedding type is supported; for a full list see
+                https://github.com/flairNLP/flair#tutorials.  For word-level embeddings, 'WordEmbeddings' is
+                recommended.  For document-level embeddings, we recommend using either 'TransformerDocumentEmbeddings'
+                (to model the full document's content) or 'SentenceTransformerDocumentEmbeddings' (if sentence-level
+                representations are needed).  Embeddings may be specified either as a string (e.g.,
+                'TransformerDocumentEmbeddings') or as a callable modele (e.g.,
+                flair.embeddings.TransformerDocumentEmbeddings).
+            - 'args': a list of unnamed arguments to pass to the given model.  All pre-trained hugging-face models are
+                supported, including (but not limited to):
+                  - word-level embedding models:
+                      https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_4_ELMO_BERT_FLAIR_EMBEDDING.md
+                  - sentence-level transformer models:
+                      https://docs.google.com/spreadsheets/d/14QplCdTCDwEmTqrn1LH4yrbKvdogK4oQvYO1K1aPR5M/edit#gid=0
+                  - document-level transformer models: https://huggingface.co/transformers/pretrained_models.html
+            - 'kwargs': a dictionary of keyword arguments to pass to the given model (these are model-specific; for
+                 details and examples see https://github.com/flairNLP/flair#tutorials
+          for example, to embed a document using GPT-2, use
+            {model: 'TransformerDocumentEmbeddings', args: ['gpt2'], 'kwargs': {}}
+          The 'kwargs' dictionary may be further subdivided; if an 'embedding_kwargs' key is included in 'kwargs',
+          its values will be treated as keyword arguments to be applied to the embedding model when it is initialized.
+          All other keyword arguments are passed on to flair.data.Sentence in order to tokenize the given text.
+    :param text: a string (a single word, sentence, or document), list of strings (a list of words, sentences, or
+      documents), or a nested list of strings (a list of listed words, sentences, or documents).  Strings and (shallow)
+      lists of strings result in a single embedding matrix; nested lists produce a list of embedding matrices (one
+      per lowest-level list)
+    :param args: a list of unnamed arguments to pass to *every* text embedding model or pipeline step.  Default: [].
+    :param mode: one of: 'fit' (fit the model), 'transform' (apply an already-fitted model), or 'fit_transform' (fit
+      a model and then apply it to the same text).  The 'fit' mode is only supported for scikit-learn (and scikit-learn-
+      compatible) models.
+    :param return_model: if True, return both the embedded text and a trained model that may be applied to new text. If
+      False, return only the text embeddings.  Default: False.
+    :param kwargs: keyword arguments are passed to the embedding model; these are equivalent to specifying the
+      embedding model as a dictionary.  When a keyword argument appears in both model['kwargs'] and kwargs, the kwargs
+      value is used preferentially.
+
+    Returns
+    -------
+    :return: The text embeddings (if return_model is False) or a tuple whose first element is the text embeddings and
+      whose second element is a fitted model that may be applied to new text (if return_model is True).
+    """
     if type(x) is list:
         models = []
         for i, v in enumerate(x):
