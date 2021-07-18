@@ -1,6 +1,10 @@
 # Data Wrangler 🤠
 Wrangle your messy data into consistent well-organized formats!
 
+### Development status
+
+![pytest](https://github.com/ContextLab/data-wrangler/actions/workflows/ci.yaml/badge.svg) [![Documentation Status](https://readthedocs.org/projects/data-wrangler/badge/?version=latest)](https://data-wrangler.readthedocs.io/en/latest/?badge=latest)
+
 
 ## Overview
 
