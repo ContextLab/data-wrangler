@@ -115,6 +115,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                 raise ValueError(f'Unknown datatype: {dtype}')
 
     assert type(x) is str, IOError('cannot interpret non-string filename')
+    # FIXME: remote images aren't loaded correctly...
     if os.path.exists(x):
         return helper(x, **kwargs)
 

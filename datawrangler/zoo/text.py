@@ -1,5 +1,6 @@
 import six
 import os
+import warnings
 import numpy as np
 from flair.data import Sentence
 from flair.datasets import UD_ENGLISH
@@ -289,6 +290,8 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             return transformed_text, {'model': model, 'args': args, 'kwargs': kwargs}
         return transformed_text
     elif is_hugging_face_model(model):
+        warnings.simplefilter('ignore')
+        
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
                 return text, {'model': model, 'args': args, 'kwargs': kwargs}
