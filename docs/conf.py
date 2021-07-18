@@ -91,6 +91,7 @@ html_theme = 'pydata_sphinx_theme'
 # documentation.
 #
 html_logo = "images/wrangler_logo.png"
+# noinspection HttpUrlsUsage
 html_theme_options = {
     "icon_links": [
         {
