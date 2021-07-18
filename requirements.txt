@@ -12,6 +12,7 @@ six~=1.15.0
 pytest>=5.4.1
 setuptools>=49.6.0
 flair~=0.8.0.post1
+tqdm~=4.49.0
 datasets~=1.8.0
 configparser~=5.0.2
 dill~=0.3.4
