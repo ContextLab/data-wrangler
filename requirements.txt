@@ -1,4 +1,6 @@
 scikit-learn~=0.24.2
+importlib-metadata==3.10.1
+konoha==4.6.5
 torch~=1.7.1
 torchvision~=0.8.2
 pytorch-transformers~=1.1.0
