@@ -1,6 +1,8 @@
-DataWrangler 🤠
+DataWrangler
 ======================================
- wrangle your messy data into consistent well-organized formats!
+Wrangle your messy data into consistent well-organized formats!
+
+
 
 .. toctree::
    :maxdepth: 1
@@ -8,6 +10,7 @@ DataWrangler 🤠
 
    readme
    installation
+   tutorials
    api
    contributing
    authors

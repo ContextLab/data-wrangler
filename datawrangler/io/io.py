@@ -106,7 +106,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                     return ''.join(f.readlines())
             elif ext in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
                          'spss', 'sql', 'gbq', 'stata', 'pkl']:
-                return load_dataframe(fname)
+                return load_dataframe(fname, **kwargs)
             elif ext in ['npy', 'npz']:
                 return np.load(fname)
             elif ext in img_types:
@@ -115,6 +115,9 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                 raise ValueError(f'Unknown datatype: {dtype}')
 
     assert type(x) is str, IOError('cannot interpret non-string filename')
+    if os.path.exists(x):
+        return helper(x, **kwargs)
+
     fname = get_local_fname(x)
     if os.path.exists(fname):
         return helper(fname, **kwargs)

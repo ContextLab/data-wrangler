@@ -90,6 +90,7 @@ html_theme = 'pydata_sphinx_theme'
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
+html_logo = "images/wrangler_icon.png"
 html_theme_options = {
     "icon_links": [
         {

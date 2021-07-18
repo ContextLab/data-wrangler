@@ -8,20 +8,59 @@ Datasets come in all shapes and sizes, and are often *messy*:
   - Labels are missing and/or aren't consistent
   - Datasets need to be wrangled 🐄 🐑 🚜
 
-The main goal of ``data-wrangler`` is to turn messy data into clean(er) data, defined as one of the following:
+The main goal of ``data-wrangler`` is to turn messy data into clean(er) data, defined as either a ``DataFrame`` or a
+list of ``DataFrame`` objects.  The package provides code for easily wrangling data from a variety of formats into
+``DataFrame`` objects, manipulating ``DataFrame`` objects in useful ways (that can be tricky to implement, but that
+apply to many analysis scenarios), and decorating Python functions to make them more flexible and/or easier to write.
 
-  - A single two-dimensional ``numpy`` ``array`` whose rows are observations and whose columns are features
-  - A single ``pandas`` ``DataFrame`` whose indices are observations and whose columns are features
-  - A list of ``array`` objects (each formatted as described above)
-  - A list of ``DataFrame`` objects (each formatted as described above)
+The ``data-wrangler`` package supports a variety of datatypes.  There is a special emphasis on text data, whereby
+``data-wrangler`` provides a simple API for interacting with natural language processing tools and datasets provided by
+``scikit-learn``, ``hugging-face``, and ``flair``.  The package is designed to provide sensible defaults, but also
+implements convenient ways of deeply customizing how different datatypes are wrangled.
 
+Quick start
+================
 
-Usage
-------
+Install datawrangler using:
 
-To use datawrangler in a project::
+.. code-block:: console
+
+    $ pip install data-wrangler
+
+Some quick natural language processing examples::
 
     import datawrangler as dw
+
+    # load in sample text
+    text_url = 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/home_on_the_range.txt'
+    text = dw.io.load(text_url)
+
+    # embed text using scikit-learn's implementation of Latent Dirichlet Allocation, trained on a curated subset of
+    # Wikipedia, called the 'minipedia' corpus.  Return the fitted model so that it can be applied to new text.
+    lda = {'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'args': [], 'kwargs': {}}
+    lda_embeddings, lda_fit = dw.wrangle(text, text_kwargs={'model': lda, 'corpus': 'minipedia'}, return_model=True)
+
+    # apply the minipedia-trained LDA model to new text
+    new_text = 'how much wood could a wood chuck chuck if a wood chuck could check wood?'
+    new_embeddings = dw.wrangle(new_text, text_kwargs={'model': lda_fit})
+
+    # embed text using hugging-face's pre-trained GPT2 model
+    gpt2 = {'model': 'TransformerDocumentEmbeddings', 'args': ['gpt2'], 'kwargs': {}}
+    gpt2_embeddings = dw.wrangle(text, text_kwargs={'model': gpt2})
+
+The ``data-wrangler`` package also provides powerful decorators that can modify existing functions to support new
+datatypes.  Just write your function as though its inputs are guaranteed to be Pandas DataFrames, and decorate it with
+``datawrangler.decorate.funnel`` to enable support for other datatypes without any new code::
+
+  image_url = 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/wrangler.jpg'
+  image = dw.io.load(image_url)
+
+  # define your function and decorate it with "funnel"
+  @dw.decorate.funnel
+  def binarize(x):
+    return x > np.mean(x.values)
+
+  binarized_image = binarize(image)  # rgb channels will be horizontally concatenated to create a 2D DataFrame
 
 
 Supported data formats
@@ -39,7 +78,4 @@ Currently supported datatypes are limited to:
   - text data (text is embedded using cutting-edge natural language processing
 or lists of mixtures of the above.
 
-Missing observations (e.g., ``nan``s, empty strings, etc.) may be filled in using:
-
-  - Probabilistic principle component analysis
-  - Interpolation to fill in observations with no features (e.g., when nearby observations are available)
+Missing observations (e.g., nans, empty strings, etc.) may be filled in using imputation and/or interpolation.

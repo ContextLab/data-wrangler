@@ -67,6 +67,9 @@ def wrangle(x, return_dtype=False, **kwargs):
                     deep_kwargs[fc]['model'] = model
                     deep_kwargs[fc]['return_model'] = return_model
                     pre_fit[fc] = True
+
+                    if return_model:
+                        wrangled = [wrangled, model]
                 else:
                     wrangled = wrangler(y, **deep_kwargs[fc])
                 dtype = fc
