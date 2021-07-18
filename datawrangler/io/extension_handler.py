@@ -7,11 +7,11 @@ def get_extension(fname):
 
     Parameters
     ----------
-    fname: the filename, represented as a string
+    :param fname: the filename, represented as a string
 
     Returns
     -------
-    The extension, represented as a lowercase string.
+    :return: The extension, represented as a lowercase string.
     """
     _, f = os.path.split(fname)
     if '.' in f:

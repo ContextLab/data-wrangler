@@ -126,9 +126,9 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     """
     Download (and return) a text corpus.  By default, a 2020 snapshot of all English Wikipedia articles is returned.
 
-    Parameters
+    [Parameters]
     ----------
-    dataset_name: a string containing the corpus name.  Can be one of the following:
+    :param dataset_name: a string containing the corpus name.  Can be one of the following:
       - Corpora built into data-wrangler:
         - 'minipedia': a curated and cleaned up subset of Wikipedia containing articles on a wide variety of topics
         - 'neurips': a collection of NeurIPS articles
@@ -136,12 +136,12 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
         - 'khan': transcripts of (most) Khan Academy YouTube videos
       - Any hugging-face corpus; for a full list see https://huggingface.co/datasets
         Note that downloading hugging-face corpora also requires specifying a config_name
-    config_name: configuration name or description for hugging-face corpora.  This argument is ignored if dataset_name
+    :param config_name: configuration name or description for hugging-face corpora.  This argument is ignored if dataset_name
       is set to one of the data-wrangler corpora described above.
 
     Returns
     -------
-    A list of number-of-documents strings, where each string contains the text of one document in the corpus.
+    :return: A list of number-of-documents strings, where each string contains the text of one document in the corpus.
     """
 
     key = f'{dataset_name}[{config_name}]'

@@ -11,16 +11,17 @@ from ..zoo.array import is_array
 
 def btwn(x, a, b):
     """
-    Return True if and only if the values in the given Array are between the given bounds (inclusive)
+    Test whether the values of an array (or scalar) are between the given bounds (inclusive)
 
     Parameters
     ----------
-    x: a numeric scalar or Array
-    a: lower bound-- a numeric scalar or an Array of the same shape as x
-    b: upper bound-- a numeric scalar or an Array of the same shape as x
+    :param x: a numeric scalar or Array
+    :param a: lower bound-- a numeric scalar or an Array of the same shape as x
+    :param b: upper bound-- a numeric scalar or an Array of the same shape as x
 
     Returns
     -------
+    :return: True if the values in the given Array are between the given bounds (inclusive), and False otherwise.
 
     """
     assert np.isscalar(a), ValueError(f'lower limit must be scalar (given: {type(a)}')
@@ -38,12 +39,12 @@ def dataframe_like(x, debug=False):
 
     Parameters
     ----------
-    x: the object
-    debug: internal flag (default: False) that prints out why an object is *not* dataframe like
+    :param x: the object
+    :param debug: internal flag (default: False) that prints out why an object is *not* dataframe like
 
     Returns
     -------
-    True (if the object can be treated like a DataFrame) or False otherwise
+    :return: True (if the object can be treated like a DataFrame) or False otherwise
     """
     required_attributes = ['values', 'index', 'columns', 'shape', 'stack', 'unstack', 'loc', 'iloc', 'size', 'copy',
                            'head', 'tail', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
@@ -66,13 +67,13 @@ def array_like(x, force_literal=False):
 
     Parameters
     ----------
-    x: the object
-    force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether they
+    :param x: the object
+    :param force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether they
       may refer to files, URLs, or Google IDs (if force_literal == False).  Default: False
 
     Returns
     -------
-    True (if the object can be treated like an Array) or False otherwise
+    :return: True (if the object can be treated like an Array) or False otherwise
     """
     if (type(x) is str) and (not force_literal) and os.path.exists(x):
         return array_like(load(x), force_literal=True)
@@ -85,11 +86,11 @@ def depth(x):
 
     Parameters
     ----------
-    x: an array-like object
+    :param x: an array-like object
 
     Returns
     -------
-    The depth of the object
+    :return: The depth of the object
     """
     if array_like(x):
         if np.isscalar(x) or (len(x) == 0):

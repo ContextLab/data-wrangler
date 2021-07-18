@@ -9,6 +9,17 @@ from ..util import array_like, btwn
 
 
 def get_image(img):
+    """
+    Return an Array containing the image data reflected in the given array-like object, URL, or filename
+
+    Parameters
+    ----------
+    :param img: an array-like object, URL, or filename
+
+    Returns
+    -------
+    :return: an Array containing the image data (if img is a valid image), or None if img is not a valid image.
+    """
     def valid_image_values(x):
         if not hasattr(x, 'dtype'):
             return False
@@ -38,12 +49,35 @@ def get_image(img):
 
 # noinspection PyUnusedLocal
 def is_image(data):
+    """
+    Test whether an object is a valid image, or a URL or filename that points to a valid image.
+
+    Parameters
+    ----------
+    :param data: the to-be-tested object
+
+    Returns
+    -------
+    :return: True if the object is an image and False otherwise
+    """
     img = get_image(data)
     return img is not None
 
 
 # noinspection PyUnusedLocal
 def wrangle_image(data, **kwargs):
+    """
+    Turn an image into a DataFrame by horizontally concatenating its color and/or alpha channels.
+
+    Parameters
+    ----------
+    :param data: the to-be-wrangled image
+    :param kwargs: any keyword objects are passed on to dataframe.zoo.wrangle_array
+
+    Returns
+    -------
+    :return: a DataFrame containing the wrangled image data
+    """
     img = get_image(data)
 
     if img is not None:

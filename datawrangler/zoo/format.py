@@ -21,17 +21,16 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     Parameters
     ----------
-
-    x: data in any format (text, numpy arrays, pandas dataframes, or a mixed list (or nested lists) of those types).
-      The following datatypes are supported:
+    :param x: data in any format (text, numpy arrays, pandas dataframes, or a mixed list (or nested lists) of those
+      types).  The following datatypes are supported:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
         - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects
         - Images, or paths to files that store images
         - Text, or paths to plain text files
         - Mixed lists of the above
-    return_dtype: if True, also return the auto-detected datatype(s) of each dataset you wrangle
-    kwargs: used to control how data are wrangled (e.g., if you don't want to use the default options for each data
-      type):
+    :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset you wrangle
+    :param kwargs: used to control how data are wrangled (e.g., if you don't want to use the default options for each
+      data type):
         - array_kwargs: passed to the datawrangler.zoo.array.wrangle_array function to control how arrays are handled
         - dataframe_kwargs: passed to the datawrangler.zoo.dataframe.wrangle_dataframe function to control how
           dataframes are handled
@@ -41,8 +40,7 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     Returns
     -------
-
-    A DataFrame, or a list of DataFrames, containing the wrangled data
+    :return: a DataFrame, or a list of DataFrames, containing the wrangled data
     """
 
     deep_kwargs = {}

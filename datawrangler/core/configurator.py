@@ -17,11 +17,11 @@ def get_default_options(fname=None):
 
     Parameters
     ----------
-    fname: absolute-path filename for the config.ini file (default: data-wrangler/datawrangler/core/config.ini)
+    :param fname: absolute-path filename for the config.ini file (default: data-wrangler/datawrangler/core/config.ini)
 
     Returns
     -------
-    A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
+    :return: A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
     arguments
     """
     if fname is None:
@@ -45,12 +45,12 @@ def update_dict(template, updates):
 
     Parameters
     ----------
-    template: default keys and values to use (if not specified in the "updates" dictionary)
-    updates: new values to use (and/or new keys to add to the resulting dictionary)
+    :param template: default keys and values to use (if not specified in the "updates" dictionary)
+    :param updates: new values to use (and/or new keys to add to the resulting dictionary)
 
     Returns
     -------
-    A new dictionary containing the union of the keys/values in template and updates, with preference given to
+    :return: A new dictionary containing the union of the keys/values in template and updates, with preference given to
     the updates dictionary
     """
     template = copy(template)
@@ -73,11 +73,11 @@ def apply_defaults(f):
 
     Parameters
     ----------
-    f: a function
+    :param f: a function
 
     Returns
     -------
-    a function replacing and un-specified arguments with the defaults defined in config.ini
+    :return: a function replacing and un-specified arguments with the defaults defined in config.ini
     """
     def get_name(func):
         if hasattr(func, '__name__'):
