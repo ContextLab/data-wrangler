@@ -14,13 +14,28 @@ def data_file(resources):
 
 
 @pytest.fixture
+def data_url():
+    return 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/data.csv'
+
+
+@pytest.fixture
 def img_file(resources):
     return os.path.join(resources, 'wrangler.jpg')
 
 
 @pytest.fixture
+def img_url():
+    return 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/wrangler.jpg'
+
+
+@pytest.fixture
 def text_file(resources):
     return os.path.join(resources, 'home_on_the_range.txt')
+
+
+@pytest.fixture
+def text_url():
+    return 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/home_on_the_range.txt'
 
 
 @pytest.fixture

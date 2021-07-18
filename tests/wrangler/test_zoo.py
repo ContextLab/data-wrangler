@@ -49,7 +49,7 @@ def test_wrangle_array(data):
     assert df.shape == (7, 5)
 
 
-def test_get_image(img_file):
+def test_get_image(img_file, img_url):
     img = dw.zoo.image.get_image(img_file)
     assert img is not None
     assert img.shape == (1400, 1920, 3)
