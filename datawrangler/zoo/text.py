@@ -21,32 +21,92 @@ preloaded_corpora = {}
 
 
 def is_sklearn_model(x):
+    """
+    Determine whether an object seems to be a valid scikit-learn model
+
+    Parameters
+    ----------
+    x: the object to test
+
+    Returns
+    -------
+    True if x contains "transform", "fit", and "fit_transform" methods and False otherwise.
+    """
     return hasattr(x, 'transform') and hasattr(x, 'fit') and hasattr(x, 'fit_transform')
 
 
 def is_hugging_face_model(x):
+    """
+    Determine whether an object seems to be a valid hugging-face model
+
+    Parameters
+    ----------
+    x: the object to test
+
+    Returns
+    -------
+    True if x contains an "embed" method, and False otherwise.
+    """
     return hasattr(x, 'embed')
 
 
 def robust_is_sklearn_model(x):
-    x, _ = get_text_model(x)
+    """
+    Wrapper for is_sklearn_model that also supports strings-- e.g., the string 'SparsePCA' will be a valid scikit-learn
+    model when checked with this function, because 'SparsePCA' is defined in the sklearn.decomposition module.
+
+    Parameters
+    ----------
+    x: a to-be-tested model object or a string
+
+    Returns
+    -------
+    True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform" methods and
+    False otherwise.
+    """
+    x = get_text_model(x)
     return is_sklearn_model(x)
 
 
 def robust_is_hugging_face_model(x):
-    x, _ = get_text_model(x)
+    """
+    Wrapper for is_hugging_face_model that also supports strings-- e.g., the string 'WordEmbeddings' will be a valid
+    hugging-face model when checked with this function, because 'WordEmbeddings' is defined in the flair.embeddings
+    module and contains an "embed" method.
+    ----------
+    x: a to-be-tested model object or a string
+
+    Returns
+    -------
+    True if x (or the hugging-face module x evaluates to) contains an "embed" method and False otherwise.
+    """
+    x = get_text_model(x)
     return is_hugging_face_model(x)
 
 
 def get_text_model(x):
+    """
+    Given an valid scikit-learn or hugging-face model, or a string (e.g., 'LatentDirichletAllocation' or
+    'TransformerDocumentEmbeddings') matching the name of a valid scikit-learn or hugging-face model, return
+    a callable function or class constructor for the given model.
+
+    Parameters
+    ----------
+    x: an object to turn into a valid scikit-learn or hugging-face model (e.g., an already-valid model or a string)
+
+    Returns
+    -------
+    A valid scikit-learn or hugging-face model (or None if no model matching the given description can be found)
+
+    """
     if is_sklearn_model(x) or is_hugging_face_model(x):
-        return x, None  # already a valid model
+        return x  # already a valid model
 
     if type(x) is dict:
         if hasattr(x, 'model'):
             return get_text_model(x['model'])
         else:
-            return None, None
+            return None
 
     # noinspection PyShadowingNames
     def model_lookup(model_name, parent):
@@ -58,11 +118,32 @@ def get_text_model(x):
     for p in ['text', 'decomposition', 'embeddings']:
         m = model_lookup(x, p)
         if m is not None:
-            return m, eval(p)
-    return None, None
+            return m
+    return None
 
 
 def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
+    """
+    Download (and return) a text corpus.  By default, a 2020 snapshot of all English Wikipedia articles is returned.
+
+    Parameters
+    ----------
+    dataset_name: a string containing the corpus name.  Can be one of the following:
+      - Corpora built into data-wrangler:
+        - 'minipedia': a curated and cleaned up subset of Wikipedia containing articles on a wide variety of topics
+        - 'neurips': a collection of NeurIPS articles
+        - 'sotus': transcripts of state of the union addresses from US Presidents from 1989 -- 2018
+        - 'khan': transcripts of (most) Khan Academy YouTube videos
+      - Any hugging-face corpus; for a full list see https://huggingface.co/datasets
+        Note that downloading hugging-face corpora also requires specifying a config_name
+    config_name: configuration name or description for hugging-face corpora.  This argument is ignored if dataset_name
+      is set to one of the data-wrangler corpora described above.
+
+    Returns
+    -------
+    A list of number-of-documents strings, where each string contains the text of one document in the corpus.
+    """
+
     key = f'{dataset_name}[{config_name}]'
     if key in preloaded_corpora.keys():
         return preloaded_corpora[key]
@@ -128,7 +209,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         return apply_text_model(x['model'], text, *[*x['args'], *args], mode=mode, return_model=return_model,
                                 **update_dict(x['kwargs'], kwargs))
 
-    model, _ = get_text_model(x)
+    model = get_text_model(x)
     if model is None:
         raise RuntimeError(f'unsupported text processing module: {x}')
 
