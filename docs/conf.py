@@ -102,6 +102,11 @@ html_theme_options = {
             "url": "https://twitter.com/ContextMemLab",
             "icon": "fab fa-twitter-square",
         },
+        {
+            "name": "Web",
+            "url": "http://www.context-lab.com",
+            "icon": "fa fa-globe",
+        },
     ]
 }
 
