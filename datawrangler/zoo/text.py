@@ -156,7 +156,7 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     # built-in corpora
     corpora = {
         'minipedia': 'https://www.dropbox.com/s/eal65nd5a193pmk/minipedia.npz?dl=1',
-        'neurips': 'https://www.dropbox.com/s/gg83ejvvz1mhwck/neurips.npz?dl=1',
+        'neurips': 'https://www.dropbox.com/s/w1t6onmdvt2mavb/neurips.npz?dl=1',
         'sotus': 'https://www.dropbox.com/s/e2qfw8tkmxp6bad/sotus.npz?dl=1',
         'khan': 'https://www.dropbox.com/s/fz3p2zx9csih0xh/khan.npz?dl=1'}
 
