@@ -20,6 +20,8 @@ The ``data-wrangler`` package supports a variety of datatypes.  There is a speci
 ``scikit-learn``, ``hugging-face``, and ``flair``.  The package is designed to provide sensible defaults, but also
 implements convenient ways of deeply customizing how different datatypes are wrangled.
 
+For more information, including a formal API and tutorials, check out https://data-wrangler.readthedocs.io
+
 Quick start
 ================
 
