@@ -4,7 +4,6 @@ import pandas as pd
 
 from .dataframe import is_dataframe, is_multiindex_dataframe, wrangle_dataframe
 from .array import is_array, wrangle_array
-from .image import is_image, wrangle_image
 from .text import is_text, wrangle_text
 from .null import is_null, wrangle_null
 from ..util import array_like, depth

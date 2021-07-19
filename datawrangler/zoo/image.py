@@ -21,7 +21,7 @@ def get_image(img):
     :return: an Array containing the image data (if img is a valid image), or None if img is not a valid image.
     """
     def valid_image_values(x):
-        if not hasattr(x, 'dtype'):
+        if not (hasattr(x, 'dtype') and hasattr(x, 'ndim')):
             return False
 
         dtype = str(x.dtype)
@@ -40,45 +40,8 @@ def get_image(img):
 
     if array_like(img):
         if valid_image_values(img):
-            if img.ndim == 1:
+            if img.ndim == 2:
                 return img
             elif img.ndim == 3 and img.shape[2] in [3, 4]:
                 return img
     return None
-
-
-# noinspection PyUnusedLocal
-def is_image(data):
-    """
-    Test whether an object is a valid image, or a URL or filename that points to a valid image.
-
-    Parameters
-    ----------
-    :param data: the to-be-tested object
-
-    Returns
-    -------
-    :return: True if the object is an image and False otherwise
-    """
-    img = get_image(data)
-    return img is not None
-
-
-# noinspection PyUnusedLocal
-def wrangle_image(data, **kwargs):
-    """
-    Turn an image into a DataFrame by horizontally concatenating its color and/or alpha channels.
-
-    Parameters
-    ----------
-    :param data: the to-be-wrangled image
-    :param kwargs: any keyword objects are passed on to dataframe.zoo.wrangle_array
-
-    Returns
-    -------
-    :return: a DataFrame containing the wrangled image data
-    """
-    img = get_image(data)
-
-    if img is not None:
-        return wrangle_array(img, **kwargs)

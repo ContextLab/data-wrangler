@@ -31,7 +31,7 @@ def get_local_fname(x, digest_size=10):
 
     h = hasher(digest_size=digest_size)
     h.update(x.encode('ascii'))
-    return os.path.join(defaults['data']['datadir'], h.hexdigest() + '.' + get_extension(x))
+    return os.path.join(eval(defaults['data']['datadir']), h.hexdigest() + '.' + get_extension(x))
 
 
 def get_confirm_token(response):
@@ -76,18 +76,18 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
             https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
           - any image filetype supported by the Matplotlib library; for a full list see:
             matplotlib.pyplot.gcf().canvas.get_supported_filetypes()
-    :param kwargs: any additional keyword arguments are passed to whatever function is selected to load in the dataset.  For
-      example, when loading in a csv file (a Pandas-compatible format), passing the keyword argument index_col=0 will
-      tell Pandas to interpret the first (0) column as the resulting DataFrame's index when loading the file's contents
-      into a DataFrame.
+    :param kwargs: any additional keyword arguments are passed to whatever function is selected to load in the dataset.
+      For example, when loading in a csv file (a Pandas-compatible format), passing the keyword argument index_col=0
+      will tell Pandas to interpret the first (0) column as the resulting DataFrame's index when loading the file's
+      contents into a DataFrame.
 
     Returns
     -------
-    :return: the retrieved data.  Remote files will be cached (saved) locally to disk for faster loading if/when the same
-    address or ID is used to load the file again at a later time.
+    :return: the retrieved data.  Remote files will be cached (saved) locally to disk for faster loading if/when the
+    same address or ID is used to load the file again at a later time.
     """
     # noinspection PyShadowingNames
-    def helper(fname, **helper_kwargs):
+    def helper(fname, dtype=None, **helper_kwargs):
         if dtype == 'pickle':
             with open(fname, 'rb') as f:
                 return dill.load(f, **helper_kwargs)
@@ -100,16 +100,16 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                     return data[list(data.keys())[0]]
             return data
         else:
-            ext = get_extension(fname)
-            if ext == 'txt':
+            dtype = get_extension(fname)
+            if dtype == 'txt':
                 with open(fname, 'r') as f:
                     return ''.join(f.readlines())
-            elif ext in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
-                         'spss', 'sql', 'gbq', 'stata', 'pkl']:
+            elif dtype in ['csv', 'xls', 'xlsx', 'json', 'html', 'xml', 'hdf', 'feather', 'parquet', 'orc', 'sas',
+                           'spss', 'sql', 'gbq', 'stata', 'pkl']:
                 return load_dataframe(fname, **kwargs)
-            elif ext in ['npy', 'npz']:
+            elif dtype in ['npy', 'npz']:
                 return np.load(fname)
-            elif ext in img_types:
+            elif dtype in img_types:
                 return plt.imread(fname)
             else:
                 raise ValueError(f'Unknown datatype: {dtype}')
@@ -117,22 +117,22 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
     assert type(x) is str, IOError('cannot interpret non-string filename')
     # FIXME: remote images aren't loaded correctly...
     if os.path.exists(x):
-        return helper(x, **kwargs)
+        return helper(x, dtype=dtype, **kwargs)
 
-    fname = get_local_fname(x)
-    if os.path.exists(fname):
-        return helper(fname, **kwargs)
-    else:
-        if x.startswith('http'):
-            data = load_remote(x)
+    local_fname = get_local_fname(x)
+    if x.startswith('http'):
+        if os.path.exists(local_fname):
+            return helper(local_fname, dtype=dtype, **kwargs)
         else:
-            # noinspection PyBroadException
-            try:     # is x a Google ID?
-                data = load_remote(base_url, params={'id': x})
-            except:
-                raise IOError('cannot find data at source: {x}')
-        save(x, data, dtype=dtype)
-        return load(x, dtype=dtype, **kwargs)
+            data = load_remote(x)
+    else:
+        # noinspection PyBroadException
+        try:
+            data = load_remote(base_url, params={'id': x})
+        except:
+            raise IOError('cannot find data at source: {x}')
+    save(x, data, dtype=dtype)
+    return load(x, dtype=dtype, **kwargs)
 
 
 def save(x, obj, dtype=None, **kwargs):

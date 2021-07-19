@@ -34,7 +34,7 @@ def get_default_options(fname=None):
     for a, b in config.items():
         config[a] = dict(b)
         for c, d in config[a].items():
-            config[a][c] = eval(d)
+            config[a][c] = d
 
     return config
 
@@ -61,8 +61,8 @@ def update_dict(template, updates):
 
 defaults = get_default_options()
 
-if not os.path.exists(defaults['data']['datadir']):
-    os.makedirs(defaults['data']['datadir'])
+if not os.path.exists(eval(defaults['data']['datadir'])):
+    os.makedirs(eval(defaults['data']['datadir']))
 
 
 # add in default keyword arguments (and values) specified in config.ini based on the function or class name
@@ -92,11 +92,11 @@ def apply_defaults(f):
 
     name = get_name(f)
     if name in defaults.keys():
-        default_kwargs = {k: v for k, v in dict(defaults[name]).items() if k[:2] != '__'}
+        default_kwargs = {k: eval(v) for k, v in dict(defaults[name]).items() if k[:2] != '__'}
     else:
         default_kwargs = {}
 
-    default_args = [v for k, v in dict(defaults[name]).items() if k[:2] == '__']
+    default_args = [eval(v) for k, v in dict(defaults[name]).items() if k[:2] == '__']
 
     @functools.wraps(f)
     def wrapped_function(*args, **kwargs):

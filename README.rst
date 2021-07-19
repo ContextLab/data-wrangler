@@ -73,9 +73,9 @@ One package can't accommodate every foreseeable format or input source, but ``da
 
 Currently supported datatypes are limited to:
 
-  - ``array``-like objects
+  - ``array``-like objects (including images)
   - ``DataFrame``-like or ``Series``-like objects
-  - text data (text is embedded using cutting-edge natural language processing
+  - text data (text is embedded using natural language processing models)
 or lists of mixtures of the above.
 
 Missing observations (e.g., nans, empty strings, etc.) may be filled in using imputation and/or interpolation.

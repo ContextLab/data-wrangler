@@ -44,7 +44,7 @@ def test_funnel(data_file, data, img_file, text_file):
                                   text_kwargs=text_kwargs,
                                   wrangle_kwargs=wrangle_kwargs)
 
-    correct_dtypes = ['dataframe', 'dataframe', 'array', 'image', 'text']
+    correct_dtypes = ['dataframe', 'dataframe', 'array', 'array', 'text']
     assert all([i == c for i, c in zip(inferred_dtypes, correct_dtypes)])
 
     assert np.allclose(wrangled[0].values, wrangled[1].values)

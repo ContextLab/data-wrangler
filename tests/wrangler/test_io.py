@@ -14,9 +14,9 @@ def test_load(data_file, img_file, text_file):
     assert not dw.zoo.is_dataframe(image)
     assert not dw.zoo.is_dataframe(text)
 
-    assert not dw.zoo.is_image(data)
-    assert dw.zoo.is_image(image)
-    assert not dw.zoo.is_image(text)
+    assert dw.zoo.is_array(data)
+    assert dw.zoo.is_array(image)
+    assert not dw.zoo.is_array(text)
 
     assert not dw.zoo.is_text(data)
     assert not dw.zoo.is_text(image)

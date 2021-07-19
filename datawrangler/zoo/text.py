@@ -62,8 +62,8 @@ def robust_is_sklearn_model(x):
 
     Returns
     -------
-    :return: True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform" methods and
-    False otherwise.
+    :return: True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform"
+      methods and False otherwise.
     """
     x = get_text_model(x)
     return is_sklearn_model(x)
@@ -218,7 +218,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
                 recommended.  For document-level embeddings, we recommend using either 'TransformerDocumentEmbeddings'
                 (to model the full document's content) or 'SentenceTransformerDocumentEmbeddings' (if sentence-level
                 representations are needed).  Embeddings may be specified either as a string (e.g.,
-                'TransformerDocumentEmbeddings') or as a callable modele (e.g.,
+                'TransformerDocumentEmbeddings') or as a callable module (e.g.,
                 flair.embeddings.TransformerDocumentEmbeddings).
             - 'args': a list of unnamed arguments to pass to the given model.  All pre-trained hugging-face models are
                 supported, including (but not limited to):
@@ -376,7 +376,7 @@ def wrangle_text(text, return_model=False, **kwargs):
     if type(text) is not list:
         text = [text]
 
-    model = kwargs.pop('model', defaults['text']['model'])
+    model = kwargs.pop('model', eval(defaults['text']['model']))
     corpus = kwargs.pop('corpus', None)
     config = kwargs.pop('config', None)
     array_args = kwargs.pop('array_args', {})
@@ -389,8 +389,8 @@ def wrangle_text(text, return_model=False, **kwargs):
             if not ((type(corpus) is list) and is_text(corpus)):
                 corpus = get_corpus(dataset_name=corpus, config_name=config)
         else:
-            corpus = get_corpus(dataset_name=defaults['text']['corpus'],
-                                config_name=defaults['text']['corpus_config'])
+            corpus = get_corpus(dataset_name=eval(defaults['text']['corpus']),
+                                config_name=eval(defaults['text']['corpus_config']))
 
         # train model on corpus
         _, model = apply_text_model(model, corpus, mode='fit', return_model=True, **kwargs)

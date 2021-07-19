@@ -43,10 +43,17 @@ def test_is_array(data, img_file, text_file, data_file):
     assert not dw.zoo.is_array(data_file)
 
 
-def test_wrangle_array(data):
+def test_wrangle_array(data, img_file):
     df = dw.zoo.wrangle_array(data.values)
     assert dw.zoo.is_dataframe(df)
     assert df.shape == (7, 5)
+
+    df = dw.zoo.wrangle_array(img_file)
+    assert df.shape == (1400, 5760)
+    assert dw.zoo.is_dataframe(df)
+    assert np.max(df.values) == 248
+    assert np.min(df.values) == 12
+    assert np.isclose(np.mean(df.values), 152.193)
 
 
 def test_get_image(img_file, img_url):
@@ -57,21 +64,8 @@ def test_get_image(img_file, img_url):
     assert np.min(img) == 12
     assert np.isclose(np.mean(img), 152.193)
 
-
-def test_is_image(img_file, data, data_file, text_file):
-    assert dw.zoo.is_image(img_file)
-    assert not dw.zoo.is_image(data)
-    assert not dw.zoo.is_image(data_file)
-    assert not dw.zoo.is_image(text_file)
-
-
-def test_wrangle_image(img_file):
-    df = dw.zoo.wrangle_image(img_file)
-    assert df.shape == (1400, 5760)
-    assert dw.zoo.is_dataframe(df)
-    assert np.max(df.values) == 248
-    assert np.min(df.values) == 12
-    assert np.isclose(np.mean(df.values), 152.193)
+    remote_img = dw.zoo.image.get_image(img_url)
+    assert np.allclose(img, remote_img)
 
 
 def test_load_text(text_file):
