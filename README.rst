@@ -1,6 +1,8 @@
 Overview
 ================
 
+|build-status|  |docs|
+
 Datasets come in all shapes and sizes, and are often *messy*:
 
   - Observations come in different formats
@@ -79,3 +81,11 @@ Currently supported datatypes are limited to:
 or lists of mixtures of the above.
 
 Missing observations (e.g., nans, empty strings, etc.) may be filled in using imputation and/or interpolation.
+
+.. |build-status| image:: https://github.com/ContextLab/data-wrangler/actions/workflows/ci.yaml/badge.svg
+    :alt: build status
+    :target: https://github.com/ContextLab/data-wrangler
+
+.. |docs| image:: https://readthedocs.org/projects/data-wrangler/badge/
+    :alt: docs status
+    :target: https://data-wrangler.readthedocs.io/
