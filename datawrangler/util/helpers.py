@@ -68,8 +68,8 @@ def array_like(x, force_literal=False):
     Parameters
     ----------
     :param x: the object
-    :param force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether they
-      may refer to files, URLs, or Google IDs (if force_literal == False).  Default: False
+    :param force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether
+      they may refer to files, URLs, or Google IDs (if force_literal == False).  Default: False
 
     Returns
     -------
