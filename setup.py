@@ -32,7 +32,7 @@ setup(
     install_requires=requirements,
     license="MIT license",
     long_description='For more information see https://data-wrangler.readthedocs.io/en/latest/',
-    long_description_content_type='text',
+    long_description_content_type='text/x-rst',
     include_package_data=True,
     keywords='datawrangler',
     name='datawrangler',
