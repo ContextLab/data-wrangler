@@ -56,18 +56,6 @@ def test_wrangle_array(data, img_file):
     assert np.isclose(np.mean(df.values), 152.193)
 
 
-def test_get_image(img_file, img_url):
-    img = dw.zoo.image.get_image(img_file)
-    assert img is not None
-    assert img.shape == (1400, 1920, 3)
-    assert np.max(img) == 248
-    assert np.min(img) == 12
-    assert np.isclose(np.mean(img), 152.193)
-
-    remote_img = dw.zoo.image.get_image(img_url)
-    assert np.allclose(img, remote_img)
-
-
 def test_load_text(text_file):
     text = dw.io.load(text_file).split('\n')
     assert text[0] == 'O give me a home where the buffaloes roam'

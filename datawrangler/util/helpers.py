@@ -69,14 +69,18 @@ def array_like(x, force_literal=False):
     ----------
     :param x: the object
     :param force_literal: specify whether strings should be interpreted strictly (if force_literal == True) or whether
-      they may refer to files, URLs, or Google IDs (if force_literal == False).  Default: False
+      they may refer to files or URLs (if force_literal == False).  Default: False
 
     Returns
     -------
     :return: True (if the object can be treated like an Array) or False otherwise
     """
-    if (type(x) is str) and (not force_literal) and os.path.exists(x):
-        return array_like(load(x), force_literal=True)
+    if type(x) is str:
+        if force_literal:
+            return False
+        else:
+            return array_like(load(x), force_literal=True)
+
     return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
 
 

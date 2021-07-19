@@ -1,7 +1,7 @@
 datawrangler.zoo.text
 ================
 
-.. currentmodule:: datawrangler.zoo
+.. currentmodule:: datawrangler.zoo.text
 
 .. autofunction:: is_text
 

@@ -3,6 +3,7 @@
 """Tests for `datawrangler` package (io module)."""
 
 import datawrangler as dw
+import numpy as np
 
 
 def test_load(data_file, img_file, text_file):
@@ -14,7 +15,7 @@ def test_load(data_file, img_file, text_file):
     assert not dw.zoo.is_dataframe(image)
     assert not dw.zoo.is_dataframe(text)
 
-    assert dw.zoo.is_array(data)
+    assert not dw.zoo.is_array(data)
     assert dw.zoo.is_array(image)
     assert not dw.zoo.is_array(text)
 
@@ -29,4 +30,4 @@ def test_save(data_file, data_url, img_file, img_url, text_file, text_url):
         local = dw.io.load(eval(f'{dtype}_file'))
         remote = dw.io.load(eval(f'{dtype}_url'))  # requires downloading and saving the remote file
 
-        assert local == remote
+        assert np.all(local == remote)

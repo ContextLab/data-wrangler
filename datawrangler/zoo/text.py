@@ -155,10 +155,10 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 
     # built-in corpora
     corpora = {
-        'minipedia': '1mRNAZlTbZzSvV3tAQfSjNm587xdYKVkX',
-        'neurips': '1Qo61vh2P3Rpb9PM1lyXb5M2iw7uB03uY',
-        'sotus': '1uKJtxs-C0KDM2my0K6W2p0jCF6howg1y',
-        'khan': '1KPhKxQlQrZHSPlCgky7K2bsfHlvJK039'}
+        'minipedia': 'https://www.dropbox.com/s/eal65nd5a193pmk/minipedia.npz?dl=1',
+        'neurips': 'https://www.dropbox.com/s/gg83ejvvz1mhwck/neurips.npz?dl=1',
+        'sotus': 'https://www.dropbox.com/s/e2qfw8tkmxp6bad/sotus.npz?dl=1',
+        'khan': 'https://www.dropbox.com/s/fz3p2zx9csih0xh/khan.npz?dl=1'}
 
     if dataset_name in corpora.keys():
         print(f'loading corpus: {dataset_name}', end='...')
@@ -330,6 +330,21 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
 
 
 def get_text(x, force_literal=False):
+    """
+    Parse, load, or download one or more documents.
+
+    Parameters
+    ----------
+    :param x: A string or list of strings.  Each string can be either the text of a document, a file path, or a URL.  If
+      a file path or URL is provided, the contents are loaded in, treated as text, and returned.  If a list of strings
+      is provided, the get_text function is applied to each element of the list.
+    :param force_literal: If True, interpret strings literally (rather than checking to see if the strings point to a
+      local or remote file).  Default: False.
+
+    Returns
+    -------
+    :return: The text as a string or (potentially nested) list of strings
+    """
     if type(x) == list:
         return [get_text(t) for t in x]
     if (type(x) in six.string_types) or (type(x) == np.str_):
@@ -341,12 +356,37 @@ def get_text(x, force_literal=False):
 
 
 def is_text(x):
+    """
+    Test whether an object contains (or points to) text.
+
+    Parameters
+    ----------
+    :param x: the object to test
+
+    Returns
+    -------
+    :return: True if the object is (or points to) text and False otherwise.
+    """
+
     if type(x) == list:
         return all([is_text(i) for i in x])
     return get_text(x) is not None
 
 
 def to_str_list(x, encoding='utf-8'):
+    """
+    Internal helper function used to wrangle text data.  Handles binary strings, nested lists of strings, and arrays
+      or dataframes containing text.
+
+    Parameters
+    ----------
+    :param x: the text-containing object to be wrangled.
+    :param encoding: for objects of type bytes, specify the encoding.  Default: 'utf-8'.
+
+    Returns
+    -------
+    :return: a string or (possibly nested) list of strings
+    """
     def to_string(s):
         if type(s) == str:
             return s
@@ -372,6 +412,30 @@ def to_str_list(x, encoding='utf-8'):
 
 # noinspection PyShadowingNames
 def wrangle_text(text, return_model=False, **kwargs):
+    """
+    Turn text into DataFrames
+
+    Parameters
+    ----------
+    :param text: A string or (nested) list of strings.  Each string can contain either the to-be-wrangled text, a file
+      path, or a URL.
+    :param return_model: if True, return a fitted model that may be applied to new text data, along with the wrangled
+      text.  Default: False.
+    :param kwargs: Other (optional) keyword arguments may be passed into the function to control the wrangling
+      process:
+      - 'corpus': any built-in or hugging-face corpus (see get_corpus for more details); this argument is passed to the
+        get_corpus function as the "dataset_name" keyword argument
+        - the 'config' argument may be used to select a specific variant of the corpus (passed to get_corpus as the
+          "config_name" keyword argument).
+      - 'model': any scikit-learn-compatible or hugging-face-compatible model (see apply_text_model for more details)
+      - 'array_kwargs': a dictionary of keyword arguments that may be passed to wrangle_array to control how the final
+        DataFrame is structured (see wrangle_array for details).
+
+    Returns
+    -------
+    :return: a DataFrame (or list of DataFrames) containing the embedded text.  If return_model is True a tuple, whose
+      first element contains the embedded text and second element contains the fitted models, is returned instead.
+    """
     text = get_text(text)
     if type(text) is not list:
         text = [text]
@@ -379,7 +443,7 @@ def wrangle_text(text, return_model=False, **kwargs):
     model = kwargs.pop('model', eval(defaults['text']['model']))
     corpus = kwargs.pop('corpus', None)
     config = kwargs.pop('config', None)
-    array_args = kwargs.pop('array_args', {})
+    array_kwargs = kwargs.pop('array_kwargs', {})
 
     if type(model) is not list:
         model = [model]
@@ -399,7 +463,7 @@ def wrangle_text(text, return_model=False, **kwargs):
     embedded_text = apply_text_model(model, text, mode='transform', return_model=False, **kwargs)
 
     # turn array into dataframe
-    df = wrangle_array(embedded_text, **array_args)
+    df = wrangle_array(embedded_text, **array_kwargs)
 
     if return_model:
         return df, model

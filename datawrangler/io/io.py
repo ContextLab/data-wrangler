@@ -1,6 +1,7 @@
 import os
 import requests
 import dill
+import re
 import numpy as np
 from hashlib import blake2b as hasher
 from matplotlib import pyplot as plt
@@ -41,11 +42,10 @@ def get_confirm_token(response):
     return None
 
 
-def load_remote(url, params=None):
-    if params is None:
-        params = {}
+def load_remote(url):
     session = requests.Session()
-    response = session.get(url, params=params, stream=True)
+    response = session.get(url, stream=True)
+
     token = get_confirm_token(response)
     if token:
         params['confirm'] = token
@@ -57,15 +57,13 @@ def load_remote(url, params=None):
         return response.content
 
 
-def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, **kwargs):
+def load(x, dtype=None, **kwargs):
     """
     Load local or remote files in a wide range of formats
 
     Parameters
     ----------
-    :param x: a string containing a URL, document ID (e.g., a Google object's ID), or file path
-    :param base_url: a template URL used to download objects specified using only their ID.
-      Default: 'https://docs.google.com/uc?export=download' (supports Google IDs)
+    :param x: a string containing a URL or file path
     :param dtype: Optional argument for specifying how the data should be loaded; can be one of:
       - 'pickle': use the dill library to load in pickled objects and functions
       - 'numpy': treat the dataset as a .npy or .npz file
@@ -84,7 +82,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
     Returns
     -------
     :return: the retrieved data.  Remote files will be cached (saved) locally to disk for faster loading if/when the
-    same address or ID is used to load the file again at a later time.
+    same address is used to load the file again at a later time.
     """
     # noinspection PyShadowingNames
     def helper(fname, dtype=None, **helper_kwargs):
@@ -115,7 +113,6 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
                 raise ValueError(f'Unknown datatype: {dtype}')
 
     assert type(x) is str, IOError('cannot interpret non-string filename')
-    # FIXME: remote images aren't loaded correctly...
     if os.path.exists(x):
         return helper(x, dtype=dtype, **kwargs)
 
@@ -126,11 +123,7 @@ def load(x, base_url='https://docs.google.com/uc?export=download', dtype=None, *
         else:
             data = load_remote(x)
     else:
-        # noinspection PyBroadException
-        try:
-            data = load_remote(base_url, params={'id': x})
-        except:
-            raise IOError('cannot find data at source: {x}')
+        return None
     save(x, data, dtype=dtype)
     return load(x, dtype=dtype, **kwargs)
 
@@ -141,7 +134,7 @@ def save(x, obj, dtype=None, **kwargs):
 
     Parameters
     ----------
-    :param x: the file's original path, URL, or ID (used to create a hash to define a new filename)
+    :param x: the file's original path or URL (used to create a hash to define a new filename)
     :param obj: the data to store to disk
     :param dtype: optional argument specifying how to store the data; can be one of:
       - 'pickle': use the dill library to pickle the object

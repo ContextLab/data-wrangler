@@ -31,7 +31,7 @@ def is_array(x):
 
     Parameters
     ----------
-    :param x: an object, file path, URL, or Google ID
+    :param x: an object, file path or URL
 
     Returns
     -------

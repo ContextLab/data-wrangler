@@ -15,7 +15,7 @@ def data_file(resources):
 
 @pytest.fixture
 def data_url():
-    return 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/data.csv'
+    return 'https://raw.githubusercontent.com/ContextLab/data-wrangler/main/tests/resources/testdata.csv'
 
 
 @pytest.fixture
