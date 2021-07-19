@@ -11,7 +11,7 @@ from .panda_handler import load_dataframe
 from .extension_handler import get_extension
 
 defaults = get_default_options()
-img_types = plt.gcf().canvas.get_supported_filetypes().keys();
+img_types = ['eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps', 'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff']
 
 
 def get_local_fname(x, digest_size=10):
