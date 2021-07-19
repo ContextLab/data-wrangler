@@ -29,7 +29,7 @@ Install datawrangler using:
 
 .. code-block:: console
 
-    $ pip install py-data-wrangler
+    $ pip install pydata-wrangler
 
 Some quick natural language processing examples::
 

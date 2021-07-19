@@ -12,7 +12,7 @@ To install datawrangler, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install py-data-wrangler
+    $ pip install pydata-wrangler
 
 This is the preferred method to install datawrangler, as it will always install the most recent stable release.
 
