@@ -70,6 +70,7 @@ def test_interpolate(data):
     def f(x):
         return x
 
+    # noinspection PyCallingNonCallable
     recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
     assert np.allclose(data, recovered_data1)
     assert dw.zoo.is_dataframe(data)
@@ -78,6 +79,7 @@ def test_interpolate(data):
     # test interpolation
     interp_test = data.copy()
     interp_test.loc[5] = np.nan
+    # noinspection PyCallingNonCallable
     recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
     assert np.allclose(data, recovered_data2)
     assert dw.zoo.is_dataframe(data)
@@ -90,6 +92,7 @@ def test_interpolate(data):
     impute_interp_test.loc[8, 'FifthDim'] = np.nan
     impute_interp_test.loc[4] = np.nan
 
+    # noinspection PyCallingNonCallable
     recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
                                                            'method': 'pchip'})
     assert np.allclose(recovered_data3.values[~np.isnan(impute_interp_test)],
@@ -104,11 +107,11 @@ def test_apply_unstacked(data):
     data2 = data.iloc[i:]
     stacked_data = dw.stack([data1, data2])
 
-    assert np.allclose(dw.stack(stacked_data), data)
+    assert np.allclose(stacked_data, data)
 
     @dw.decorate.apply_unstacked
     def f(x):
-        return x.mean(axis=0)
+        return pd.DataFrame(x.mean(axis=0)).T
 
     means = f(stacked_data)
     assert dw.zoo.is_multiindex_dataframe(means)

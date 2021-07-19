@@ -19,7 +19,7 @@ from ..util.helpers import depth
 
 
 defaults = get_default_options()
-format_checkers = defaults['supported_formats']['types']
+format_checkers = eval(defaults['supported_formats']['types'])
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names
@@ -216,14 +216,14 @@ def interpolate(f):
         impute_kwargs = kwargs.pop('impute_kwargs', {})
 
         if impute_kwargs:
-            model = impute_kwargs.pop('model', defaults['impute']['model'])
+            model = impute_kwargs.pop('model', eval(defaults['impute']['model']))
             imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
             data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
         else:
             model = None
 
         if kwargs:
-            kwargs = update_dict(defaults['interpolate'], kwargs)
+            kwargs = update_dict(defaults['interpolate'], kwargs, from_config=True)
             data = data.interpolate(**kwargs)
 
         if return_model:
@@ -240,7 +240,6 @@ def interpolate(f):
 
 
 # noinspection PyIncorrectDocstring
-@funnel
 def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False, copy=True, ignore_index=False,
                  levels=None):
     """
@@ -252,7 +251,7 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
 
     Parameters
     ----------
-    :param data: data in any format supported by datawrangler
+    :param data: A single DataFrame or a list of DataFrames with must matching columns.
     :param names: names for the levels in the resulting hierarchical index. (Default: None)
     :param keys: if multiple levels passed, should contain tuples. Construct hierarchical index using the passed keys as
       the outermost level.
@@ -280,6 +279,9 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
         data = [data]
     elif len(data) == 0:
         return None
+
+    # ensure that Series objects are cast into DataFrames
+    data = [pd.DataFrame(d) for d in data]
 
     assert len(np.unique([d.shape[1] for d in data])) == 1, 'All DataFrames must have the same number of columns'
     for i, d1 in enumerate(data):

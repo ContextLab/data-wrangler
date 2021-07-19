@@ -11,7 +11,7 @@ from ..core import update_dict, get_default_options
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
-format_checkers = get_default_options()['supported_formats']['types']
+format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 
 def wrangle(x, return_dtype=False, **kwargs):

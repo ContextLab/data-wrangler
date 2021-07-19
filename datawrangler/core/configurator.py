@@ -39,7 +39,7 @@ def get_default_options(fname=None):
     return config
 
 
-def update_dict(template, updates):
+def update_dict(template, updates, from_config=False):
     """
     Replace a template dictionary's values with new values defined in a second "updates" dictionary.
 
@@ -47,6 +47,8 @@ def update_dict(template, updates):
     ----------
     :param template: default keys and values to use (if not specified in the "updates" dictionary)
     :param updates: new values to use (and/or new keys to add to the resulting dictionary)
+    :param from_config: if True, evaluate the keys in the "template" dictionary and set their values to the result.
+      Used when loading options from the configuration file.  (Default: False)
 
     Returns
     -------
@@ -54,6 +56,10 @@ def update_dict(template, updates):
     the updates dictionary
     """
     template = copy(template)
+    if from_config:
+        for k, v in template.items():
+            template[k] = eval(v)
+
     for k, v in updates.items():
         template[k] = v
     return template
