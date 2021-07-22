@@ -1,7 +1,7 @@
 Overview
 ================
 
-|build-status|  |docs|
+|build-status|  |docs|  |doi|
 
 Datasets come in all shapes and sizes, and are often *messy*:
 
@@ -91,3 +91,6 @@ Missing observations (e.g., nans, empty strings, etc.) may be filled in using im
 .. |docs| image:: https://readthedocs.org/projects/data-wrangler/badge/
     :alt: docs status
     :target: https://data-wrangler.readthedocs.io/
+
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5123310.svg
+   :target: https://doi.org/10.5281/zenodo.5123310
