@@ -161,16 +161,17 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
         'khan': 'https://www.dropbox.com/s/ieztnyhao2ejo48/khan.npz?dl=1'}
 
     if dataset_name in corpora.keys():
-        print(f'loading corpus: {dataset_name}', end='...')
+        print(f'loading corpus: {dataset_name}', end='')
         data = load(corpora[dataset_name], dtype='numpy')
         try:
             corpus = data['corpus']
-            print('done!')
+            print('...done!', end='')
             preloaded_corpora[key] = corpus
             return corpus
         finally:
             # ensure NpzFile is closed
             data.close()
+        print('')
 
     # Hugging-Face Corpus
     try:
