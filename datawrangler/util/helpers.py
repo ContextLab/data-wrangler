@@ -30,7 +30,7 @@ def btwn(x, a, b):
     if b < a:
         return btwn(x, b, a)
 
-    return np.all(x >= a) and np.all(b <= b)
+    return np.all(x >= a) and np.all(x <= b)
 
 
 def dataframe_like(x, debug=False):
