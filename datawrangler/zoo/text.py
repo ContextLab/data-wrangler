@@ -129,7 +129,7 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     Download (and return) a text corpus.  By default, a 2020 snapshot of all English Wikipedia articles is returned.
 
     [Parameters]
-    ----------
+    ------------
     :param dataset_name: a string containing the corpus name.  Can be one of the following:
       - Corpora built into data-wrangler:
         - 'minipedia': a curated and cleaned up subset of Wikipedia containing articles on a wide variety of topics

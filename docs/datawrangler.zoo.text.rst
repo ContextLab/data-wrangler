@@ -1,5 +1,5 @@
 datawrangler.zoo.text
-================
+=====================
 
 .. currentmodule:: datawrangler.zoo.text
 

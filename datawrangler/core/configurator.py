@@ -1,5 +1,4 @@
 from configparser import ConfigParser
-from pkg_resources import get_distribution
 from copy import copy
 import os
 import warnings
@@ -8,7 +7,7 @@ from flair import embeddings           # used when applying default options
 import numpy as np                     # used when applying default options
 
 
-__version__ = get_distribution('datawrangler')
+__version__ = '0.1.3'
 
 
 def get_default_options(fname=None):
