@@ -311,7 +311,7 @@ def pandas_unstack(x):
 
     Parameters
     ----------
-    :param x: a single DataFrame or MultiIndex DataFrame
+    :param x: a single DataFrame, a MultiIndex DataFrame, or a list of DataFrames
 
     Returns
     -------
@@ -319,6 +319,8 @@ def pandas_unstack(x):
     """
     if not is_multiindex_dataframe(x):
         if is_dataframe(x):
+            return x
+        elif type(x) is list and all([is_dataframe(d) for d in x]):
             return x
         else:
             raise Exception(f'Unsupported datatype: {type(x)}')
@@ -338,7 +340,17 @@ def pandas_unstack(x):
     assert names[0] == grouper, 'Unstacking error'
 
     x.index.rename(names, inplace=True)
-    return [d[1].set_index(d[1].index.get_level_values(1)) for d in list(x.groupby(grouper))]
+
+    groups = list(x.groupby(grouper))
+    n_levels = len(groups[0][1].index.levels)
+    if n_levels > 2:
+        g = groups[0][1]
+        index = pd.MultiIndex.from_arrays([g.index.get_level_values(len(g.index.levels) - n)
+                                           for n in range(1, len(g.index.levels))][::-1])
+        return [d[1].set_index(index) for d in groups]
+    else:
+        return [d[1].set_index(d[1].index.get_level_values(len(d[1].index.levels) - 1))
+                for d in list(x.groupby(grouper))]
 
 
 def apply_stacked(f):

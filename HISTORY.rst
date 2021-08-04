@@ -2,6 +2,11 @@
 History
 =======
 
+0.1.3 (2021-08-04)
+------------------
+
+* Fixed some bugs related to stacking and unstacking DataFrames
+
 0.1.2 (2021-08-04)
 ------------------
 

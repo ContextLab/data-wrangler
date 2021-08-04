@@ -118,6 +118,31 @@ def test_apply_unstacked(data):
     assert np.allclose(means.iloc[0], data1.mean(axis=0))
     assert np.allclose(means.iloc[1], data2.mean(axis=0))
 
+    xs = [np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)]
+
+    @dw.decorate.apply_unstacked
+    def g(x):
+        return x
+
+    assert all(np.allclose(x, y) for x, y in zip(xs, g(xs)))
+    assert all(np.allclose(x, y) for x, y in zip(xs, dw.unstack(g(dw.stack(xs)))))
+
+
+def test_unstack(data):
+    xs = dw.wrangle([np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)])
+    ys = dw.wrangle([np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)])
+
+    stacked_xs = dw.stack(xs)
+    stacked_ys = dw.stack(ys)
+    stacked_xy = dw.stack([stacked_xs, stacked_ys])
+
+    assert np.allclose(dw.unstack(stacked_xs)[0], xs[0])
+    assert np.allclose(dw.unstack(stacked_xs)[0].index.values, xs[0].index.values)
+
+    assert np.allclose(dw.unstack(stacked_xy)[0], stacked_xs)
+    assert dw.zoo.is_multiindex_dataframe(dw.unstack(stacked_xy)[0])
+    assert np.allclose(dw.unstack(stacked_xy)[0].index.to_frame(), stacked_xs.index.to_frame())
+
 
 def test_apply_stacked(data):
     i = 4
