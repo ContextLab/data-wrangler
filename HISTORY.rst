@@ -2,7 +2,7 @@
 History
 =======
 
-0.1.2 (2021-08-14)
+0.1.2 (2021-08-04)
 ------------------
 
 * Minor update that corrects URLs of Khan Academy and NeurIPS corpora and corrects some issues with loading npy files
