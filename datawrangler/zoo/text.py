@@ -179,7 +179,7 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
         raise RuntimeError(f'Corpus not found: {dataset_name}.  Available corpora: {", ".join(list_datasets())}')
     except ValueError:
         raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
-                           f'Available configurations: {", ".join(get_dataset_config_names(data_name))}')
+                           f'Available configurations: {", ".join(get_dataset_config_names(dataset_name))}')
 
     corpus = []
     content_keys = ['text', 'content']
