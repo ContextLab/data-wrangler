@@ -93,10 +93,15 @@ def load(x, dtype=None, **kwargs):
             if 'allow_pickle' not in helper_kwargs.keys():
                 helper_kwargs['allow_pickle'] = True
             data = np.load(fname, **helper_kwargs)
-            if type(data) is dict:
-                if len(data.keys()) == 1:
-                    return data[list(data.keys())[0]]
-            return data
+            try:
+                if type(data) is dict:
+                    if len(data.keys()) == 1:
+                        return data[list(data.keys())[0]]
+                return data
+            except Exception:
+                if isinstance(data, np.lib.npyio.NpzFile):
+                    data.close()
+                raise
         else:
             dtype = get_extension(fname)
             if dtype == 'txt':
