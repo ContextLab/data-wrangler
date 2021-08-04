@@ -162,11 +162,15 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 
     if dataset_name in corpora.keys():
         print(f'loading corpus: {dataset_name}', end='...')
-        corpus = load(corpora[dataset_name], dtype='numpy')['corpus']
-        print('done!')
-
-        preloaded_corpora[key] = corpus
-        return corpus
+        data = load(corpora[dataset_name], dtype='numpy')
+        try:
+            corpus = data['corpus']
+            print('done!')
+            preloaded_corpora[key] = corpus
+            return corpus
+        finally:
+            # ensure NpzFile is closed
+            data.close()
 
     # Hugging-Face Corpus
     try:
@@ -291,7 +295,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         return transformed_text
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
-        
+
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
                 return text, {'model': model, 'args': args, 'kwargs': kwargs}
