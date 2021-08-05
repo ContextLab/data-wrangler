@@ -7,7 +7,7 @@ from flair import embeddings           # used when applying default options
 import numpy as np                     # used when applying default options
 
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
 def get_default_options(fname=None):
@@ -72,18 +72,23 @@ if not os.path.exists(eval(defaults['data']['datadir'])):
 
 # add in default keyword arguments (and values) specified in config.ini based on the function or class name
 # can also be used as a decorator
-def apply_defaults(f):
+def apply_defaults(f, defaults=None):
     """
     Replace a function's default arguments and keyword arguments with defaults specified in config.ini
 
     Parameters
     ----------
     :param f: a function
+    :param defaults: an optional dictionary of default options (default: get_default_options)
 
     Returns
     -------
     :return: a function replacing and un-specified arguments with the defaults defined in config.ini
     """
+
+    if defaults is None:
+        defaults = get_default_options()
+
     def get_name(func):
         if hasattr(func, '__name__'):
             return func.__name__

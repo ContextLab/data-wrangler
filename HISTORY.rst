@@ -2,6 +2,11 @@
 History
 =======
 
+0.1.4 (2021-08-04)
+------------------
+
+* Added an option to specify a customized dictionary of default options to the apply_default_options function
+
 0.1.3 (2021-08-04)
 ------------------
 
