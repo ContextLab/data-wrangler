@@ -2,6 +2,12 @@
 History
 =======
 
+0.1.7 (2021-08-09)
+------------------
+
+* Updates default behaviors for several models (via config.ini)
+
+
 0.1.6 (2021-08-09)
 ------------------
 
