@@ -378,17 +378,34 @@ def apply_stacked(f):
 
     @funnel
     def wrapped(data, *args, **kwargs):
+        def helper(d, x, split):
+            if split:
+                x0 = x[0]
+                x1 = x[1]
+            else:
+                x0 = x
+
+            if is_dataframe(d) and type(x0) is list and len(x0) == 1:
+                x0 = x0[0]
+
+            if split:
+                return x0, x1
+            else:
+                return x0
+
         stack_result = is_multiindex_dataframe(data)
 
         stacked_data = pandas_stack(data)
         transformed = f(stacked_data, *args, **kwargs)
 
+        return_model = kwargs.copy().pop('return_model', False)
         if not stack_result:
             if ('return_model' in kwargs.keys()) and kwargs['return_model']:
                 transformed[0] = pandas_unstack(transformed[0])
             else:
                 transformed = pandas_unstack(transformed)
-        return transformed
+
+        return helper(data, transformed, return_model)
 
     return wrapped
 
