@@ -320,6 +320,8 @@ def pandas_unstack(x):
     if not is_multiindex_dataframe(x):
         if is_dataframe(x):
             return x
+        elif issubclass(type(x), pd.Series):
+            return pd.DataFrame(x).T
         elif type(x) is list and all([is_dataframe(d) for d in x]):
             return x
         else:
@@ -381,8 +383,11 @@ def apply_stacked(f):
         stacked_data = pandas_stack(data)
         transformed = f(stacked_data, *args, **kwargs)
 
-        if (not stack_result) and (('return_model' in kwargs.keys()) and kwargs['return_model']):
-            transformed[0] = pandas_unstack(transformed[0])
+        if not stack_result:
+            if ('return_model' in kwargs.keys()) and kwargs['return_model']:
+                transformed[0] = pandas_unstack(transformed[0])
+            else:
+                transformed = pandas_unstack(transformed)
         return transformed
 
     return wrapped

@@ -7,7 +7,7 @@ from flair import embeddings           # used when applying default options
 import numpy as np                     # used when applying default options
 
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 
 def get_default_options(fname=None):
