@@ -7,6 +7,5 @@
    datawrangler.zoo.array
    datawrangler.zoo.dataframe
    datawrangler.zoo.text
-   datawrangler.zoo.image
    datawrangler.zoo.null
 

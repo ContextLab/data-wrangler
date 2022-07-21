@@ -18,11 +18,11 @@ def test_get_default_options():
     assert 'CountVectorizer' in keys
 
     assert 'text' in keys
-    assert defaults['text']['model'] == ['CountVectorizer', 'LatentDirichletAllocation']
+    assert eval(defaults['text']['model']) == ['CountVectorizer', 'LatentDirichletAllocation']
 
     assert 'data' in keys
-    assert os.path.exists(defaults['data']['homedir'])
-    assert os.path.exists(defaults['data']['datadir'])
+    assert os.path.exists(eval(defaults['data']['homedir']))
+    assert os.path.exists(eval(defaults['data']['datadir']))
 
 
 def test_apply_defaults():
@@ -32,7 +32,7 @@ def test_apply_defaults():
     cv2 = dw.core.apply_defaults(CountVectorizer)().get_params()
 
     for k in defaults.keys():
-        assert cv2[k] == defaults[k]
+        assert cv2[k] == eval(defaults[k])
 
     for k in cv1.keys():
         if k not in defaults.keys():

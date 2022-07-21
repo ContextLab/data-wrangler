@@ -1,5 +1,4 @@
 from configparser import ConfigParser
-from pkg_resources import get_distribution
 from copy import copy
 import os
 import warnings
@@ -8,7 +7,7 @@ from flair import embeddings           # used when applying default options
 import numpy as np                     # used when applying default options
 
 
-__version__ = get_distribution('datawrangler')
+__version__ = '0.1.7'
 
 
 def get_default_options(fname=None):
@@ -17,11 +16,11 @@ def get_default_options(fname=None):
 
     Parameters
     ----------
-    fname: absolute-path filename for the config.ini file (default: data-wrangler/datawrangler/core/config.ini)
+    :param fname: absolute-path filename for the config.ini file (default: data-wrangler/datawrangler/core/config.ini)
 
     Returns
     -------
-    A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
+    :return: A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
     arguments
     """
     if fname is None:
@@ -34,26 +33,32 @@ def get_default_options(fname=None):
     for a, b in config.items():
         config[a] = dict(b)
         for c, d in config[a].items():
-            config[a][c] = eval(d)
+            config[a][c] = d
 
     return config
 
 
-def update_dict(template, updates):
+def update_dict(template, updates, from_config=False):
     """
     Replace a template dictionary's values with new values defined in a second "updates" dictionary.
 
     Parameters
     ----------
-    template: default keys and values to use (if not specified in the "updates" dictionary)
-    updates: new values to use (and/or new keys to add to the resulting dictionary)
+    :param template: default keys and values to use (if not specified in the "updates" dictionary)
+    :param updates: new values to use (and/or new keys to add to the resulting dictionary)
+    :param from_config: if True, evaluate the keys in the "template" dictionary and set their values to the result.
+      Used when loading options from the configuration file.  (Default: False)
 
     Returns
     -------
-    A new dictionary containing the union of the keys/values in template and updates, with preference given to
+    :return: A new dictionary containing the union of the keys/values in template and updates, with preference given to
     the updates dictionary
     """
     template = copy(template)
+    if from_config:
+        for k, v in template.items():
+            template[k] = eval(v)
+
     for k, v in updates.items():
         template[k] = v
     return template
@@ -61,24 +66,29 @@ def update_dict(template, updates):
 
 defaults = get_default_options()
 
-if not os.path.exists(defaults['data']['datadir']):
-    os.makedirs(defaults['data']['datadir'])
+if not os.path.exists(eval(defaults['data']['datadir'])):
+    os.makedirs(eval(defaults['data']['datadir']))
 
 
 # add in default keyword arguments (and values) specified in config.ini based on the function or class name
 # can also be used as a decorator
-def apply_defaults(f):
+def apply_defaults(f, defaults=None):
     """
     Replace a function's default arguments and keyword arguments with defaults specified in config.ini
 
     Parameters
     ----------
-    f: a function
+    :param f: a function
+    :param defaults: an optional dictionary of default options (default: get_default_options)
 
     Returns
     -------
-    a function replacing and un-specified arguments with the defaults defined in config.ini
+    :return: a function replacing and un-specified arguments with the defaults defined in config.ini
     """
+
+    if defaults is None:
+        defaults = get_default_options()
+
     def get_name(func):
         if hasattr(func, '__name__'):
             return func.__name__
@@ -92,11 +102,11 @@ def apply_defaults(f):
 
     name = get_name(f)
     if name in defaults.keys():
-        default_kwargs = {k: v for k, v in dict(defaults[name]).items() if k[:2] != '__'}
+        default_kwargs = {k: eval(v) for k, v in dict(defaults[name]).items() if k[:2] != '__'}
     else:
         default_kwargs = {}
 
-    default_args = [v for k, v in dict(defaults[name]).items() if k[:2] == '__']
+    default_args = [eval(v) for k, v in dict(defaults[name]).items() if k[:2] == '__']
 
     @functools.wraps(f)
     def wrapped_function(*args, **kwargs):

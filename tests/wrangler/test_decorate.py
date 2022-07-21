@@ -44,7 +44,7 @@ def test_funnel(data_file, data, img_file, text_file):
                                   text_kwargs=text_kwargs,
                                   wrangle_kwargs=wrangle_kwargs)
 
-    correct_dtypes = ['dataframe', 'dataframe', 'array', 'image', 'text']
+    correct_dtypes = ['dataframe', 'dataframe', 'array', 'array', 'text']
     assert all([i == c for i, c in zip(inferred_dtypes, correct_dtypes)])
 
     assert np.allclose(wrangled[0].values, wrangled[1].values)
@@ -70,6 +70,7 @@ def test_interpolate(data):
     def f(x):
         return x
 
+    # noinspection PyCallingNonCallable
     recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
     assert np.allclose(data, recovered_data1)
     assert dw.zoo.is_dataframe(data)
@@ -78,6 +79,7 @@ def test_interpolate(data):
     # test interpolation
     interp_test = data.copy()
     interp_test.loc[5] = np.nan
+    # noinspection PyCallingNonCallable
     recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
     assert np.allclose(data, recovered_data2)
     assert dw.zoo.is_dataframe(data)
@@ -90,6 +92,7 @@ def test_interpolate(data):
     impute_interp_test.loc[8, 'FifthDim'] = np.nan
     impute_interp_test.loc[4] = np.nan
 
+    # noinspection PyCallingNonCallable
     recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
                                                            'method': 'pchip'})
     assert np.allclose(recovered_data3.values[~np.isnan(impute_interp_test)],
@@ -104,16 +107,41 @@ def test_apply_unstacked(data):
     data2 = data.iloc[i:]
     stacked_data = dw.stack([data1, data2])
 
-    assert np.allclose(dw.stack(stacked_data), data)
+    assert np.allclose(stacked_data, data)
 
     @dw.decorate.apply_unstacked
     def f(x):
-        return x.mean(axis=0)
+        return pd.DataFrame(x.mean(axis=0)).T
 
     means = f(stacked_data)
     assert dw.zoo.is_multiindex_dataframe(means)
     assert np.allclose(means.iloc[0], data1.mean(axis=0))
     assert np.allclose(means.iloc[1], data2.mean(axis=0))
+
+    xs = [np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)]
+
+    @dw.decorate.apply_unstacked
+    def g(x):
+        return x
+
+    assert all(np.allclose(x, y) for x, y in zip(xs, g(xs)))
+    assert all(np.allclose(x, y) for x, y in zip(xs, dw.unstack(g(dw.stack(xs)))))
+
+
+def test_unstack(data):
+    xs = dw.wrangle([np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)])
+    ys = dw.wrangle([np.cumsum(np.random.randn(100, 5), axis=0) for _ in range(10)])
+
+    stacked_xs = dw.stack(xs)
+    stacked_ys = dw.stack(ys)
+    stacked_xy = dw.stack([stacked_xs, stacked_ys])
+
+    assert np.allclose(dw.unstack(stacked_xs)[0], xs[0])
+    assert np.allclose(dw.unstack(stacked_xs)[0].index.values, xs[0].index.values)
+
+    assert np.allclose(dw.unstack(stacked_xy)[0], stacked_xs)
+    assert dw.zoo.is_multiindex_dataframe(dw.unstack(stacked_xy)[0])
+    assert np.allclose(dw.unstack(stacked_xy)[0].index.to_frame(), stacked_xs.index.to_frame())
 
 
 def test_apply_stacked(data):

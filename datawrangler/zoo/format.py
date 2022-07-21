@@ -4,7 +4,6 @@ import pandas as pd
 
 from .dataframe import is_dataframe, is_multiindex_dataframe, wrangle_dataframe
 from .array import is_array, wrangle_array
-from .image import is_image, wrangle_image
 from .text import is_text, wrangle_text
 from .null import is_null, wrangle_null
 from ..util import array_like, depth
@@ -12,7 +11,7 @@ from ..core import update_dict, get_default_options
 
 # the order matters: if earlier checks pass, later checks will not run.
 # the list specifies the priority of converting to the given data types.
-format_checkers = get_default_options()['supported_formats']['types']
+format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 
 def wrangle(x, return_dtype=False, **kwargs):
@@ -21,17 +20,16 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     Parameters
     ----------
-
-    x: data in any format (text, numpy arrays, pandas dataframes, or a mixed list (or nested lists) of those types).
-      The following datatypes are supported:
+    :param x: data in any format (text, numpy arrays, pandas dataframes, or a mixed list (or nested lists) of those
+      types).  The following datatypes are supported:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
         - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects
         - Images, or paths to files that store images
         - Text, or paths to plain text files
         - Mixed lists of the above
-    return_dtype: if True, also return the auto-detected datatype(s) of each dataset you wrangle
-    kwargs: used to control how data are wrangled (e.g., if you don't want to use the default options for each data
-      type):
+    :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset you wrangle
+    :param kwargs: used to control how data are wrangled (e.g., if you don't want to use the default options for each
+      data type):
         - array_kwargs: passed to the datawrangler.zoo.array.wrangle_array function to control how arrays are handled
         - dataframe_kwargs: passed to the datawrangler.zoo.dataframe.wrangle_dataframe function to control how
           dataframes are handled
@@ -41,8 +39,7 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     Returns
     -------
-
-    A DataFrame, or a list of DataFrames, containing the wrangled data
+    :return: a DataFrame, or a list of DataFrames, containing the wrangled data
     """
 
     deep_kwargs = {}
@@ -69,6 +66,9 @@ def wrangle(x, return_dtype=False, **kwargs):
                     deep_kwargs[fc]['model'] = model
                     deep_kwargs[fc]['return_model'] = return_model
                     pre_fit[fc] = True
+
+                    if return_model:
+                        wrangled = [wrangled, model]
                 else:
                     wrangled = wrangler(y, **deep_kwargs[fc])
                 dtype = fc

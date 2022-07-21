@@ -19,7 +19,7 @@ from ..util.helpers import depth
 
 
 defaults = get_default_options()
-format_checkers = defaults['supported_formats']['types']
+format_checkers = eval(defaults['supported_formats']['types'])
 
 
 # import all model-like classes within a sklearn-like module; return a list of model names
@@ -31,11 +31,11 @@ def import_sklearn_models(module):
 
     Parameters
     ----------
-    module: a Python module object (e.g. sklearn.decomposition)
+    :param module: a Python module object (e.g. sklearn.decomposition)
 
     Returns
     -------
-    a list of valid models contained in the module
+    :return: a list of valid models contained in the module
     """
     models = [d for d in dir(module) if hasattr(getattr(module, d), 'fit_transform')]
     for m in models:
@@ -49,7 +49,7 @@ def get_sklearn_model(x):
 
     Parameters
     ----------
-    x: a callable scikit-learn model, a string containing a scikit-learn model's name (e.g.,
+    :param x: a callable scikit-learn model, a string containing a scikit-learn model's name (e.g.,
     'LatentDirichletAllocation'), or a dictionary with the following keys:
       - 'model': a callable scikit-learn model or a string containing a scikit-learn model's name
       - 'args': a list of arguments to pass to the model (this list will be pre-pended with the data the model is
@@ -58,7 +58,7 @@ def get_sklearn_model(x):
 
     Returns
     -------
-    A callable scikit-learn model
+    :return: A callable scikit-learn model
     """
     if is_sklearn_model(x):
         return x  # already a valid model
@@ -83,19 +83,19 @@ def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=F
 
     Parameters
     ----------
-    model: a scikit-learn model (as defined in the *get_sklearn_model* description), or a list of models to be applied
+    :param model: a scikit-learn model (as defined in the *get_sklearn_model* description), or a list of models to be applied
            in sequence
-    data: a dataset (array or DataFrame)
-    args: other arguments to pass to the model (after data)
-    mode: one of 'fit', 'transform', or 'fit_transform' (default: 'fit_transform'); uses scikit-learn syntax
-    return_model: if True, both the (potentially transformed) data *and* the fitted model (or list of fitted models)
+    :param data: a dataset (array or DataFrame)
+    :param args: other arguments to pass to the model (after data)
+    :param mode: one of 'fit', 'transform', or 'fit_transform' (default: 'fit_transform'); uses scikit-learn syntax
+    :param return_model: if True, both the (potentially transformed) data *and* the fitted model (or list of fitted models)
           are returned.  If False, only the (potentially transformed) data is returned.  Default: False
-    kwargs: other keyword arguments to pass to *all* of the scikit-learn models (in addition to any model-specific
+    :param kwargs: other keyword arguments to pass to *all* of the scikit-learn models (in addition to any model-specific
           keyword arguments)
 
     Returns
     -------
-    Either the (potentially transformed) dataset (if return_model == False) or a tuple containing the
+    :return: Either the (potentially transformed) dataset (if return_model == False) or a tuple containing the
     transformed dataset (first element) and the fitted model(s) (second element), if return_model == True.
     """
     assert mode in ['fit', 'transform', 'fit_transform']
@@ -151,11 +151,11 @@ def list_generalizer(f):
 
     Parameters
     ----------
-    f: the function to decorate, of the form f(data, *args, **kwargs).
+    :param f: the function to decorate, of the form f(data, *args, **kwargs).
 
     Returns
     -------
-    A decorated function that supports lists of data objects (rather than only non-list data objects)
+    :return: A decorated function that supports lists of data objects (rather than only non-list data objects)
     """
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
@@ -173,12 +173,12 @@ def funnel(f):
 
     Parameters
     ----------
-    f: a function of the form f(data, *args, **kwargs) that assumes data is either a DataFrame or a list of
+    :param f: a function of the form f(data, *args, **kwargs) that assumes data is either a DataFrame or a list of
        DataFrames
 
     Returns
     -------
-    A decorated function the supports any wrangle-able data format
+    :return: A decorated function the supports any wrangle-able data format
     """
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
@@ -194,15 +194,16 @@ def funnel(f):
 def interpolate(f):
     """
     A decorator that fills in missing data by imputing and/or interpolating missing values
+
     Parameters
     ----------
-    f: a function of the form f(data, *args, **kwargs) that assumes the data are formatted as either a DataFrame or
+    :param f: a function of the form f(data, *args, **kwargs) that assumes the data are formatted as either a DataFrame or
        a list of DataFrames, with no missing (numpy.nan) values
 
     Returns
     -------
-    A decorated function that supports any wrangle-able datatype.  Pass in the following keyword arguments to fill in
-    missing data:
+    :return: A decorated function that supports any wrangle-able datatype.  Pass in the following keyword arguments to
+    fill in missing data:
       impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
           {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model* function.
       any other keywords are passed to pandas.DataFrame.interpolate; e.g. method='linear' will apply linear
@@ -215,14 +216,14 @@ def interpolate(f):
         impute_kwargs = kwargs.pop('impute_kwargs', {})
 
         if impute_kwargs:
-            model = impute_kwargs.pop('model', defaults['impute']['model'])
+            model = impute_kwargs.pop('model', eval(defaults['impute']['model']))
             imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
             data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
         else:
             model = None
 
         if kwargs:
-            kwargs = update_dict(defaults['interpolate'], kwargs)
+            kwargs = update_dict(defaults['interpolate'], kwargs, from_config=True)
             data = data.interpolate(**kwargs)
 
         if return_model:
@@ -238,7 +239,7 @@ def interpolate(f):
     return wrapped
 
 
-@funnel
+# noinspection PyIncorrectDocstring
 def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False, copy=True, ignore_index=False,
                  levels=None):
     """
@@ -248,15 +249,28 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
     DataFrames are stacked vertically, with the data names as their level 1
     indices and their original indices as their level 2 indices.
 
-    INPUTS
-    data: data in any format supported by datawrangler
+    Parameters
+    ----------
+    :param data: A single DataFrame or a list of DataFrames with must matching columns.
+    :param names: names for the levels in the resulting hierarchical index. (Default: None)
+    :param keys: if multiple levels passed, should contain tuples. Construct hierarchical index using the passed keys as
+      the outermost level.
+    :param verify_integrity: check whether the new concatenated axis contains duplicates. This can be very expensive
+      relative to the actual data concatenation.  (Default: False)
+    :param sort: sort non-concatenation axis if it is not already aligned when join is ‘outer’. This has no effect when
+      join='inner', which already preserves the order of the non-concatenation axis.  (Default: False)
+    :param copy: if False, do not copy data unnecessarily.  (Default: True)
+    :param ignore_index: if True, do not use the index values along the concatenation axis. The resulting axis will be
+      labeled 0, …, n - 1. This is useful if you are concatenating objects where the concatenation axis does not have
+      meaningful indexing information. Note the index values on the other axes are still respected in the join.
+      (Default: False)
+    :param levels: specific levels (unique values) to use for constructing a MultiIndex. Otherwise they will be inferred
+      from the keys. (Default: None)
+    :param kwargs: any other keyword arguments will be passed to datawrangler.decorate.funnel
 
-    Also takes all keyword arguments from pandas.concat except axis, join, join_axes
-
-    All other keyword arguments (if any) are passed to funnel
-
-    OUTPUTS
-    a single MultiIndex DataFrame
+    Returns
+    -------
+    :return: a single MultiIndex DataFrame
     """
 
     if is_multiindex_dataframe(data):
@@ -265,6 +279,9 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
         data = [data]
     elif len(data) == 0:
         return None
+
+    # ensure that Series objects are cast into DataFrames
+    data = [pd.DataFrame(d) for d in data]
 
     assert len(np.unique([d.shape[1] for d in data])) == 1, 'All DataFrames must have the same number of columns'
     for i, d1 in enumerate(data):
@@ -294,14 +311,18 @@ def pandas_unstack(x):
 
     Parameters
     ----------
-    x: a single DataFrame or MultiIndex DataFrame
+    :param x: a single DataFrame, a MultiIndex DataFrame, or a list of DataFrames
 
     Returns
     -------
-    A list of one or more DataFrames
+    :return: a list of one or more DataFrames
     """
     if not is_multiindex_dataframe(x):
         if is_dataframe(x):
+            return x
+        elif issubclass(type(x), pd.Series):
+            return pd.DataFrame(x).T
+        elif type(x) is list and all([is_dataframe(d) for d in x]):
             return x
         else:
             raise Exception(f'Unsupported datatype: {type(x)}')
@@ -321,7 +342,17 @@ def pandas_unstack(x):
     assert names[0] == grouper, 'Unstacking error'
 
     x.index.rename(names, inplace=True)
-    return [d[1].set_index(d[1].index.get_level_values(1)) for d in list(x.groupby(grouper))]
+
+    groups = list(x.groupby(grouper))
+    n_levels = len(groups[0][1].index.levels)
+    if n_levels > 2:
+        g = groups[0][1]
+        index = pd.MultiIndex.from_arrays([g.index.get_level_values(len(g.index.levels) - n)
+                                           for n in range(1, len(g.index.levels))][::-1])
+        return [d[1].set_index(index) for d in groups]
+    else:
+        return [d[1].set_index(d[1].index.get_level_values(len(d[1].index.levels) - 1))
+                for d in list(x.groupby(grouper))]
 
 
 def apply_stacked(f):
@@ -336,25 +367,45 @@ def apply_stacked(f):
 
     Parameters
     ----------
-    f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
+    :param f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
        single DataFrame as output.
 
     Returns
     -------
-    A decorated function that supports any wrangle-able data types, applies the original function to the full
+    :return: a decorated function that supports any wrangle-able data types, applies the original function to the full
     list of datasets simultaneously, and then returns the result(s) as a new DataFrame or list of DataFrames.
     """
 
     @funnel
     def wrapped(data, *args, **kwargs):
+        def helper(d, x, split):
+            if split:
+                x0 = x[0]
+                x1 = x[1]
+            else:
+                x0 = x
+
+            if is_dataframe(d) and type(x0) is list and len(x0) == 1:
+                x0 = x0[0]
+
+            if split:
+                return x0, x1
+            else:
+                return x0
+
         stack_result = is_multiindex_dataframe(data)
 
         stacked_data = pandas_stack(data)
         transformed = f(stacked_data, *args, **kwargs)
 
-        if (not stack_result) and (('return_model' in kwargs.keys()) and kwargs['return_model']):
-            transformed[0] = pandas_unstack(transformed[0])
-        return transformed
+        return_model = kwargs.copy().pop('return_model', False)
+        if not stack_result:
+            if ('return_model' in kwargs.keys()) and kwargs['return_model']:
+                transformed[0] = pandas_unstack(transformed[0])
+            else:
+                transformed = pandas_unstack(transformed)
+
+        return helper(data, transformed, return_model)
 
     return wrapped
 
@@ -370,12 +421,12 @@ def apply_unstacked(f):
 
     Parameters
     ----------
-    f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
-       single DataFrame as output.
+    :param f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns
+      a single DataFrame as output.
 
     Returns
     -------
-    A decorated function that supports any wrangle-able data types, applies the original function to the full
+    :return: A decorated function that supports any wrangle-able data types, applies the original function to the full
     list of datasets separately, and then returns the result(s) as a new DataFrame or list of DataFrames.
     """
 

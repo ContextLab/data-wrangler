@@ -6,12 +6,11 @@ torchvision~=0.8.2
 pytorch-transformers~=1.1.0
 pytorch-pretrained-bert~=0.6.2
 sentencepiece==0.1.95
-pandas~=1.2.4
-scipy~=1.7.0
+pandas
+scipy
 numpy~=1.19.5
 requests~=2.26.0
 six~=1.15.0
-pytest>=5.4.1
 setuptools>=49.6.0
 flair~=0.8.0.post1
 tqdm~=4.49.0

@@ -12,11 +12,11 @@ def is_number(x):
 
     Parameters
     ----------
-    x: the object to test
+    :param x: the object to test
 
     Returns
     -------
-    True of x is a real or complex scalar and False otherwise
+    :return: True of x is a real or complex scalar and False otherwise
     """
     if np.isscalar(x):
         return np.isreal(x) or np.iscomplex(x)  # exclude single characters (non-numeric)
@@ -31,11 +31,11 @@ def is_array(x):
 
     Parameters
     ----------
-    x: an object, file path, URL, or Google ID
+    :param x: an object, file path or URL
 
     Returns
     -------
-    Whether (or not) x is an array (or if it points to an array)
+    :return: whether (or not) x is an array (or if it points to an array)
     """
     if (not ('str' in str(type(x)))) and (type(x).__module__ == 'numpy'):
         return True
@@ -59,10 +59,10 @@ def wrangle_array(data, return_model=False, **kwargs):
 
     Parameters
     ----------
-    data: an Array (or path to an Array)
-    return_model: if True, return a function for casting an Array into a DataFrame (along with the resulting DataFrame).
-       Default: False
-    kwargs: a list of keyword arguments:
+    :param data: an Array (or path to an Array)
+    :param return_model: if True, return a function for casting an Array into a DataFrame (along with the resulting
+      DataFrame).  Default: False
+    :param kwargs: a list of keyword arguments:
        - 'model': a callable function or constructor, or a dictionary containing the following keys:
          - 'model': a callable function or constructor
          - 'args': a list of arguments to pass to the function (in addition to data)
@@ -74,7 +74,7 @@ def wrangle_array(data, return_model=False, **kwargs):
 
     Returns
     -------
-    The resulting DataFrame
+    :return: The resulting DataFrame
     """
     def stacker(x):
         while x.ndim >= 3:

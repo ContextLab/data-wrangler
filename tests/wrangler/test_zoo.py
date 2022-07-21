@@ -43,30 +43,12 @@ def test_is_array(data, img_file, text_file, data_file):
     assert not dw.zoo.is_array(data_file)
 
 
-def test_wrangle_array(data):
+def test_wrangle_array(data, img_file):
     df = dw.zoo.wrangle_array(data.values)
     assert dw.zoo.is_dataframe(df)
     assert df.shape == (7, 5)
 
-
-def test_get_image(img_file):
-    img = dw.zoo.image.get_image(img_file)
-    assert img is not None
-    assert img.shape == (1400, 1920, 3)
-    assert np.max(img) == 248
-    assert np.min(img) == 12
-    assert np.isclose(np.mean(img), 152.193)
-
-
-def test_is_image(img_file, data, data_file, text_file):
-    assert dw.zoo.is_image(img_file)
-    assert not dw.zoo.is_image(data)
-    assert not dw.zoo.is_image(data_file)
-    assert not dw.zoo.is_image(text_file)
-
-
-def test_wrangle_image(img_file):
-    df = dw.zoo.wrangle_image(img_file)
+    df = dw.zoo.wrangle_array(img_file)
     assert df.shape == (1400, 5760)
     assert dw.zoo.is_dataframe(df)
     assert np.max(df.values) == 248
@@ -130,20 +112,11 @@ def test_wrangle_text_sklearn(text_file):
     assert np.allclose(cv[i:], cv2[1])
 
     # scikit-learn CountVectorizer + LatentDirichletAllocation
-    text_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation']}
+    text_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'corpus': 'sotus'}
     lda = dw.wrangle(text, text_kwargs=text_kwargs)
     assert lda.shape == (24, 50)
     assert dw.util.btwn(lda, 0, 1)
     assert np.allclose(lda.sum(axis=1), 1)
-
-    lda2 = dw.wrangle(text)  # default model: ['CountVectorizer', 'LatentDirichletAllocation']
-    assert lda2.shape == lda.shape
-    assert dw.util.btwn(lda2, 0, 1)
-    assert np.allclose(lda2.sum(axis=1), 1)
-
-    # check that the same lines of text received non-uniform topic weights
-    assert np.allclose(np.max(lda, axis=1) > 1 / lda.shape[1], np.max(lda2, axis=1) > 1 / lda2.shape[1])
-    assert np.where(np.max(lda, axis=1) > 1 / lda.shape[1])[0].tolist() == [1, 5, 8, 10, 11, 13, 16, 18, 21]
 
     # scikit-learn TfidfVectorizer + NMF
     text_kwargs = {'model': ['TfidfVectorizer', {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 25}}],
@@ -168,7 +141,8 @@ def test_wrangle_text_hugging_face(text_file):
                         +0.0083214, -0.0095522, -0.0250349, -0.0261115, -0.0308725, -0.0095388,
                         -0.0167642, -0.0208202, +0.0083214, -0.0095522, -0.0250349, -0.0261115])
 
-    distilbert_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['distilbert-base-uncased'], 'kwargs': {}}}
+    distilbert_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['distilbert-base-uncased'],
+                                   'kwargs': {}}}
     distilbert_embeddings = dw.wrangle(text, text_kwargs=distilbert_kwargs)
     assert distilbert_embeddings.shape == (24, 768)
     assert np.isclose(distilbert_embeddings.mean(axis=0).mean(axis=0), -0.0088198)

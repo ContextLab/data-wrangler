@@ -1,15 +1,40 @@
 name: Python package
 
-on: [push]
+on:
+  push:
+    paths:
+      - .github/workflows/**
+      - datawrangler/**
+      - tests/**
+      - MANIFEST.in
+      - Makefile
+      - requirements.txt
+      - requirements_dev.txt
+      - setup.cfg
+      - setup.py
+      - tox.ini
+  pull_request:
+    paths:
+      - .github/workflows/**
+      - datawrangler/**
+      - tests/**
+      - MANIFEST.in
+      - Makefile
+      - requirements.txt
+      - requirements_dev.txt
+      - setup.cfg
+      - setup.py
+      - tox.ini
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    # only run on pull requests between forks to avoid duplicate runs with 'push' event
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.7]
-
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
