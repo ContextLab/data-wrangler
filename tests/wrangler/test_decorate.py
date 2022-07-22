@@ -57,7 +57,7 @@ def test_funnel(data_file, data, img_file, text_file):
 
     assert wrangled[4].shape == (1, 4196)
     assert dw.util.btwn(wrangled[4], -1, 1)
-    assert np.isclose(wrangled[4].values.mean(), 0.00449942)
+    assert np.isclose(wrangled[4].values.mean(), 0.00449995376)
 
 
 def test_interpolate(data):

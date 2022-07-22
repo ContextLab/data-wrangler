@@ -1,0 +1,32 @@
+name: wrangler
+
+channels:
+  - pytorch
+
+dependencies:
+  - pytorch
+  - torchvision
+  - torchaudio
+  - cudatoolkit=11.3
+  - pandas
+  - matplotlib
+  - python
+  - scikit-learn
+  - scipy
+  - pip:
+    - flair
+    - sentence-transformers
+    - transformers
+    - datasets
+    - tqdm
+    - requests
+    - six
+    - setuptools
+    - configparser
+    - dill
+    - Pillow
+    - pytest
+    - Sphinx
+    - pydata-sphinx-theme
+    - nbsphinx
+  
