@@ -5,6 +5,12 @@ import warnings
 import functools         # used when applying default options
 import numpy as np
 
+try:
+    from flair import embeddings
+except:
+    pass # used when applying default options
+
+
 __version__ = '0.2.1'
 
 

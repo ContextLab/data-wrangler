@@ -319,32 +319,32 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
 
         # document-level embeddings-- re-compute by token
         if hasattr(wrapped_text, 'embedding') and len(wrapped_text.embedding) > 0:
-            embeddings = np.empty([len(wrapped_text), len(wrapped_text.embedding)])
-            embeddings[:] = np.nan
+            embedded_text = np.empty([len(wrapped_text), len(wrapped_text.embedding)])
+            embedded_text[:] = np.nan
 
             for i, token in enumerate(wrapped_text):
                 next_wrapped = Sentence(token.text)
                 model.embed(next_wrapped)
                 try:
-                    embeddings[i, :] = next_wrapped.embedding.detach().numpy()
+                    embedded_text[i, :] = next_wrapped.embedding.detach().numpy()
                 except TypeError: # if running on GPU, copy to CPU before converting to an array
-                    embeddings[i, :] = next_wrapped.embedding.cpu().detach().numpy()
+                    embedded_text[i, :] = next_wrapped.embedding.cpu().detach().numpy()
         else:  # token-level embeddings; wrangle into an array
-            embeddings = np.empty([len(wrapped_text), len(wrapped_text[0].embedding)])
-            embeddings[:] = np.nan
+            embedded_text = np.empty([len(wrapped_text), len(wrapped_text[0].embedding)])
+            embedded_text[:] = np.nan
             for i, token in enumerate(wrapped_text):
                 if len(token.embedding) > 0:
                     try:
-                        embeddings[i, :] = token.embedding
+                        embedded_text[i, :] = token.embedding
                     except TypeError:  # if the embeddings were computed on a GPU we need to copy them over to the CPU
-                        embeddings[i, :] = token.embedding.cpu()
+                        embedded_text[i, :] = token.embedding.cpu()
 
         if return_model:
-            return embeddings, {'model': model, 'args': args,
-                                'kwargs': {'embedding_kwargs': embedding_kwargs,
-                                           **kwargs}}
+            return embedded_text, {'model': model, 'args': args,
+                                   'kwargs': {'embedding_kwargs': embedding_kwargs,
+                                              **kwargs}}
         else:
-            return embeddings
+            return embedded_text
     else:                                 # unknown model
         raise RuntimeError('Cannot apply text model: {model}')
 
