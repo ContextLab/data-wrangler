@@ -300,9 +300,11 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         return transformed_text
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
-
-        if not 'Sentence' in dir():
-            raise ModuleNotFoundError('Huggingface libraries have not been installed.  Please run "pip install --upgrade pydata-wrangler[hugface]" to fix.')
+        
+        try:
+            tmp = Sentence
+        except NameError:
+            raise ModuleNotFoundError('Hugging-face libraries have not been installed.  Please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
