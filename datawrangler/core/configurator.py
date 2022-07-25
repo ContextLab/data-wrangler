@@ -2,12 +2,10 @@ from configparser import ConfigParser
 from copy import copy
 import os
 import warnings
-import functools
-from flair import embeddings           # used when applying default options
-import numpy as np                     # used when applying default options
+import functools         # used when applying default options
+import numpy as np
 
-
-__version__ = '0.1.7'
+__version__ = '0.2.1'
 
 
 def get_default_options(fname=None):
