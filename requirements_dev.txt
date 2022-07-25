@@ -2,3 +2,4 @@ Sphinx>=1.8.5
 pytest
 pydata-sphinx-theme
 nbsphinx
+pygments
