@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Manning"
+  given-names: "Jeremy"
+  orcid: "https://orcid.org/0000-0001-7613-4732"
+title: "DataWrangler: wrangler your messy data into consistent well-organized formats"
+version: 0.2.1
+doi: 10.5281/zenodo.5123310
+date-released: 2022-07-25
+url: "https://github.com/ContextLab/data-wrangler"
