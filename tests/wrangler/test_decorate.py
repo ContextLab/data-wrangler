@@ -52,12 +52,12 @@ def test_funnel(data_file, data, img_file, text_file):
     assert np.allclose(wrangled[0].values, wrangled[2].values)
 
     assert wrangled[3].shape == (1400, 5760)
-    assert np.isclose(wrangled[3].values.mean(), 152.193)
+    assert np.isclose(wrangled[3].values.mean(), 152.19, atol=0.1)
     assert dw.util.btwn(wrangled[3], 12, 248)
 
     assert wrangled[4].shape == (1, 4196)
     assert dw.util.btwn(wrangled[4], -1, 1)
-    assert np.isclose(wrangled[4].values.mean(), 0.00449942)
+    assert np.isclose(wrangled[4].values.mean(), 0.00449995376, atol=1e-5)
 
 
 def test_interpolate(data):

@@ -7,6 +7,9 @@ from setuptools import setup, find_packages
 with open('requirements.txt') as requirements_file:
     requirements = requirements_file.read()
 
+with open('requirements_hf.txt') as requirements_hf_file:
+    hf_requirements = requirements_hf_file.read()
+
 test_requirements = ['pytest>=3', ]
 
 setup(
@@ -26,10 +29,12 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     description="Wrangle messy data into pandas DataFrames, with a special focus on text data and natural language "
                 "processing",
     install_requires=requirements,
+    extras_require={'hf': hf_requirements, 'dev': test_requirements},
     license="MIT license",
     long_description='For more information see https://data-wrangler.readthedocs.io/en/latest/',
     long_description_content_type='text/x-rst',
@@ -41,6 +46,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/ContextLab/data-wrangler',
-    version='0.1.7',
+    version='0.2.0',
     zip_safe=False,
 )
