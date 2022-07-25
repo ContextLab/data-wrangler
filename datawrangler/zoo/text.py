@@ -124,6 +124,9 @@ def get_text_model(x):
             return eval(f'{parent}.{model_name}')
         except AttributeError:
             return None
+        except NameError:
+            raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face models, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
+
 
     for p in ['text', 'decomposition', 'embeddings']:
         m = model_lookup(x, p)

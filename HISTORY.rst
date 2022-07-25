@@ -2,6 +2,16 @@
 History
 =======
 
+0.2.2 (22-07-25)
+-----------------
+
+* Better error handling when hugging-face libraries aren't installed and user asks to embed text using hugging-face models
+
+0.2.1 (22-07-25)
+------------------
+
+* Bug fixes when hugging-face libraries aren't installed
+
 0.2.0 (2022-07-25)
 ------------------
 
