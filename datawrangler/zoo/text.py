@@ -2,12 +2,16 @@ import six
 import os
 import warnings
 import numpy as np
-from flair.data import Sentence
-from flair.datasets import UD_ENGLISH
-from flair import embeddings
 from datasets import load_dataset, get_dataset_config_names, list_datasets
 from sklearn.feature_extraction import text
 from sklearn import decomposition
+
+try:
+    from flair.data import Sentence
+    from flair.datasets import UD_ENGLISH
+    from flair import embeddings
+except ModuleNotFoundError:  # ignore missing flair module for now...
+    pass
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
@@ -297,13 +301,16 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
 
+        if not 'Sentence' in dir():
+            raise ModuleNotFoundError('Huggingface libraries have not been installed.  Please run "pip install --upgrade pydata-wrangler[hugface]" to fix.')
+
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
                 return text, {'model': model, 'args': args, 'kwargs': kwargs}
             return text
 
         embedding_kwargs = kwargs.pop('embedding_kwargs', {})
-
+        
         model = apply_defaults(model)(*args, **embedding_kwargs)
         wrapped_text = Sentence(text, **kwargs)
         model.embed(wrapped_text)
