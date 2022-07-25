@@ -2,12 +2,16 @@ import six
 import os
 import warnings
 import numpy as np
-from flair.data import Sentence
-from flair.datasets import UD_ENGLISH
-from flair import embeddings
 from datasets import load_dataset, get_dataset_config_names, list_datasets
 from sklearn.feature_extraction import text
 from sklearn import decomposition
+
+try:
+    from flair.data import Sentence
+    from flair.datasets import UD_ENGLISH
+    from flair import embeddings
+except ModuleNotFoundError:  # ignore missing flair module for now...
+    pass
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
@@ -296,6 +300,11 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         return transformed_text
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
+        
+        try:
+            tmp = Sentence
+        except NameError:
+            raise ModuleNotFoundError('Hugging-face libraries have not been installed.  Please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
@@ -303,7 +312,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             return text
 
         embedding_kwargs = kwargs.pop('embedding_kwargs', {})
-
+        
         model = apply_defaults(model)(*args, **embedding_kwargs)
         wrapped_text = Sentence(text, **kwargs)
         model.embed(wrapped_text)
@@ -316,13 +325,19 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             for i, token in enumerate(wrapped_text):
                 next_wrapped = Sentence(token.text)
                 model.embed(next_wrapped)
-                embeddings[i, :] = next_wrapped.embedding.detach().numpy()
+                try:
+                    embeddings[i, :] = next_wrapped.embedding.detach().numpy()
+                except TypeError: # if running on GPU, copy to CPU before converting to an array
+                    embeddings[i, :] = next_wrapped.embedding.cpu().detach().numpy()
         else:  # token-level embeddings; wrangle into an array
             embeddings = np.empty([len(wrapped_text), len(wrapped_text[0].embedding)])
             embeddings[:] = np.nan
             for i, token in enumerate(wrapped_text):
                 if len(token.embedding) > 0:
-                    embeddings[i, :] = token.embedding
+                    try:
+                        embeddings[i, :] = token.embedding
+                    except TypeError:  # if the embeddings were computed on a GPU we need to copy them over to the CPU
+                        embeddings[i, :] = token.embedding.cpu()
 
         if return_model:
             return embeddings, {'model': model, 'args': args,

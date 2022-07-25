@@ -2,9 +2,10 @@ import os
 import requests
 import dill
 import re
+import PIL
+from io import BytesIO
 import numpy as np
 from hashlib import blake2b as hasher
-from matplotlib import pyplot as plt
 
 from ..core.configurator import get_default_options
 from .panda_handler import load_dataframe
@@ -48,7 +49,7 @@ def load_remote(url):
 
     token = get_confirm_token(response)
     if token:
-        params['confirm'] = token
+        params['confirm'] = token  # FIXME-- what's this supposed to be doing?
         response = session.get(url, params=params, stream=True)
 
     if get_extension(url) in ['txt']:
@@ -72,8 +73,8 @@ def load(x, dtype=None, **kwargs):
           - txt files: treated as plain text
           - any filetype supported by the Pandas library:
             https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
-          - any image filetype supported by the Matplotlib library; for a full list see:
-            matplotlib.pyplot.gcf().canvas.get_supported_filetypes()
+          - any image filetype supported by PIL; for a full list see:
+            https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
     :param kwargs: any additional keyword arguments are passed to whatever function is selected to load in the dataset.
       For example, when loading in a csv file (a Pandas-compatible format), passing the keyword argument index_col=0
       will tell Pandas to interpret the first (0) column as the resulting DataFrame's index when loading the file's
@@ -113,7 +114,14 @@ def load(x, dtype=None, **kwargs):
             elif dtype in ['npy', 'npz']:
                 return np.load(fname)
             elif dtype in img_types:
-                return plt.imread(fname)
+                if os.path.exists(fname):
+                    im = PIL.Image.open(fname)
+                else:
+                    try:
+                        im = PIL.Image.open(BytesIO(requests.get(fname).content))
+                    except:
+                        raise FileNotFoundError(f'File not found or invalid URL: {fname}')
+                return np.array(im.getdata()).reshape(im.size[1], im.size[0], np.array(im.getdata()).shape[1])
             else:
                 raise ValueError(f'Unknown datatype: {dtype}')
 
@@ -129,7 +137,7 @@ def load(x, dtype=None, **kwargs):
             data = load_remote(x)
     else:
         return None
-    save(x, data, dtype=dtype)
+    save(x, data, dtype=dtype) # FIXME: these last two lines result in a duplicated copy of each file...
     return load(x, dtype=dtype, **kwargs)
 
 
