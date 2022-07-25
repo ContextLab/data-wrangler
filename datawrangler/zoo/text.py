@@ -2,7 +2,6 @@ import six
 import os
 import warnings
 import numpy as np
-from datasets import load_dataset, get_dataset_config_names, list_datasets
 from sklearn.feature_extraction import text
 from sklearn import decomposition
 
@@ -11,6 +10,11 @@ try:
     from flair.datasets import UD_ENGLISH
     from flair import embeddings
 except ModuleNotFoundError:  # ignore missing flair module for now...
+    pass
+
+try:
+    from datasets import load_dataset, get_dataset_config_names, list_datasets
+except ModuleNotFoundError:  # this will be triggered if hugging-face libraries aren't installed
     pass
 
 from .array import is_array, wrangle_array
@@ -185,6 +189,8 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     except ValueError:
         raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
                            f'Available configurations: {", ".join(get_dataset_config_names(dataset_name))}')
+    except NameError:
+        raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face corpora, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
     corpus = []
     content_keys = ['text', 'content']
