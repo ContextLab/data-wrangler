@@ -10,3 +10,4 @@ tqdm
 configparser
 dill
 Pillow
+matplotlib

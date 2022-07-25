@@ -2,10 +2,9 @@ import os
 import requests
 import dill
 import re
-import PIL
-from io import BytesIO
 import numpy as np
 from hashlib import blake2b as hasher
+from matplotlib import pyplot as plt
 
 from ..core.configurator import get_default_options
 from .panda_handler import load_dataframe
@@ -49,6 +48,7 @@ def load_remote(url):
 
     token = get_confirm_token(response)
     if token:
+        raise NotImplementedError('This feature is poorly implemented.  Try downloading and reading in the file locally.')
         params['confirm'] = token  # FIXME-- what's this supposed to be doing?
         response = session.get(url, params=params, stream=True)
 
@@ -114,14 +114,7 @@ def load(x, dtype=None, **kwargs):
             elif dtype in ['npy', 'npz']:
                 return np.load(fname)
             elif dtype in img_types:
-                if os.path.exists(fname):
-                    im = PIL.Image.open(fname)
-                else:
-                    try:
-                        im = PIL.Image.open(BytesIO(requests.get(fname).content))
-                    except:
-                        raise FileNotFoundError(f'File not found or invalid URL: {fname}')
-                return np.array(im.getdata()).reshape(im.size[1], im.size[0], np.array(im.getdata()).shape[1])
+                return plt.imread(fname)
             else:
                 raise ValueError(f'Unknown datatype: {dtype}')
 
