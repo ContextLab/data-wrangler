@@ -11,7 +11,7 @@ except:
     pass # used when applying default options
 
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 def get_default_options(fname=None):

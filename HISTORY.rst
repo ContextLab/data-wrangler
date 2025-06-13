@@ -2,6 +2,39 @@
 History
 =======
 
+0.3.0 (2025-01-13)
+------------------
+
+**Major Release: NumPy 2.0+ Compatibility & Modern ML Libraries**
+
+This release brings full compatibility with NumPy 2.0+ and pandas 2.0+ while modernizing the text embedding infrastructure:
+
+**Breaking Changes:**
+* Replaced Flair with sentence-transformers for text embeddings
+* Removed gensim dependency (eliminates NumPy version conflicts) 
+* Updated text embedding API to use sentence-transformers models
+
+**New Features:**
+* Full NumPy 2.0+ and pandas 2.0+ compatibility
+* Modern sentence-transformers integration for text embeddings
+* Support for latest scikit-learn, matplotlib, and scipy versions
+* Enhanced error handling for missing dependencies
+
+**Bug Fixes:**
+* Fixed numpy.str_ deprecation that broke in NumPy 2.0+
+* Updated HuggingFace datasets import for API changes
+* Fixed sklearn IterativeImputer experimental import compatibility
+* Replaced deprecated matplotlib.pyplot.imread
+
+**Documentation:**
+* Updated all examples to use sentence-transformers syntax
+* Modernized installation instructions and model references
+* Comprehensive tutorial updates with new embedding approaches
+
+**Migration Guide:**
+Old Flair syntax: `{'model': 'TransformerDocumentEmbeddings', 'args': ['bert-base-uncased']}`
+New syntax: `{'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}`
+
 0.2.2 (22-07-25)
 -----------------
 
