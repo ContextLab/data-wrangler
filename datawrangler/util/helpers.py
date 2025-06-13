@@ -47,7 +47,7 @@ def dataframe_like(x, debug=False):
     :return: True (if the object can be treated like a DataFrame) or False otherwise
     """
     required_attributes = ['values', 'index', 'columns', 'shape', 'stack', 'unstack', 'loc', 'iloc', 'size', 'copy',
-                           'head', 'tail', 'items', 'iteritems', 'keys', 'iterrows', 'itertuples',
+                           'head', 'tail', 'items', 'keys', 'iterrows', 'itertuples',
                            'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
                            'pow', 'dot', 'radd', 'rsub', 'rmul', 'rdiv', 'rtruediv', 'rfloordiv', 'rmod', 'rpow',
                            'lt', 'gt', 'le', 'ge', 'ne', 'eq', 'apply', 'groupby', 'rolling', 'expanding', 'abs',
