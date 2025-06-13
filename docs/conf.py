@@ -69,7 +69,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'datawrangler'
 # noinspection PyShadowingBuiltins
-copyright = "2021, Contextual Dynamics Lab"
+copyright = "2025, Contextual Dynamics Lab"
 author = "Contextual Dynamics Lab"
 
 # The version info for the project you're documenting, acts as replacement
@@ -104,32 +104,16 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'pydata_sphinx_theme'
+html_theme = 'insegel'
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_logo = "images/wrangler_logo.png"
-# noinspection HttpUrlsUsage
+# Theme options for insegel theme
 html_theme_options = {
-    "icon_links": [
-        {
-            "name": "GitHub",
-            "url": "https://github.com/ContextLab/data-wrangler",
-            "icon": "fab fa-github-square",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/ContextMemLab",
-            "icon": "fab fa-twitter-square",
-        },
-        {
-            "name": "Web",
-            "url": "http://www.context-lab.com",
-            "icon": "fa fa-globe",
-        },
-    ]
+    # Add insegel-specific options here if needed
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
