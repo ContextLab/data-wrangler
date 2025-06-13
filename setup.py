@@ -15,7 +15,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="Contextual Dynamics Lab",
     author_email='contextualdynamics@gmail.com',
-    python_requires='>=3.6',
+    python_requires='>=3.9',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -25,11 +25,10 @@ setup(
         'Natural Language :: English',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
     description="Wrangle messy data into pandas DataFrames, with a special focus on text data and natural language "
                 "processing",

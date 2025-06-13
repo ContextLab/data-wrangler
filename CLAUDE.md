@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `make install` - Install package locally
 
 ### Testing
-- `make test-all` - Run tox across Python 3.6-3.10
+- `make test-all` - Run tox across Python 3.9-3.12
 - Tests located in `/tests/wrangler/` with sample data in `/tests/resources/`
 
 ## Architecture
