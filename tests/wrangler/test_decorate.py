@@ -37,7 +37,7 @@ def test_funnel(data_file, data, img_file, text_file):
         return x
 
     dataframe_kwargs = {'load_kwargs': {'index_col': 0}}
-    text_kwargs = {'model': 'StackedEmbeddings'}
+    text_kwargs = {'model': 'all-MiniLM-L6-v2'}
     wrangle_kwargs = {'return_dtype': True}
     wrangled, inferred_dtypes = f([data_file, data, data.values, img_file, text_file],
                                   dataframe_kwargs=dataframe_kwargs,
@@ -55,9 +55,9 @@ def test_funnel(data_file, data, img_file, text_file):
     assert np.isclose(wrangled[3].values.mean(), 152.19, atol=0.1)
     assert dw.util.btwn(wrangled[3], 12, 248)
 
-    assert wrangled[4].shape == (1, 4196)
+    assert wrangled[4].shape == (1, 384)  # all-MiniLM-L6-v2 produces 384-dim embeddings
     assert dw.util.btwn(wrangled[4], -1, 1)
-    assert np.isclose(wrangled[4].values.mean(), 0.00449995376, atol=1e-5)
+    assert np.isclose(wrangled[4].values.mean(), -0.0007741971, atol=1e-5)
 
 
 def test_interpolate(data):

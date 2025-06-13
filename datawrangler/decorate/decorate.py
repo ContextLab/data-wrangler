@@ -7,8 +7,14 @@ import sklearn.manifold as manifold
 import sklearn.feature_extraction.text as text
 import sklearn.mixture as mixture
 
-from sklearn.experimental import enable_iterative_imputer
-import sklearn.impute as impute
+try:
+    # Try to import IterativeImputer directly (newer sklearn versions)
+    from sklearn.impute import IterativeImputer
+    import sklearn.impute as impute
+except ImportError:
+    # Fall back to experimental import (older sklearn versions)
+    from sklearn.experimental import enable_iterative_imputer
+    import sklearn.impute as impute
 
 from ..zoo import wrangle
 from ..zoo.text import is_sklearn_model

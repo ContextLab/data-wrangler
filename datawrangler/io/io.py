@@ -114,7 +114,9 @@ def load(x, dtype=None, **kwargs):
             elif dtype in ['npy', 'npz']:
                 return np.load(fname)
             elif dtype in img_types:
-                return plt.imread(fname)
+                # Use matplotlib.image.imread instead of deprecated plt.imread
+                import matplotlib.image as mpimg
+                return mpimg.imread(fname)
             else:
                 raise ValueError(f'Unknown datatype: {dtype}')
 

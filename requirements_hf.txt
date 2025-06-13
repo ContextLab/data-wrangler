@@ -1,10 +1,6 @@
-konoha
 torch
 torchvision
-pytorch-transformers
-pytorch-pretrained-bert
 sentencepiece
-flair
 datasets
 sentence-transformers
 tokenizers

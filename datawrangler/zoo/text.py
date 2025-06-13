@@ -6,16 +6,27 @@ from sklearn.feature_extraction import text
 from sklearn import decomposition
 
 try:
-    from flair.data import Sentence
-    from flair.datasets import UD_ENGLISH
-    from flair import embeddings
-except ModuleNotFoundError:  # ignore missing flair module for now...
-    pass
+    from sentence_transformers import SentenceTransformer
+except ModuleNotFoundError:  # ignore missing sentence-transformers module for now...
+    SentenceTransformer = None
 
 try:
-    from datasets import load_dataset, get_dataset_config_names, list_datasets
+    from transformers import AutoTokenizer, AutoModel
+    import torch
+except ModuleNotFoundError:  # ignore missing transformers module for now...
+    AutoTokenizer = None
+    AutoModel = None
+    torch = None
+
+try:
+    from datasets import load_dataset, get_dataset_config_names
+    # list_datasets was removed in datasets 2.0+, replace with Hub API if needed
+    try:
+        from huggingface_hub import list_datasets
+    except ImportError:
+        list_datasets = None
 except ModuleNotFoundError:  # this will be triggered if hugging-face libraries aren't installed
-    pass
+    list_datasets = None
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
@@ -46,7 +57,7 @@ def is_sklearn_model(x):
 
 def is_hugging_face_model(x):
     """
-    Determine whether an object seems to be a valid hugging-face model
+    Determine whether an object seems to be a valid hugging-face model (sentence-transformers)
 
     Parameters
     ----------
@@ -54,9 +65,18 @@ def is_hugging_face_model(x):
 
     Returns
     -------
-    :return: True if x contains an "embed" method, and False otherwise.
+    :return: True if x is a sentence-transformers model or model name, and False otherwise.
     """
-    return hasattr(x, 'embed')
+    # Check for SentenceTransformer class or instance
+    if x == SentenceTransformer or (hasattr(x, '__class__') and 'SentenceTransformer' in str(x.__class__)):
+        return True
+    
+    # Check for sentence-transformers model names (common ones)
+    if isinstance(x, str) and any(name in x for name in ['all-MiniLM', 'all-mpnet', 'all-distilroberta', 'paraphrase-', 'sentence-t5']):
+        return True
+    
+    # Check for encode method (sentence-transformers interface)
+    return hasattr(x, 'encode')
 
 
 def robust_is_sklearn_model(x):
@@ -79,15 +99,14 @@ def robust_is_sklearn_model(x):
 
 def robust_is_hugging_face_model(x):
     """
-    Wrapper for is_hugging_face_model that also supports strings-- e.g., the string 'WordEmbeddings' will be a valid
-    hugging-face model when checked with this function, because 'WordEmbeddings' is defined in the flair.embeddings
-    module and contains an "embed" method.
+    Wrapper for is_hugging_face_model that also supports strings-- e.g., the string 'all-MiniLM-L6-v2' will be a valid
+    hugging-face model when checked with this function, because it's a sentence-transformers model name.
     ----------
     :param x: a to-be-tested model object or a string
 
     Returns
     -------
-    :return: True if x (or the hugging-face module x evaluates to) contains an "embed" method and False otherwise.
+    :return: True if x (or the sentence-transformers model x evaluates to) is a valid model and False otherwise.
     """
     x = get_text_model(x)
     return is_hugging_face_model(x)
@@ -128,7 +147,20 @@ def get_text_model(x):
             raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face models, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
 
-    for p in ['text', 'decomposition', 'embeddings']:
+    # Check for sentence-transformers models first
+    if x == 'SentenceTransformer' and SentenceTransformer is not None:
+        return SentenceTransformer
+    
+    # Check if it's a sentence-transformers model name
+    if isinstance(x, str) and SentenceTransformer is not None:
+        try:
+            # Try to load as a sentence transformer model
+            SentenceTransformer(x)
+            return SentenceTransformer
+        except:
+            pass
+    
+    for p in ['text', 'decomposition']:
         m = model_lookup(x, p)
         if m is not None:
             return m
@@ -188,7 +220,14 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
     try:
         data = load_dataset(dataset_name, config_name)
     except FileNotFoundError:
-        raise RuntimeError(f'Corpus not found: {dataset_name}.  Available corpora: {", ".join(list_datasets())}')
+        available_msg = ""
+        if list_datasets is not None:
+            try:
+                available_corpora = list_datasets()
+                available_msg = f"  Available corpora: {', '.join(available_corpora)}"
+            except Exception:
+                available_msg = "  (Unable to list available corpora)"
+        raise RuntimeError(f'Corpus not found: {dataset_name}.{available_msg}')
     except ValueError:
         raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
                            f'Available configurations: {", ".join(get_dataset_config_names(dataset_name))}')
@@ -229,29 +268,21 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition
             These may be passed either as callable modules (e.g., sklearn.decomposition.NMF) or as strings (e.g.,
             'NMF').  Default options for each model are defined in config.ini.
-      - Hugging-face models.  These take raw text as input and produce text embeddings as output.  Hugging-face models
-          are specified using dictionaries containing the following keys:
-            - 'model': the type of embedding to use-- any flair embedding type is supported; for a full list see
-                https://github.com/flairNLP/flair#tutorials.  For word-level embeddings, 'WordEmbeddings' is
-                recommended.  For document-level embeddings, we recommend using either 'TransformerDocumentEmbeddings'
-                (to model the full document's content) or 'SentenceTransformerDocumentEmbeddings' (if sentence-level
-                representations are needed).  Embeddings may be specified either as a string (e.g.,
-                'TransformerDocumentEmbeddings') or as a callable module (e.g.,
-                flair.embeddings.TransformerDocumentEmbeddings).
-            - 'args': a list of unnamed arguments to pass to the given model.  All pre-trained hugging-face models are
-                supported, including (but not limited to):
-                  - word-level embedding models:
-                      https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_4_ELMO_BERT_FLAIR_EMBEDDING.md
-                  - sentence-level transformer models:
-                      https://docs.google.com/spreadsheets/d/14QplCdTCDwEmTqrn1LH4yrbKvdogK4oQvYO1K1aPR5M/edit#gid=0
-                  - document-level transformer models: https://huggingface.co/transformers/pretrained_models.html
-            - 'kwargs': a dictionary of keyword arguments to pass to the given model (these are model-specific; for
-                 details and examples see https://github.com/flairNLP/flair#tutorials
-          for example, to embed a document using GPT-2, use
-            {model: 'TransformerDocumentEmbeddings', args: ['gpt2'], 'kwargs': {}}
+      - Hugging-face models.  These take raw text as input and produce text embeddings as output.  Models are
+          specified using sentence-transformers:
+            - 'model': the name of a sentence-transformers model or 'SentenceTransformer'. Popular models include:
+                - 'all-MiniLM-L6-v2': Fast, good for general sentence similarity
+                - 'all-mpnet-base-v2': High quality sentence embeddings  
+                - 'paraphrase-MiniLM-L6-v2': Good for paraphrase detection
+                For a full list see: https://www.sbert.net/docs/pretrained_models.html
+            - 'args': a list of arguments to pass to the model (typically the model name if using 'SentenceTransformer')
+            - 'kwargs': a dictionary of keyword arguments to pass to the model initialization
+          for example, to embed text using a high-quality model, use:
+            {'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}
+          or using the SentenceTransformer class:
+            {'model': 'SentenceTransformer', 'args': ['all-MiniLM-L6-v2'], 'kwargs': {}}
           The 'kwargs' dictionary may be further subdivided; if an 'embedding_kwargs' key is included in 'kwargs',
           its values will be treated as keyword arguments to be applied to the embedding model when it is initialized.
-          All other keyword arguments are passed on to flair.data.Sentence in order to tokenize the given text.
     :param text: a string (a single word, sentence, or document), list of strings (a list of words, sentences, or
       documents), or a nested list of strings (a list of listed words, sentences, or documents).  Strings and (shallow)
       lists of strings result in a single embedding matrix; nested lists produce a list of embedding matrices (one
@@ -310,10 +341,8 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
         
-        try:
-            tmp = Sentence
-        except NameError:
-            raise ModuleNotFoundError('Hugging-face libraries have not been installed.  Please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
+        if SentenceTransformer is None:
+            raise ModuleNotFoundError('Hugging-face libraries have not been installed. Please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
             if return_model:
@@ -322,34 +351,39 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
 
         embedding_kwargs = kwargs.pop('embedding_kwargs', {})
         
-        model = apply_defaults(model)(*args, **embedding_kwargs)
-        wrapped_text = Sentence(text, **kwargs)
-        model.embed(wrapped_text)
+        # Handle different model specifications for sentence-transformers
+        if isinstance(model, str):
+            # Model name string (e.g., 'all-MiniLM-L6-v2')
+            model_instance = SentenceTransformer(model, **embedding_kwargs)
+        elif model == SentenceTransformer:
+            # SentenceTransformer class with args
+            if args:
+                model_instance = SentenceTransformer(args[0], **embedding_kwargs)
+            else:
+                model_instance = SentenceTransformer('all-MiniLM-L6-v2', **embedding_kwargs)
+        else:
+            # Already instantiated model
+            model_instance = model
 
-        # document-level embeddings-- re-compute by token
-        if hasattr(wrapped_text, 'embedding') and len(wrapped_text.embedding) > 0:
-            embedded_text = np.empty([len(wrapped_text), len(wrapped_text.embedding)])
-            embedded_text[:] = np.nan
+        # Convert text to list if it's a single string
+        if isinstance(text, str):
+            texts = [text]
+        else:
+            texts = text
 
-            for i, token in enumerate(wrapped_text):
-                next_wrapped = Sentence(token.text)
-                model.embed(next_wrapped)
-                try:
-                    embedded_text[i, :] = next_wrapped.embedding.detach().numpy()
-                except TypeError: # if running on GPU, copy to CPU before converting to an array
-                    embedded_text[i, :] = next_wrapped.embedding.cpu().detach().numpy()
-        else:  # token-level embeddings; wrangle into an array
-            embedded_text = np.empty([len(wrapped_text), len(wrapped_text[0].embedding)])
-            embedded_text[:] = np.nan
-            for i, token in enumerate(wrapped_text):
-                if len(token.embedding) > 0:
-                    try:
-                        embedded_text[i, :] = token.embedding
-                    except TypeError:  # if the embeddings were computed on a GPU we need to copy them over to the CPU
-                        embedded_text[i, :] = token.embedding.cpu()
+        # Generate embeddings
+        embedded_text = model_instance.encode(texts, **kwargs)
+        
+        # Convert to numpy array if not already
+        if not isinstance(embedded_text, np.ndarray):
+            embedded_text = np.array(embedded_text)
+
+        # If input was a single string, return single embedding
+        if isinstance(text, str):
+            embedded_text = embedded_text[0]
 
         if return_model:
-            return embedded_text, {'model': model, 'args': args,
+            return embedded_text, {'model': model_instance, 'args': args,
                                    'kwargs': {'embedding_kwargs': embedding_kwargs,
                                               **kwargs}}
         else:
@@ -376,7 +410,7 @@ def get_text(x, force_literal=False):
     """
     if type(x) == list:
         return [get_text(t) for t in x]
-    if (type(x) in six.string_types) or (type(x) == np.str_):
+    if (type(x) in six.string_types) or (type(x) == str):
         if os.path.exists(x):
             if not force_literal:
                 return get_text(load(x), force_literal=True)

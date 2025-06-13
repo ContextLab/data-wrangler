@@ -6,7 +6,7 @@ import functools         # used when applying default options
 import numpy as np
 
 try:
-    from flair import embeddings
+    from sentence_transformers import SentenceTransformer
 except:
     pass # used when applying default options
 

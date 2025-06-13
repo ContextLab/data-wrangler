@@ -130,28 +130,28 @@ def test_wrangle_text_hugging_face(text_file):
     text = dw.io.load(text_file).split('\n')
     words = [s.split() for s in text]
 
-    glove_kwargs = {'model': {'model': 'WordEmbeddings', 'args': ['glove'], 'kwargs': {}}}
-    glove_embeddings = dw.wrangle(words, text_kwargs=glove_kwargs)
-    assert len(glove_embeddings) == 24
-    assert all([a == b for a, b in zip([g.shape[0] for g in glove_embeddings], [len(w) for w in words])])
-    assert all(g.shape[1] == 100 for g in glove_embeddings)
-    assert np.allclose([g.values.mean() for g in glove_embeddings],
-                       [-0.0025757, -0.0095522, -0.0250349, -0.0261115, +0.0083214, -0.0095522,
-                        -0.0250349, -0.0261115, -0.0162621, -0.0142552, -0.0116034, -0.0279718,
-                        +0.0083214, -0.0095522, -0.0250349, -0.0261115, -0.0308725, -0.0095388,
-                        -0.0167642, -0.0208202, +0.0083214, -0.0095522, -0.0250349, -0.0261115], atol=0.001)
+    sentence_transformer_kwargs = {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
+    sentence_embeddings = dw.wrangle(words, text_kwargs=sentence_transformer_kwargs)
+    assert len(sentence_embeddings) == 24
+    assert all([a == b for a, b in zip([g.shape[0] for g in sentence_embeddings], [len(w) for w in words])])
+    assert all(g.shape[1] == 384 for g in sentence_embeddings)  # all-MiniLM-L6-v2 produces 384-dim embeddings
+    assert np.allclose([g.values.mean() for g in sentence_embeddings],
+                       [0.0011996, 0.0009824, 0.001065, 0.0012655, 0.001737, 0.0009824,
+                        0.001065, 0.0012655, 0.0012792, 0.0010756, 0.0012165, 0.0014435,
+                        0.001737, 0.0009824, 0.001065, 0.0012655, 0.0013562, 0.0010959,
+                        0.0015061, 0.0013031, 0.001737, 0.0009824, 0.001065, 0.0012655], atol=0.001)
 
-    distilbert_kwargs = {'model': {'model': 'TransformerDocumentEmbeddings', 'args': ['distilbert-base-uncased'],
+    distilbert_kwargs = {'model': {'model': 'all-mpnet-base-v2', 'args': [],
                                    'kwargs': {}}}
     distilbert_embeddings = dw.wrangle(text, text_kwargs=distilbert_kwargs)
-    assert distilbert_embeddings.shape == (24, 768)
-    assert np.isclose(distilbert_embeddings.mean(axis=0).mean(axis=0), -0.0088198, atol=0.0001)
+    assert distilbert_embeddings.shape == (24, 768)  # all-mpnet-base-v2 produces 768-dim embeddings
+    assert np.isclose(distilbert_embeddings.mean(axis=0).mean(axis=0), -0.000105, atol=0.0001)
 
-    bert_kwargs = {'model': {'model': 'SentenceTransformerDocumentEmbeddings', 'args': ['bert-base-nli-mean-tokens'],
+    bert_kwargs = {'model': {'model': 'all-MiniLM-L12-v2', 'args': [],
                              'kwargs': {}}}
     bert_embeddings = dw.wrangle(text, text_kwargs=bert_kwargs)
-    assert bert_embeddings.shape == (24, 768)
-    assert np.isclose(bert_embeddings.mean(axis=0).mean(axis=0), -0.018518, atol=0.0001)
+    assert bert_embeddings.shape == (24, 384)  # all-MiniLM-L12-v2 produces 384-dim embeddings
+    assert np.isclose(bert_embeddings.mean(axis=0).mean(axis=0), -0.0001967, atol=0.0001)
 
 
 def test_is_null():
