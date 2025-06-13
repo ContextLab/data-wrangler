@@ -2,19 +2,19 @@ import warnings
 import functools
 import numpy as np
 import pandas as pd
-import sklearn.decomposition as decomposition
-import sklearn.manifold as manifold
-import sklearn.feature_extraction.text as text
-import sklearn.mixture as mixture
 
-try:
-    # Try to import IterativeImputer directly (newer sklearn versions)
-    from sklearn.impute import IterativeImputer
-    import sklearn.impute as impute
-except ImportError:
-    # Fall back to experimental import (older sklearn versions)
-    from sklearn.experimental import enable_iterative_imputer
-    import sklearn.impute as impute
+# Use lazy imports for sklearn modules
+from ..util.lazy_imports import (
+    get_sklearn_decomposition,
+    get_sklearn_manifold,
+    get_sklearn_feature_extraction_text,
+    get_sklearn_mixture,
+    lazy_import_with_fallback
+)
+
+# Create lazy importers for sklearn.impute
+_get_sklearn_impute = lazy_import_with_fallback('sklearn.impute')
+_get_IterativeImputer = lazy_import_with_fallback('sklearn.impute', 'IterativeImputer')
 
 from ..zoo import wrangle
 from ..zoo.text import is_sklearn_model
@@ -137,13 +137,33 @@ def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=F
     return transformed_data
 
 
-reduce_models = ['UMAP']
-reduce_models.extend(import_sklearn_models(decomposition))
-reduce_models.extend(import_sklearn_models(manifold))
+# Initialize lazy model lists - will be populated when first accessed
+reduce_models = None
+text_vectorizers = None
+impute_models = None
 
-text_vectorizers = import_sklearn_models(text)
+def _get_reduce_models():
+    """Lazy initialization of reduce models."""
+    global reduce_models
+    if reduce_models is None:
+        reduce_models = ['UMAP']
+        reduce_models.extend(import_sklearn_models(get_sklearn_decomposition()))
+        reduce_models.extend(import_sklearn_models(get_sklearn_manifold()))
+    return reduce_models
 
-impute_models = import_sklearn_models(impute)
+def _get_text_vectorizers():
+    """Lazy initialization of text vectorizers."""
+    global text_vectorizers
+    if text_vectorizers is None:
+        text_vectorizers = import_sklearn_models(get_sklearn_feature_extraction_text())
+    return text_vectorizers
+
+def _get_impute_models():
+    """Lazy initialization of impute models."""
+    global impute_models
+    if impute_models is None:
+        impute_models = import_sklearn_models(_get_sklearn_impute())
+    return impute_models
 
 # source: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
 interpolation_models = ['linear', 'time', 'index', 'pad', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'spline',

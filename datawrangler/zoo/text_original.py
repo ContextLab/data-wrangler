@@ -2,60 +2,31 @@ import six
 import os
 import warnings
 import numpy as np
+from sklearn.feature_extraction import text
+from sklearn import decomposition
 
-# Lazy imports for heavy dependencies
-from ..util.lazy_imports import (
-    lazy_import_with_fallback,
-    get_sklearn_feature_extraction_text,
-    get_sklearn_decomposition
-)
+try:
+    from sentence_transformers import SentenceTransformer
+except ModuleNotFoundError:  # ignore missing sentence-transformers module for now...
+    SentenceTransformer = None
 
-# Use the lazy importers from util module
-_get_sklearn_text = get_sklearn_feature_extraction_text
-_get_sklearn_decomposition = get_sklearn_decomposition
+try:
+    from transformers import AutoTokenizer, AutoModel
+    import torch
+except ModuleNotFoundError:  # ignore missing transformers module for now...
+    AutoTokenizer = None
+    AutoModel = None
+    torch = None
 
-# Create lazy importers for HuggingFace modules
-_get_SentenceTransformer = lazy_import_with_fallback(
-    'sentence_transformers', 'SentenceTransformer',
-    fallback_message="sentence-transformers not installed. Install with: pip install 'pydata-wrangler[hf]'"
-)
-
-_get_AutoTokenizer = lazy_import_with_fallback(
-    'transformers', 'AutoTokenizer',
-    fallback_message="transformers not installed. Install with: pip install 'pydata-wrangler[hf]'"
-)
-
-_get_AutoModel = lazy_import_with_fallback(
-    'transformers', 'AutoModel',
-    fallback_message="transformers not installed. Install with: pip install 'pydata-wrangler[hf]'"
-)
-
-_get_torch = lazy_import_with_fallback(
-    'torch',
-    fallback_message="PyTorch not installed. Install with: pip install torch"
-)
-
-_get_load_dataset = lazy_import_with_fallback(
-    'datasets', 'load_dataset',
-    fallback_message="datasets not installed. Install with: pip install 'pydata-wrangler[hf]'"
-)
-
-_get_dataset_config_names = lazy_import_with_fallback(
-    'datasets', 'get_dataset_config_names',
-    fallback_message="datasets not installed. Install with: pip install 'pydata-wrangler[hf]'"
-)
-
-_get_list_datasets = lazy_import_with_fallback(
-    'huggingface_hub', 'list_datasets',
-    fallback_message=None  # Optional dependency
-)
-
-# Compatibility variables for backward compatibility
-SentenceTransformer = None
-AutoTokenizer = None
-AutoModel = None
-torch = None
-list_datasets = None
+try:
+    from datasets import load_dataset, get_dataset_config_names
+    # list_datasets was removed in datasets 2.0+, replace with Hub API if needed
+    try:
+        from huggingface_hub import list_datasets
+    except ImportError:
+        list_datasets = None
+except ModuleNotFoundError:  # this will be triggered if hugging-face libraries aren't installed
+    list_datasets = None
 
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
@@ -97,14 +68,8 @@ def is_hugging_face_model(x):
     :return: True if x is a sentence-transformers model or model name, and False otherwise.
     """
     # Check for SentenceTransformer class or instance
-    try:
-        SentenceTransformer = _get_SentenceTransformer()
-        if x == SentenceTransformer or (hasattr(x, '__class__') and 'SentenceTransformer' in str(x.__class__)):
-            return True
-    except ImportError:
-        # If sentence-transformers not available, check by class name string
-        if hasattr(x, '__class__') and 'SentenceTransformer' in str(x.__class__):
-            return True
+    if x == SentenceTransformer or (hasattr(x, '__class__') and 'SentenceTransformer' in str(x.__class__)):
+        return True
     
     # Check for sentence-transformers model names (common ones)
     if isinstance(x, str) and any(name in x for name in ['all-MiniLM', 'all-mpnet', 'all-distilroberta', 'paraphrase-', 'sentence-t5']):
@@ -183,18 +148,11 @@ def get_text_model(x):
     # noinspection PyShadowingNames
     def model_lookup(model_name, parent):
         try:
-            if parent == 'text':
-                sklearn_text = _get_sklearn_text()
-                return getattr(sklearn_text, model_name)
-            elif parent == 'decomposition':
-                sklearn_decomposition = _get_sklearn_decomposition()
-                return getattr(sklearn_decomposition, model_name)
-            else:
-                return None
+            return eval(f'{parent}.{model_name}')
         except AttributeError:
             return None
-        except ImportError:
-            raise ModuleNotFoundError('sklearn is required for text processing models. Install with: pip install scikit-learn')
+        except NameError:
+            raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face models, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
 
     # Check sklearn models first (before sentence-transformers)
@@ -204,18 +162,12 @@ def get_text_model(x):
             return m
     
     # Check for sentence-transformers models
-    if x == 'SentenceTransformer':
-        try:
-            return _get_SentenceTransformer()
-        except ImportError:
-            return None
+    if x == 'SentenceTransformer' and SentenceTransformer is not None:
+        return SentenceTransformer
     
     # If it's a string and not found in sklearn modules, assume it's a sentence-transformers model
-    if isinstance(x, str):
-        try:
-            return _get_SentenceTransformer()
-        except ImportError:
-            return None
+    if isinstance(x, str) and SentenceTransformer is not None:
+        return SentenceTransformer
     return None
 
 
@@ -270,28 +222,19 @@ def get_corpus(dataset_name='wikipedia', config_name='20200501.en'):
 
     # Hugging-Face Corpus
     try:
-        load_dataset = _get_load_dataset()
         data = load_dataset(dataset_name, config_name)
     except FileNotFoundError:
         available_msg = ""
-        try:
-            list_datasets = _get_list_datasets()
-            available_corpora = list_datasets()
-            available_msg = f"  Available corpora: {', '.join(available_corpora)}"
-        except ImportError:
-            available_msg = "  (Unable to list available corpora - huggingface_hub not installed)"
-        except Exception:
-            available_msg = "  (Unable to list available corpora)"
+        if list_datasets is not None:
+            try:
+                available_corpora = list_datasets()
+                available_msg = f"  Available corpora: {', '.join(available_corpora)}"
+            except Exception:
+                available_msg = "  (Unable to list available corpora)"
         raise RuntimeError(f'Corpus not found: {dataset_name}.{available_msg}')
     except ValueError:
-        try:
-            get_dataset_config_names = _get_dataset_config_names()
-            configs = get_dataset_config_names(dataset_name)
-            raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
-                               f'Available configurations: {", ".join(configs)}')
-        except ImportError:
-            raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
-                               f'(Cannot list available configurations - datasets not installed)')
+        raise RuntimeError(f'Configuration for {dataset_name} corpus not found: {config_name}. '
+                           f'Available configurations: {", ".join(get_dataset_config_names(dataset_name))}')
     except NameError:
         raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face corpora, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
@@ -402,9 +345,7 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
     elif is_hugging_face_model(model):
         warnings.simplefilter('ignore')
         
-        try:
-            _get_SentenceTransformer()
-        except ImportError:
+        if SentenceTransformer is None:
             raise ModuleNotFoundError('Hugging-face libraries have not been installed. Please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
         if mode == 'fit':  # do nothing-- just return the un-transformed text and original model
@@ -415,7 +356,6 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         embedding_kwargs = kwargs.pop('embedding_kwargs', {})
         
         # Handle different model specifications for sentence-transformers
-        SentenceTransformer = _get_SentenceTransformer()
         if isinstance(model, str):
             # Model name string (e.g., 'all-MiniLM-L6-v2')
             model_instance = SentenceTransformer(model, **embedding_kwargs)

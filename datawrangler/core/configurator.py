@@ -5,10 +5,13 @@ import warnings
 import functools         # used when applying default options
 import numpy as np
 
-try:
-    from sentence_transformers import SentenceTransformer
-except:
-    pass # used when applying default options
+# Use lazy import to avoid loading heavy dependencies at module level
+def _get_SentenceTransformer():
+    try:
+        from sentence_transformers import SentenceTransformer
+        return SentenceTransformer
+    except ImportError:
+        return None
 
 
 __version__ = '0.3.0'

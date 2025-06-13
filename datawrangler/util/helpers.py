@@ -6,7 +6,10 @@ import os
 
 from ..io import load
 from ..io.extension_handler import get_extension
-from ..zoo.array import is_array
+# Use lazy import to avoid circular dependency
+def _get_is_array():
+    from ..zoo.array import is_array
+    return is_array
 
 
 def btwn(x, a, b):
@@ -81,7 +84,7 @@ def array_like(x, force_literal=False):
         else:
             return array_like(load(x), force_literal=True)
 
-    return is_array(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
+    return _get_is_array()(x) or dataframe_like(x) or (type(x) in [list, np.array, np.ndarray, pd.Series, pd.DataFrame])
 
 
 def depth(x):
