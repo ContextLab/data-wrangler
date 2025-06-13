@@ -75,8 +75,8 @@ def is_hugging_face_model(x):
     if isinstance(x, str) and any(name in x for name in ['all-MiniLM', 'all-mpnet', 'all-distilroberta', 'paraphrase-', 'sentence-t5']):
         return True
     
-    # Check for encode method (sentence-transformers interface)
-    return hasattr(x, 'encode')
+    # Check for encode method (sentence-transformers interface) but not strings
+    return hasattr(x, 'encode') and not isinstance(x, str)
 
 
 def robust_is_sklearn_model(x):
@@ -147,23 +147,19 @@ def get_text_model(x):
             raise ModuleNotFoundError('Hugging-face libraries have not been installed.  To use hugging-face models, please run "pip install --upgrade pydata-wrangler[hf]" to fix.')
 
 
-    # Check for sentence-transformers models first
-    if x == 'SentenceTransformer' and SentenceTransformer is not None:
-        return SentenceTransformer
-    
-    # Check if it's a sentence-transformers model name
-    if isinstance(x, str) and SentenceTransformer is not None:
-        try:
-            # Try to load as a sentence transformer model
-            SentenceTransformer(x)
-            return SentenceTransformer
-        except:
-            pass
-    
+    # Check sklearn models first (before sentence-transformers)
     for p in ['text', 'decomposition']:
         m = model_lookup(x, p)
         if m is not None:
             return m
+    
+    # Check for sentence-transformers models
+    if x == 'SentenceTransformer' and SentenceTransformer is not None:
+        return SentenceTransformer
+    
+    # If it's a string and not found in sklearn modules, assume it's a sentence-transformers model
+    if isinstance(x, str) and SentenceTransformer is not None:
+        return SentenceTransformer
     return None
 
 
