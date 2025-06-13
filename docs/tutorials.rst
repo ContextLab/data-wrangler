@@ -1,16 +1,36 @@
 Tutorials
 ======================================
 
-Check out these tutorials to see ``data-wrangler`` in action.
+Check out these comprehensive tutorials to see ``data-wrangler`` in action with modern examples.
+
+Getting Started
+---------------
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials:
+   :caption: Getting Started:
 
    tutorials/wrangling_basics.ipynb
-   tutorials/interpolation_and_imputation.ipynb
+
+Core Concepts
+-------------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Core Concepts:
+
    tutorials/decorators1.ipynb
    tutorials/decorators2.ipynb
+   tutorials/core.ipynb
    tutorials/io.ipynb
    tutorials/util.ipynb
-   tutorials/core.ipynb
+
+Advanced Applications
+---------------------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Advanced Applications:
+
+   tutorials/real_world_examples.ipynb
+   tutorials/interpolation_and_imputation.ipynb

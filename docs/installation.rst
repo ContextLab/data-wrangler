@@ -4,15 +4,43 @@
 Installation
 ============
 
+Requirements
+------------
+
+- **Python 3.9+** (v0.3.0+ requires modern Python versions)
+- NumPy 2.0+ and pandas 2.0+ compatible
+- Optional: HuggingFace transformers for advanced text processing
 
 Stable release
 --------------
+
+**Basic Installation**
 
 To install datawrangler, run this command in your terminal:
 
 .. code-block:: console
 
     $ pip install pydata-wrangler
+
+This installs the core functionality including sklearn-based text processing.
+
+**Full Installation with ML Libraries**
+
+For advanced text processing with sentence-transformers models:
+
+.. code-block:: console
+
+    $ pip install "pydata-wrangler[hf]"
+
+This includes sentence-transformers, transformers, and related HuggingFace libraries.
+
+**Upgrade from Previous Versions**
+
+If upgrading from v0.2.x, ensure you have Python 3.9+:
+
+.. code-block:: console
+
+    $ pip install --upgrade "pydata-wrangler[hf]"
 
 This is the preferred method to install datawrangler, as it will always install the most recent stable release.
 

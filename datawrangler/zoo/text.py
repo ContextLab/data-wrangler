@@ -101,6 +101,8 @@ def robust_is_hugging_face_model(x):
     """
     Wrapper for is_hugging_face_model that also supports strings-- e.g., the string 'all-MiniLM-L6-v2' will be a valid
     hugging-face model when checked with this function, because it's a sentence-transformers model name.
+    
+    Parameters
     ----------
     :param x: a to-be-tested model object or a string
 
@@ -114,19 +116,25 @@ def robust_is_hugging_face_model(x):
 
 def get_text_model(x):
     """
-    Given an valid scikit-learn or hugging-face model, or a string (e.g., 'LatentDirichletAllocation' or
-    'TransformerDocumentEmbeddings') matching the name of a valid scikit-learn or hugging-face model, return
-    a callable function or class constructor for the given model.
+    Given a valid scikit-learn or sentence-transformers model, or a string matching the name of a valid model, 
+    return a callable function or class constructor for the given model.
 
     Parameters
     ----------
-    :param x: an object to turn into a valid scikit-learn or hugging-face model (e.g., an already-valid model or a
-      string)
+    :param x: an object to turn into a valid scikit-learn or sentence-transformers model. Can be:
+        - An already-valid model instance
+        - A string matching sklearn model names (e.g., 'LatentDirichletAllocation', 'CountVectorizer')
+        - A string matching sentence-transformers model names (e.g., 'all-MiniLM-L6-v2', 'all-mpnet-base-v2')
 
     Returns
     -------
-    :return: A valid scikit-learn or hugging-face model (or None if no model matching the given description can be
-      found)
+    :return: A valid scikit-learn or sentence-transformers model (or None if no model matching the given 
+        description can be found)
+        
+    Examples
+    --------
+    >>> get_text_model('LatentDirichletAllocation')  # sklearn model
+    >>> get_text_model('all-MiniLM-L6-v2')  # sentence-transformers model
     """
     if is_sklearn_model(x) or is_hugging_face_model(x):
         return x  # already a valid model

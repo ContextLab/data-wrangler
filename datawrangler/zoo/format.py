@@ -16,30 +16,38 @@ format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 def wrangle(x, return_dtype=False, **kwargs):
     """
-    Turn messy data into clean data
+    Turn messy data into clean pandas DataFrames
+
+    Automatically detects and converts various data types into consistent DataFrame format.
+    Specializes in text processing using modern NLP models and handles mixed data types.
 
     Parameters
     ----------
-    :param x: data in any format (text, numpy arrays, pandas dataframes, or a mixed list (or nested lists) of those
-      types).  The following datatypes are supported:
+    :param x: data in any format. Supported datatypes:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
-        - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects
-        - Images, or paths to files that store images
-        - Text, or paths to plain text files
-        - Mixed lists of the above
-    :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset you wrangle
-    :param kwargs: used to control how data are wrangled (e.g., if you don't want to use the default options for each
-      data type):
-        - array_kwargs: passed to the datawrangler.zoo.array.wrangle_array function to control how arrays are handled
-        - dataframe_kwargs: passed to the datawrangler.zoo.dataframe.wrangle_dataframe function to control how
-          dataframes are handled
-        - image_kwargs: passed to the datawrangler.zoo.image.wrangle_image function to control how images are handled
-        - text_kwargs: passed to the datawrangler.zoo.text.wrangle_text function to control how text data are handled
-      any other keyword arguments are passed to *all* of the wrangle functions.
+        - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects  
+        - Text strings, lists of strings, or paths to plain text files
+        - Mixed lists or nested lists of the above types
+    :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset. Default: False
+    :param kwargs: control how data are wrangled:
+        - array_kwargs: passed to wrangle_array function to control how arrays are handled
+        - dataframe_kwargs: passed to wrangle_dataframe function to control how dataframes are handled
+        - text_kwargs: passed to wrangle_text function to control how text data are handled
+            Common text_kwargs options:
+            - {'model': 'all-MiniLM-L6-v2'} for sentence-transformers
+            - {'model': ['CountVectorizer', 'LatentDirichletAllocation']} for sklearn pipeline
+        Any other keyword arguments are passed to all wrangle functions.
 
     Returns
     -------
     :return: a DataFrame, or a list of DataFrames, containing the wrangled data
+    
+    Examples
+    --------
+    >>> import datawrangler as dw
+    >>> df = dw.wrangle([1, 2, 3])  # Convert array to DataFrame
+    >>> text_df = dw.wrangle(["Hello", "World"], text_kwargs={'model': 'all-MiniLM-L6-v2'})
+    >>> mixed_df, dtypes = dw.wrangle([df, text_df], return_dtype=True)
     """
 
     deep_kwargs = {}

@@ -10,6 +10,7 @@ Wrangle your messy data into consistent well-organized formats!
 
    readme
    installation
+   migration_guide
    tutorials
    api
    contributing
