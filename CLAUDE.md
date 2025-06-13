@@ -45,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Dependencies
 - **Core**: pandas, numpy, scipy, scikit-learn, matplotlib
-- **Optional ML**: PyTorch, HuggingFace transformers, Flair (in `requirements_hf.txt`)
+- **Optional ML**: PyTorch, HuggingFace transformers, sentence-transformers (in `requirements_hf.txt`)
 - **Dev**: pytest, Sphinx, flake8 (in `requirements_dev.txt`)
 
 ## Adding New Data Types
