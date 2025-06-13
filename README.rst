@@ -17,7 +17,7 @@ apply to many analysis scenarios), and decorating Python functions to make them 
 
 The ``data-wrangler`` package supports a variety of datatypes.  There is a special emphasis on text data, whereby
 ``data-wrangler`` provides a simple API for interacting with natural language processing tools and datasets provided by
-``scikit-learn``, ``hugging-face``, and ``flair``.  The package is designed to provide sensible defaults, but also
+``scikit-learn`` and ``hugging-face`` (via sentence-transformers).  The package is designed to provide sensible defaults, but also
 implements convenient ways of deeply customizing how different datatypes are wrangled.
 
 For more information, including a formal API and tutorials, check out https://data-wrangler.readthedocs.io
@@ -48,9 +48,9 @@ Some quick natural language processing examples::
     new_text = 'how much wood could a wood chuck chuck if a wood chuck could check wood?'
     new_embeddings = dw.wrangle(new_text, text_kwargs={'model': lda_fit})
 
-    # embed text using hugging-face's pre-trained GPT2 model
-    gpt2 = {'model': 'TransformerDocumentEmbeddings', 'args': ['gpt2'], 'kwargs': {}}
-    gpt2_embeddings = dw.wrangle(text, text_kwargs={'model': gpt2})
+    # embed text using sentence-transformers pre-trained model
+    sentence_model = {'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}
+    sentence_embeddings = dw.wrangle(text, text_kwargs={'model': sentence_model})
 
 The ``data-wrangler`` package also provides powerful decorators that can modify existing functions to support new
 datatypes.  Just write your function as though its inputs are guaranteed to be Pandas DataFrames, and decorate it with
