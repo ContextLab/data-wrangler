@@ -8,8 +8,8 @@ requests
 six
 setuptools
 tqdm
-configparser
 dill
 Pillow
 matplotlib
 # Note: All dependencies verified working with Polars backend (2025-06-13)
+# Note: configparser removed as it's built-in to Python 3.x

@@ -1,10 +1,19 @@
 # Current Session Handoff Summary
 
 **Date**: June 14, 2025  
-**Session Type**: Text Model API Simplification Implementation  
-**Status**: 🎉 **PHASE 4 COMPLETE** - Simplified text model API successfully implemented
+**Session Type**: Google Colab Warning Fix & 0.4.0 Release Preparation
+**Status**: 🔧 **Colab Issue Resolved** - Preparing for 0.4.0 release
 
 ## 🎯 **What We Just Accomplished**
+
+### **GOOGLE COLAB WARNING FIX** ✅
+- **Root Cause Identified**: Colab pre-imports scikit-learn, which uses `joblib.backports`
+- **Not a Real Issue**: `joblib.backports` is not a true backports package, just internal compatibility code
+- **Solution Implemented**:
+  - Removed redundant `configparser` from requirements.txt (built-in to Python 3.x)
+  - Added documentation note for Colab users in installation guide
+  - Created `colab_utils.py` for future Colab-specific handling if needed
+- **User Impact**: Warning still appears but users now know it's safe to ignore
 
 ### **TEXT MODEL API SIMPLIFICATION** ✅
 - **Simplified String Format**: `{'model': 'all-MiniLM-L6-v2'}` now works everywhere
@@ -203,9 +212,54 @@ pytest tests/wrangler/test_zoo.py::test_wrangle_text_sklearn -v
 
 ---
 
-**NEXT PHASE FOCUS**: Simplify text model API to reduce configuration complexity and improve user experience while maintaining full backward compatibility.
+## 🚀 **NEXT PRIORITY: RELEASE 0.4.0 PREPARATION (Phase 5)**
 
-**Current State**: Production-ready dual-backend implementation with comprehensive testing
-**Next Goal**: Streamlined text processing API for better developer experience
+### **PHASE 4 COMPLETE** ✅
+**Text Model API Simplification** successfully implemented with:
+- 80% reduction in configuration verbosity
+- Full backward compatibility maintained  
+- Comprehensive dual-backend testing
+- All documentation and tutorials updated
+- All tests passing (45/45)
+- Changes committed and pushed to GitHub
+
+### **IMMEDIATE NEXT TASKS FOR 0.4.0 RELEASE**
+
+#### **1. DOCUMENTATION AUDIT (HIGH PRIORITY 🚨)**
+- **Search for pandas-only references**: Find docs that need dual-backend updates
+- **Review featured examples**: Ensure all use simplified text model API
+- **Update verbose text model examples**: Replace any remaining old syntax
+- **Check migration guide**: Verify 0.3.0→0.4.0 guidance is accurate
+- **Installation docs review**: Make sure PyPI package info is current
+
+#### **2. MANUAL TESTING IN COLAB**
+- **Create comprehensive test notebook**: Cover all major features
+- **Test simplified API**: Verify `{'model': 'all-MiniLM-L6-v2'}` works seamlessly
+- **Cross-backend verification**: Test pandas vs Polars performance/equivalence
+- **HuggingFace models**: Test sentence-transformers with new API
+- **sklearn models**: Test simplified pipeline syntax `['CountVectorizer', 'NMF']`
+
+#### **3. VERSION BUMP AND PYPI RELEASE**
+- **Update version to 0.4.0**: Bump in setup.py, __init__.py, etc.
+- **Update HISTORY.rst**: Document 0.4.0 changes
+- **Prepare release notes**: Highlight simplified API as key feature
+- **PyPI release**: Build and upload to pydata-wrangler package
+
+### **0.4.0 RELEASE HIGHLIGHTS**
+- **🎯 Simplified Text Model API**: 80% reduction in configuration complexity
+- **⚡ Enhanced Performance**: Continued Polars backend improvements
+- **🔄 Backward Compatible**: All existing code continues working
+- **📚 Updated Documentation**: Clean examples throughout
+- **🧪 Comprehensive Testing**: Dual-backend test coverage
+
+### **SUCCESS CRITERIA FOR 0.4.0**
+- ✅ All documentation uses simplified API in featured examples
+- ✅ Manual Colab testing passes for all major features
+- ✅ No pandas-only references in dual-backend contexts
+- ✅ Version bump completed and tagged
+- ✅ PyPI release successful
+
+**Current State**: Text model API simplification complete and tested
+**Next Goal**: Polished documentation and successful 0.4.0 PyPI release
 
 **Remember**: Always verify the current date is correct! 📅

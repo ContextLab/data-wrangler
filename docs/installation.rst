@@ -47,6 +47,12 @@ This is the preferred method to install datawrangler, as it will always install 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
+**Note for Google Colab Users**
+
+When installing datawrangler in Google Colab, you may see a warning popup about "backports" being previously imported. 
+This is a known issue caused by Colab pre-importing scikit-learn. The warning can be safely ignored - datawrangler 
+will work correctly after installation without requiring a runtime restart.
+
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 
