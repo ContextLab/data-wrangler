@@ -142,6 +142,7 @@ def requires_import(*modules):
 get_sklearn = lazy_import('sklearn')
 get_numpy = lazy_import('numpy')
 get_pandas = lazy_import('pandas')
+get_polars = lazy_import('polars')  # Now a required dependency
 get_torch = lazy_import_with_fallback(
     'torch',
     fallback_message="PyTorch not installed. Install with: pip install torch"

@@ -60,6 +60,7 @@ list_datasets = None
 from .array import is_array, wrangle_array
 from .dataframe import is_dataframe
 from .null import is_null
+from .polars_dataframe import create_polars_dataframe
 
 from ..core.configurator import get_default_options, apply_defaults, update_dict
 from ..io import load
@@ -538,9 +539,9 @@ def to_str_list(x, encoding='utf-8'):
 
 
 # noinspection PyShadowingNames
-def wrangle_text(text, return_model=False, **kwargs):
+def wrangle_text(text, return_model=False, backend=None, **kwargs):
     """
-    Turn text into DataFrames
+    Turn text into DataFrames (pandas or Polars)
 
     Parameters
     ----------
@@ -548,6 +549,8 @@ def wrangle_text(text, return_model=False, **kwargs):
       path, or a URL.
     :param return_model: if True, return a fitted model that may be applied to new text data, along with the wrangled
       text.  Default: False.
+    :param backend: str, optional
+        The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param kwargs: Other (optional) keyword arguments may be passed into the function to control the wrangling
       process:
       - 'corpus': any built-in or hugging-face corpus (see get_corpus for more details); this argument is passed to the
@@ -589,7 +592,9 @@ def wrangle_text(text, return_model=False, **kwargs):
     # apply model to text
     embedded_text = apply_text_model(model, text, mode='transform', return_model=False, **kwargs)
 
-    # turn array into dataframe
+    # turn array into dataframe, passing backend preference
+    if backend:
+        array_kwargs['backend'] = backend
     df = wrangle_array(embedded_text, **array_kwargs)
 
     if return_model:

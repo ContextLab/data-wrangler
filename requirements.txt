@@ -1,6 +1,7 @@
 scikit-learn
 importlib-metadata
 pandas
+polars>=0.20.0
 scipy
 numpy
 requests

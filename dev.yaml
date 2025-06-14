@@ -9,6 +9,7 @@ dependencies:
   - torchaudio
   - cudatoolkit=11.3
   - pandas
+  - polars
   - matplotlib
   - python
   - scikit-learn

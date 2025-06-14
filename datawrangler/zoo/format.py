@@ -14,9 +14,9 @@ from ..core import update_dict, get_default_options
 format_checkers = eval(get_default_options()['supported_formats']['types'])
 
 
-def wrangle(x, return_dtype=False, **kwargs):
+def wrangle(x, return_dtype=False, backend=None, **kwargs):
     """
-    Turn messy data into clean pandas DataFrames
+    Turn messy data into clean DataFrames (pandas or Polars)
 
     Automatically detects and converts various data types into consistent DataFrame format.
     Specializes in text processing using modern NLP models and handles mixed data types.
@@ -26,9 +26,12 @@ def wrangle(x, return_dtype=False, **kwargs):
     :param x: data in any format. Supported datatypes:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
         - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects  
+        - Polars DataFrames and LazyFrames
         - Text strings, lists of strings, or paths to plain text files
         - Mixed lists or nested lists of the above types
     :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset. Default: False
+    :param backend: str, optional
+        The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param kwargs: control how data are wrangled:
         - array_kwargs: passed to wrangle_array function to control how arrays are handled
         - dataframe_kwargs: passed to wrangle_dataframe function to control how dataframes are handled
@@ -40,12 +43,13 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     Returns
     -------
-    :return: a DataFrame, or a list of DataFrames, containing the wrangled data
+    :return: a DataFrame (pandas or Polars), or a list of DataFrames, containing the wrangled data
     
     Examples
     --------
     >>> import datawrangler as dw
-    >>> df = dw.wrangle([1, 2, 3])  # Convert array to DataFrame
+    >>> df = dw.wrangle([1, 2, 3])  # Convert array to pandas DataFrame
+    >>> df_polars = dw.wrangle([1, 2, 3], backend='polars')  # Convert array to Polars DataFrame
     >>> text_df = dw.wrangle(["Hello", "World"], text_kwargs={'model': 'all-MiniLM-L6-v2'})
     >>> mixed_df, dtypes = dw.wrangle([df, text_df], return_dtype=True)
     """
@@ -56,6 +60,9 @@ def wrangle(x, return_dtype=False, **kwargs):
 
     for f in format_checkers:
         deep_kwargs[f] = update_dict(kwargs, deep_kwargs[f])
+        # Pass backend parameter to all wranglers
+        if backend is not None:
+            deep_kwargs[f]['backend'] = backend
 
     pre_fit = {f: False for f in format_checkers}
 

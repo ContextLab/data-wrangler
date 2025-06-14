@@ -9,6 +9,7 @@ from ..util.lazy_imports import (
     get_sklearn_manifold,
     get_sklearn_feature_extraction_text,
     get_sklearn_mixture,
+    get_sklearn_impute,
     lazy_import_with_fallback
 )
 
@@ -43,6 +44,13 @@ def import_sklearn_models(module):
     -------
     :return: a list of valid models contained in the module
     """
+    # Handle experimental features like IterativeImputer
+    if module.__name__ == 'sklearn.impute':
+        try:
+            from sklearn.experimental import enable_iterative_imputer
+        except ImportError:
+            pass
+    
     models = [d for d in dir(module) if hasattr(getattr(module, d), 'fit_transform')]
     for m in models:
         exec(f'from {module.__name__} import {m}', globals())
@@ -74,6 +82,30 @@ def get_sklearn_model(x):
         else:
             return None
     elif type(x) is str:
+        # Check if it's in the impute models
+        if x in _get_impute_models():
+            # noinspection PyBroadException
+            try:
+                return get_sklearn_model(eval(x))
+            except:
+                pass
+        
+        # Check other model categories
+        if x in _get_reduce_models():
+            # noinspection PyBroadException
+            try:
+                return get_sklearn_model(eval(x))
+            except:
+                pass
+                
+        if x in _get_text_vectorizers():
+            # noinspection PyBroadException
+            try:
+                return get_sklearn_model(eval(x))
+            except:
+                pass
+        
+        # Try direct evaluation as fallback
         # noinspection PyBroadException
         try:
             return get_sklearn_model(eval(x))
@@ -162,7 +194,7 @@ def _get_impute_models():
     """Lazy initialization of impute models."""
     global impute_models
     if impute_models is None:
-        impute_models = import_sklearn_models(_get_sklearn_impute())
+        impute_models = import_sklearn_models(get_sklearn_impute())
     return impute_models
 
 # source: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html

@@ -139,3 +139,49 @@ def apply_defaults(f, defaults=None):
                 return repr(self.__wrapped__)
 
         return WrappedClass
+
+
+# Global backend configuration
+_dataframe_backend = 'pandas'  # Default backend
+
+
+def set_dataframe_backend(backend):
+    """
+    Set the global DataFrame backend preference.
+    
+    Parameters
+    ----------
+    backend : str
+        The backend to use ('pandas' or 'polars')
+        
+    Raises
+    ------
+    ValueError
+        If backend is not 'pandas' or 'polars'
+    """
+    global _dataframe_backend
+    
+    if backend not in ['pandas', 'polars']:
+        raise ValueError(f"Invalid backend: {backend}. Must be 'pandas' or 'polars'")
+    
+    _dataframe_backend = backend
+
+
+def get_dataframe_backend():
+    """
+    Get the current global DataFrame backend preference.
+    
+    Returns
+    -------
+    str
+        The current backend ('pandas' or 'polars')
+    """
+    return _dataframe_backend
+
+
+def reset_dataframe_backend():
+    """
+    Reset the DataFrame backend to the default (pandas).
+    """
+    global _dataframe_backend
+    _dataframe_backend = 'pandas'

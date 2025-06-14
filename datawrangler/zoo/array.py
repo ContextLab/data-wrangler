@@ -4,6 +4,8 @@ import six
 import os
 from ..io import load
 from ..core.configurator import update_dict
+from ..util.lazy_imports import get_polars
+from .polars_dataframe import create_polars_dataframe
 
 
 def is_number(x):
@@ -53,28 +55,30 @@ def is_array(x):
     return False
 
 
-def wrangle_array(data, return_model=False, **kwargs):
+def wrangle_array(data, return_model=False, backend=None, **kwargs):
     """
-    Turn an Array into a Pandas DataFrame
+    Turn an Array into a DataFrame (pandas or Polars)
 
     Parameters
     ----------
     :param data: an Array (or path to an Array)
     :param return_model: if True, return a function for casting an Array into a DataFrame (along with the resulting
       DataFrame).  Default: False
+    :param backend: str, optional
+        The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param kwargs: a list of keyword arguments:
        - 'model': a callable function or constructor, or a dictionary containing the following keys:
          - 'model': a callable function or constructor
          - 'args': a list of arguments to pass to the function (in addition to data)
          - 'kwargs': a list of keyword arguments to pass to the function
-         default: pandas.DataFrame
+         default: pandas.DataFrame or polars.DataFrame (based on backend)
        - all other keyword arguments are passed to the model (or constructor).  These can be used to change how the
          DataFrame is created (e.g., passing columns=['one', 'two', 'three'] will change the column names of the
-         resulting DataFrame, assuming the "model" is pandas.DataFrame).
+         resulting DataFrame).
 
     Returns
     -------
-    :return: The resulting DataFrame
+    :return: The resulting DataFrame (pandas or Polars based on backend)
     """
     def stacker(x):
         while x.ndim >= 3:
@@ -93,7 +97,16 @@ def wrangle_array(data, return_model=False, **kwargs):
 
     data = stacker(np.atleast_2d(data))
 
-    model = kwargs.pop('model', pd.DataFrame)
+    # Determine default model based on backend
+    if 'model' not in kwargs:
+        if backend == 'polars':
+            default_model = create_polars_dataframe
+        else:
+            default_model = pd.DataFrame
+    else:
+        default_model = pd.DataFrame
+    
+    model = kwargs.pop('model', default_model)
     if type(model) is dict:
         # noinspection PyArgumentList
         assert all([k in model.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'Invalid model: {model}')
