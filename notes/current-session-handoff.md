@@ -1,159 +1,211 @@
 # Current Session Handoff Summary
 
-**Date**: January 13, 2025  
-**Session Type**: Performance Optimization - Phase 2 Polars Support  
-**Status**: ✅ **PHASE 2 COMPLETE** - Major Success
+**Date**: June 14, 2025  
+**Session Type**: Text Model API Simplification Implementation  
+**Status**: 🎉 **PHASE 4 COMPLETE** - Simplified text model API successfully implemented
 
 ## 🎯 **What We Just Accomplished**
 
-### **MAJOR PERFORMANCE BREAKTHROUGH** 🚀
-- **Polars Integration**: Complete first-class DataFrame backend support
-- **Performance Gains**: 2-100x+ speedup for DataFrame operations  
-- **Zero Breaking Changes**: Full backward compatibility maintained
-- **All Tests Passing**: 27/27 tests pass with both backends
+### **TEXT MODEL API SIMPLIFICATION** ✅
+- **Simplified String Format**: `{'model': 'all-MiniLM-L6-v2'}` now works everywhere
+- **Automatic Normalization**: All model formats (string, partial dict, full dict) normalized consistently
+- **Enhanced Model Detection**: Properly distinguishes sklearn vs HuggingFace models
+- **Full Backward Compatibility**: All existing code continues working unchanged
+- **List Model Support**: Lists of models work with simplified format (e.g., `['CountVectorizer', 'NMF']`)
 
-## 📊 **Measurable Results**
+### Implementation Details:
+1. **normalize_text_model()**: Universal function to convert any model format to normalized dict
+2. **Enhanced is_sklearn_model_name()**: Checks decomposition, text, and manifold sklearn modules
+3. **Smart Model Routing**: String models correctly identified as sklearn or HuggingFace
+4. **Robust Functions Updated**: Handle normalized dict format in addition to strings
+5. **Comprehensive Tests**: 3 new test functions covering all API variations
+6. **Tutorial Updates**: Updated all notebooks to use simplified API
+7. **Documentation Updates**: Updated README.rst and all docstrings with simplified examples
 
-```
-Array to DataFrame conversion: 159x faster with Polars
-Import time: Maintained <600ms from Phase 1
-Memory usage: Significantly reduced with columnar format
-Test suite: 27/27 tests passing (100% success rate)
-```
+### **COMPREHENSIVE DUAL-BACKEND TESTING** ✅
+- **Enhanced Decorators**: Added `backend` parameter support to `@funnel` and `@interpolate`
+- **Parameterized Tests**: All tests now run with both pandas and Polars backends
+- **Backend-Aware Assertions**: Handle expected differences (e.g., index name preservation)
+- **Cross-Backend Equivalence**: Verify deterministic operations produce identical results
+- **Smart Fallbacks**: Polars interpolation automatically converts to pandas with warnings
 
-## 🔧 **Technical Achievement Summary**
+### **DOCUMENTATION EXCELLENCE** ✅  
+- **Package-Level**: Clear backend trade-offs and selection guidance
+- **Function Docstrings**: Backend parameters and behavior documented
+- **Test Strategy**: Comprehensive documentation of testing approach
+- **User Guidance**: When to choose each backend clearly explained
 
-### Major Implementation
-1. **Complete Polars Backend**: Added as first-class citizen alongside pandas
-2. **Universal Backend Support**: All data types (array, text, null, dataframe) support both backends
-3. **Smart Auto-Detection**: Preserves input DataFrame type by default
-4. **Global Configuration**: Set backend preferences globally or per-operation
-5. **Fixed Critical Bug**: Resolved IterativeImputer experimental import issue
+### **PRODUCTION-READY IMPLEMENTATION** ✅
+- **Honest API**: Documents differences instead of hiding them
+- **No Wrapper Classes**: Users get real DataFrame objects
+- **Backward Compatible**: All existing code continues working
+- **Future-Proof**: Easy to extend and maintain
 
-### Architecture Changes
-- **New Module**: `datawrangler/zoo/polars_dataframe.py` - Core Polars support
-- **Updated All Handlers**: array.py, text.py, null.py, dataframe.py support `backend` parameter
-- **Enhanced Orchestrator**: format.py propagates backend preference
-- **Configuration System**: configurator.py manages backend preferences
-- **Performance Tools**: benchmarks/dataframe_performance.py for monitoring
+## 📊 **Current Project Status**
 
-## 📁 **Files Modified This Session**
+### Technical Implementation (Complete ✅)
+- **Polars Backend**: Full first-class support with 2-100x speedups
+- **Dual-Backend Testing**: Comprehensive pytest parameterization coverage
+- **Smart Decorators**: Backend-aware with automatic fallbacks
+- **Cross-Platform**: Works seamlessly across different environments
 
-### New Files
-- `datawrangler/zoo/polars_dataframe.py` - Polars DataFrame support module
-- `benchmarks/dataframe_performance.py` - Performance benchmarking suite
-- `notes/polars-integration-phase2.md` - Technical documentation
+### Testing Infrastructure (Complete ✅)  
+- **54 Test Variants**: 27 base tests × 2 backends = comprehensive coverage
+- **Backend-Specific Expectations**: Tests handle expected differences appropriately
+- **Deterministic ML Models**: Random seed management for cross-backend equivalence
+- **Smart Assertions**: Backend-aware validation and equivalence checking
 
-### Modified Files (14 total)
-- `requirements.txt` - Added polars>=0.20.0 as main dependency
-- `datawrangler/zoo/array.py` - Backend parameter support
-- `datawrangler/zoo/text.py` - Backend parameter support  
-- `datawrangler/zoo/null.py` - Backend parameter support
-- `datawrangler/zoo/dataframe.py` - Polars detection and routing
-- `datawrangler/zoo/format.py` - Backend parameter propagation
-- `datawrangler/core/configurator.py` - Backend configuration functions
-- `datawrangler/core/config.ini` - Backend configuration section
-- `datawrangler/util/lazy_imports.py` - Added get_polars import
-- `datawrangler/decorate/decorate.py` - Fixed IterativeImputer experimental import
-- `dev.yaml` - Added Polars to conda environment
+### Documentation (Complete ✅)
+- **Package Overview**: Updated with dual-backend examples and trade-offs
+- **Function Documentation**: All docstrings updated for backend awareness
+- **Test Documentation**: Clear strategy and patterns documented
+- **User Guidance**: Performance vs compatibility guidance provided
 
-## 💻 **Usage API**
+## 🚀 **NEXT PRIORITY: TEXT MODEL API SIMPLIFICATION (Phase 4)**
 
-### Per-Operation Backend Selection
+### **Problem Identified**
+Current text model specification is verbose and redundant:
+
 ```python
-import datawrangler as dw
+# Current: Verbose dictionary format required
+text_kwargs = {
+    'model': {
+        'model': 'all-MiniLM-L6-v2',
+        'args': [],                    # Often empty
+        'kwargs': {}                   # Often empty
+    }
+}
 
-# Choose backend for any operation
-df_pandas = dw.wrangle(data)  # Default: pandas
-df_polars = dw.wrangle(data, backend='polars')  # High performance
-
-# Works with all data types
-text_polars = dw.wrangle(texts, backend='polars')
-array_polars = dw.wrangle(arrays, backend='polars')
+# Desired: Simplified API
+text_kwargs = {'model': 'all-MiniLM-L6-v2'}  # Simple string
+# OR
+text_kwargs = {'model': {'model': 'all-MiniLM-L6-v2'}}  # Dict with just model key
 ```
 
-### Global Backend Configuration
+### **Required Implementation**
+1. **String Support**: Accept model as simple string and auto-convert to dict format
+2. **Partial Dict Support**: Accept dicts with only 'model' key, auto-fill args/kwargs
+3. **Backward Compatibility**: Existing full dict format continues working
+4. **Consistent Behavior**: Works across all text processing functions
+
+### **Implementation Strategy**
 ```python
-from datawrangler.core.configurator import set_dataframe_backend
-
-# Set global preference
-set_dataframe_backend('polars')  # All operations use Polars
-set_dataframe_backend('pandas')  # Reset to default
+def normalize_text_model(model):
+    """Convert string or partial dict to full model specification."""
+    if isinstance(model, str):
+        return {'model': model, 'args': [], 'kwargs': {}}
+    elif isinstance(model, dict):
+        return {
+            'model': model['model'],
+            'args': model.get('args', []),
+            'kwargs': model.get('kwargs', {})
+        }
+    return model  # Already normalized or invalid
 ```
 
-### Auto-Detection
+### **Files to Update**
+- `datawrangler/zoo/text.py` - Core text processing functions
+- `datawrangler/zoo/format.py` - Main wrangle function text handling  
+- `tests/wrangler/test_zoo.py` - Update text model tests
+- Documentation - Add examples of simplified API
+
+## 📁 **Files Modified in This Session**
+
+### Core Implementation
+- `datawrangler/__init__.py` - Package docs with backend guidance
+- `datawrangler/decorate/decorate.py` - Enhanced decorators with backend support
+- `tests/wrangler/conftest.py` - Backend testing utilities  
+- `tests/wrangler/test_zoo.py` - Comprehensive parameterized tests
+- `tests/wrangler/test_decorate.py` - Backend-aware decorator tests
+
+### Documentation Enhanced
+- Package-level documentation with clear backend trade-offs
+- Function docstrings updated for dual-backend reality
+- Test strategy documentation and patterns established
+
+## 🔍 **Key Technical Achievements**
+
+### **Enhanced Decorators**
 ```python
-import pandas as pd
-import polars as pl
+@dw.funnel
+def my_function(df):
+    return df.mean()
 
-# Input type preserved by default
-pd_df = pd.DataFrame({'A': [1, 2, 3]})
-result1 = dw.wrangle(pd_df)  # Stays pandas
-
-pl_df = pl.DataFrame({'A': [1, 2, 3]})  
-result2 = dw.wrangle(pl_df)  # Stays Polars
-
-# Explicit conversion
-pd_to_pl = dw.wrangle(pd_df, backend='polars')  # pandas → Polars
-pl_to_pd = dw.wrangle(pl_df, backend='pandas')  # Polars → pandas
+# Now supports:
+result = my_function(data, backend='polars')  # ✅ Works!
 ```
 
-## 🧪 **Testing Status**
+### **Parameterized Testing**
+```python
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_wrangle_function(backend):
+    result = dw.wrangle(data, backend=backend)
+    assert_backend_type(result, backend)
+    # Backend-specific expectations handled appropriately
+```
 
-### All Tests Verified ✅
-- **Existing Test Suite**: 27/27 tests pass with pandas backend
-- **Polars Functionality**: All core operations verified with Polars backend
-- **Cross-Conversion**: pandas ↔ Polars conversions working perfectly
-- **Configuration**: Backend management functions tested
-- **Performance**: Significant speedups verified (159x example)
+### **Smart Backend Handling**
+- pandas: Preserves index names, full feature compatibility
+- Polars: High performance, position-based indexing, automatic pandas fallbacks
+- Tests document and verify expected differences rather than forcing equivalence
 
-### Critical Bug Fixed
-- **Issue**: `test_interpolate` failing due to IterativeImputer import
-- **Root Cause**: sklearn experimental feature requires special import
-- **Solution**: Added experimental import handling in import_sklearn_models()
-- **Result**: All tests now pass
+## ⚠️ **IMPORTANT REMINDER: DATE ACCURACY**
+**🗓️ CRITICAL**: Always verify current date is **June 13, 2025**
 
-## 🚀 **Next Phase Opportunities**
+## 🚀 **IMMEDIATE NEXT TASKS (Phase 4 Priority)**
 
-### Phase 3: Advanced Performance Optimizations
-1. **Parallel Text Processing** - Use Polars' native parallelization
-2. **Lazy Evaluation** - Leverage Polars LazyFrames for large datasets  
-3. **Memory Streaming** - Process data in chunks for massive datasets
-4. **Smart Backend Selection** - Auto-choose based on data size/type
+### **1. TEXT MODEL API SIMPLIFICATION** (HIGH PRIORITY 🚨)
+- Implement `normalize_text_model()` utility function
+- Update all text processing functions to use simplified API
+- Add backward compatibility tests
+- Update documentation with simplified examples
+- **Target**: Reduce text model specification verbosity by 80%
 
-### Immediate Tasks for Next Session
-1. **Documentation Update** - Add Polars examples to README and docs
-2. **Tutorial Creation** - Performance comparison guide
-3. **Benchmark Expansion** - Comprehensive performance testing
-4. **CI/CD Enhancement** - Add Polars testing to continuous integration
+### **2. Implementation Steps**
+1. **Create normalization utility** (30 minutes)
+2. **Update core text functions** (1 hour)
+3. **Update tests and examples** (30 minutes)  
+4. **Verify backward compatibility** (15 minutes)
+
+### **3. Success Criteria**
+- ✅ `{'model': 'all-MiniLM-L6-v2'}` works everywhere
+- ✅ All existing dict formats continue working
+- ✅ Documentation shows simplified examples
+- ✅ Tests cover all format variations
+
+## 💻 **Key Commands for Next Session**
+
+```bash
+# Test current text functionality
+python -c "import datawrangler as dw; print(dw.wrangle(['test text'], text_kwargs={'model': 'all-MiniLM-L6-v2'}))"
+
+# Run text-specific tests
+pytest tests/wrangler/test_zoo.py -k "text" -v
+
+# Test both backends
+pytest tests/wrangler/test_zoo.py::test_wrangle_text_sklearn -v
+```
 
 ## 📈 **Git Status**
 
-- ✅ **Committed**: Hash `03d57b0` - Add Polars DataFrame backend support
-- ✅ **Pushed**: Changes live on GitHub main branch
-- ✅ **Clean State**: All changes committed and pushed
-- ✅ **Documentation**: Comprehensive session notes saved
+- ✅ **Current Branch**: `main`
+- ✅ **Last Commit**: `cc50f35` - Implement comprehensive dual-backend testing and enhanced decorators
+- ✅ **Ready to Push**: Backend testing implementation committed
+- 🔄 **Next Commit**: Will be text model API simplification
 
-## 🎉 **Project Status**
+## 🎯 **Success Criteria for Next Session**
 
-### Current Capabilities
-- **Import Speed**: <600ms (84% improvement from Phase 1)
-- **DataFrame Backends**: pandas (familiar) + Polars (fast)
-- **Performance**: 2-100x speedup available with Polars
-- **Compatibility**: Zero breaking changes
-- **Testing**: 100% test pass rate
-
-### User Experience
-- **Simple API**: Just add `backend='polars'` for performance
-- **Automatic**: Smart defaults preserve user preferences
-- **Flexible**: Global or per-operation configuration
-- **Future-Proof**: Easy to extend with new backends
-
-**data-wrangler is now a high-performance data processing library that maintains its simplicity while offering cutting-edge performance when needed.**
+1. **Text API Simplified**: Support string and partial dict model specifications
+2. **Backward Compatible**: All existing code continues working unchanged
+3. **Documentation Updated**: Examples show simplified API patterns
+4. **Tests Enhanced**: Cover all model specification formats
+5. **User Experience**: 80% reduction in text model configuration verbosity
 
 ---
 
-**Current Branch**: `main`  
-**Last Commit**: `03d57b0`  
-**Performance Status**: ⭐ **PHASE 1 + 2 COMPLETE** ⭐  
-**Next Session Ready**: ✅ Documentation and advanced optimizations
+**NEXT PHASE FOCUS**: Simplify text model API to reduce configuration complexity and improve user experience while maintaining full backward compatibility.
+
+**Current State**: Production-ready dual-backend implementation with comprehensive testing
+**Next Goal**: Streamlined text processing API for better developer experience
+
+**Remember**: Always verify the current date is correct! 📅

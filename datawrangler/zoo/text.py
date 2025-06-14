@@ -70,6 +70,45 @@ defaults = get_default_options()
 preloaded_corpora = {}
 
 
+def normalize_text_model(model):
+    """
+    Convert string or partial dict to full model specification.
+    
+    This function enables simplified text model API by accepting:
+    - String model names: 'all-MiniLM-L6-v2', 'CountVectorizer', etc.
+    - Partial dicts: {'model': 'all-MiniLM-L6-v2'}
+    - Full dicts: {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    
+    Normalizes both scikit-learn and HuggingFace models to consistent dict format.
+    
+    Parameters
+    ----------
+    :param model: Model specification as string, partial dict, or full dict
+    
+    Returns
+    -------
+    :return: Normalized dict with 'model', 'args', and 'kwargs' keys
+    
+    Examples
+    --------
+    >>> normalize_text_model('all-MiniLM-L6-v2')
+    {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    >>> normalize_text_model('CountVectorizer')
+    {'model': 'CountVectorizer', 'args': [], 'kwargs': {}}
+    >>> normalize_text_model({'model': 'all-MiniLM-L6-v2'})
+    {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    """
+    if isinstance(model, str):
+        return {'model': model, 'args': [], 'kwargs': {}}
+    elif isinstance(model, dict):
+        return {
+            'model': model['model'],
+            'args': model.get('args', []),
+            'kwargs': model.get('kwargs', {})
+        }
+    return model  # Already normalized or invalid
+
+
 def is_sklearn_model(x):
     """
     Determine whether an object seems to be a valid scikit-learn model
@@ -83,6 +122,43 @@ def is_sklearn_model(x):
     :return: True if x contains "transform", "fit", and "fit_transform" methods and False otherwise.
     """
     return hasattr(x, 'transform') and hasattr(x, 'fit') and hasattr(x, 'fit_transform')
+
+
+def is_sklearn_model_name(model_name):
+    """
+    Check if a string represents a scikit-learn model name from supported modules.
+    
+    Supported sklearn modules: decomposition, feature_extraction.text, manifold
+    """
+    if not isinstance(model_name, str):
+        return False
+    
+    # Check against known sklearn modules
+    try:
+        # Check decomposition module
+        sklearn_decomposition = _get_sklearn_decomposition()
+        if hasattr(sklearn_decomposition, model_name):
+            return True
+    except (ImportError, AttributeError):
+        pass
+    
+    try:
+        # Check feature_extraction.text module
+        sklearn_text = _get_sklearn_text()
+        if hasattr(sklearn_text, model_name):
+            return True
+    except (ImportError, AttributeError):
+        pass
+    
+    try:
+        # Check manifold module
+        sklearn_manifold = lazy_import_with_fallback('sklearn.manifold')()
+        if hasattr(sklearn_manifold, model_name):
+            return True
+    except (ImportError, AttributeError):
+        pass
+    
+    return False
 
 
 def is_hugging_face_model(x):
@@ -107,8 +183,11 @@ def is_hugging_face_model(x):
         if hasattr(x, '__class__') and 'SentenceTransformer' in str(x.__class__):
             return True
     
-    # Check for sentence-transformers model names (common ones)
-    if isinstance(x, str) and any(name in x for name in ['all-MiniLM', 'all-mpnet', 'all-distilroberta', 'paraphrase-', 'sentence-t5']):
+    # If it's a string, check if it's NOT a sklearn model
+    if isinstance(x, str):
+        if is_sklearn_model_name(x):
+            return False
+        # If not sklearn, assume it's a HuggingFace model (sentence-transformers or other)
         return True
     
     # Check for encode method (sentence-transformers interface) but not strings
@@ -119,16 +198,21 @@ def robust_is_sklearn_model(x):
     """
     Wrapper for is_sklearn_model that also supports strings-- e.g., the string 'SparsePCA' will be a valid scikit-learn
     model when checked with this function, because 'SparsePCA' is defined in the sklearn.decomposition module.
+    Also supports normalized dict format: {'model': 'CountVectorizer', 'args': [], 'kwargs': {}}.
 
     Parameters
     ----------
-    :param x: a to-be-tested model object or a string
+    :param x: a to-be-tested model object, a string, or a normalized dict
 
     Returns
     -------
     :return: True if x (or the scikit-learn module x evaluates to) contains "transform", "fit", and "fit_transform"
       methods and False otherwise.
     """
+    # Handle normalized dict format
+    if isinstance(x, dict) and 'model' in x:
+        x = x['model']
+    
     x = get_text_model(x)
     return is_sklearn_model(x)
 
@@ -137,15 +221,20 @@ def robust_is_hugging_face_model(x):
     """
     Wrapper for is_hugging_face_model that also supports strings-- e.g., the string 'all-MiniLM-L6-v2' will be a valid
     hugging-face model when checked with this function, because it's a sentence-transformers model name.
+    Also supports normalized dict format: {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}.
     
     Parameters
     ----------
-    :param x: a to-be-tested model object or a string
+    :param x: a to-be-tested model object, a string, or a normalized dict
 
     Returns
     -------
     :return: True if x (or the sentence-transformers model x evaluates to) is a valid model and False otherwise.
     """
+    # Handle normalized dict format
+    if isinstance(x, dict) and 'model' in x:
+        x = x['model']
+    
     x = get_text_model(x)
     return is_hugging_face_model(x)
 
@@ -161,6 +250,7 @@ def get_text_model(x):
         - An already-valid model instance
         - A string matching sklearn model names (e.g., 'LatentDirichletAllocation', 'CountVectorizer')
         - A string matching sentence-transformers model names (e.g., 'all-MiniLM-L6-v2', 'all-mpnet-base-v2')
+        - A normalized dict with 'model' key (e.g., {'model': 'CountVectorizer', 'args': [], 'kwargs': {}})
 
     Returns
     -------
@@ -171,6 +261,7 @@ def get_text_model(x):
     --------
     >>> get_text_model('LatentDirichletAllocation')  # sklearn model
     >>> get_text_model('all-MiniLM-L6-v2')  # sentence-transformers model
+    >>> get_text_model({'model': 'CountVectorizer'})  # dict format
     """
     if is_sklearn_model(x) or is_hugging_face_model(x):
         return x  # already a valid model
@@ -190,6 +281,9 @@ def get_text_model(x):
             elif parent == 'decomposition':
                 sklearn_decomposition = _get_sklearn_decomposition()
                 return getattr(sklearn_decomposition, model_name)
+            elif parent == 'manifold':
+                sklearn_manifold = lazy_import_with_fallback('sklearn.manifold')()
+                return getattr(sklearn_manifold, model_name)
             else:
                 return None
         except AttributeError:
@@ -199,7 +293,7 @@ def get_text_model(x):
 
 
     # Check sklearn models first (before sentence-transformers)
-    for p in ['text', 'decomposition']:
+    for p in ['text', 'decomposition', 'manifold']:
         m = model_lookup(x, p)
         if m is not None:
             return m
@@ -330,16 +424,20 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
             https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition
             These may be passed either as callable modules (e.g., sklearn.decomposition.NMF) or as strings (e.g.,
             'NMF').  Default options for each model are defined in config.ini.
-      - Hugging-face models.  These take raw text as input and produce text embeddings as output.  Models are
-          specified using sentence-transformers:
-            - 'model': the name of a sentence-transformers model or 'SentenceTransformer'. Popular models include:
-                - 'all-MiniLM-L6-v2': Fast, good for general sentence similarity
-                - 'all-mpnet-base-v2': High quality sentence embeddings  
-                - 'paraphrase-MiniLM-L6-v2': Good for paraphrase detection
-                For a full list see: https://www.sbert.net/docs/pretrained_models.html
-            - 'args': a list of arguments to pass to the model (typically the model name if using 'SentenceTransformer')
-            - 'kwargs': a dictionary of keyword arguments to pass to the model initialization
-          for example, to embed text using a high-quality model, use:
+      - Hugging-face models.  These take raw text as input and produce text embeddings as output.  Models can be
+          specified using the simplified API (recommended) or full dict format:
+          
+          Simplified API (NEW):
+            - As a string: 'all-MiniLM-L6-v2'
+            - As a partial dict: {'model': 'all-MiniLM-L6-v2'}
+            
+          Popular models include:
+            - 'all-MiniLM-L6-v2': Fast, good for general sentence similarity
+            - 'all-mpnet-base-v2': High quality sentence embeddings  
+            - 'paraphrase-MiniLM-L6-v2': Good for paraphrase detection
+            For a full list see: https://www.sbert.net/docs/pretrained_models.html
+            
+          Full dict format (backward compatible):
             {'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}
           or using the SentenceTransformer class:
             {'model': 'SentenceTransformer', 'args': ['all-MiniLM-L6-v2'], 'kwargs': {}}
@@ -380,9 +478,16 @@ def apply_text_model(x, text, *args, mode='fit_transform', return_model=False, *
         else:
             return text
     elif type(x) is dict:
-        assert all([k in x.keys() for k in ['model', 'args', 'kwargs']]), ValueError(f'invalid model: {x}')
+        assert all([k in x.keys() for k in ['model']]), ValueError(f'invalid model: {x}')
+        
+        # Normalize the model dict to ensure 'args' and 'kwargs' keys exist
+        x = normalize_text_model(x)
+
         return apply_text_model(x['model'], text, *[*x['args'], *args], mode=mode, return_model=return_model,
                                 **update_dict(x['kwargs'], kwargs))
+    elif isinstance(x, str):
+        # Handle string model names directly - don't recurse, process as model string
+        pass  # Fall through to model processing below
 
     model = get_text_model(x)
     if model is None:
@@ -558,6 +663,13 @@ def wrangle_text(text, return_model=False, backend=None, **kwargs):
         - the 'config' argument may be used to select a specific variant of the corpus (passed to get_corpus as the
           "config_name" keyword argument).
       - 'model': any scikit-learn-compatible or hugging-face-compatible model (see apply_text_model for more details)
+        Simplified API examples:
+          - 'all-MiniLM-L6-v2' (string format for sentence-transformers)
+          - 'CountVectorizer' (string format for sklearn model) 
+          - ['CountVectorizer', 'LatentDirichletAllocation'] (list of strings for sklearn pipeline)
+          - {'model': 'all-MiniLM-L6-v2'} (partial dict format)
+        Full dict format (backward compatible):
+          - {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
       - 'array_kwargs': a dictionary of keyword arguments that may be passed to wrangle_array to control how the final
         DataFrame is structured (see wrangle_array for details).
 
@@ -577,6 +689,9 @@ def wrangle_text(text, return_model=False, backend=None, **kwargs):
 
     if type(model) is not list:
         model = [model]
+    
+    # Normalize each model in the list to support simplified API
+    model = [normalize_text_model(m) if isinstance(m, (str, dict)) else m for m in model]
 
     if any(robust_is_sklearn_model(m) for m in model):
         if corpus is not None:

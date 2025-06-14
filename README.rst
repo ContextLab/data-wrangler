@@ -44,16 +44,16 @@ Some quick natural language processing examples::
 
     # embed text using scikit-learn's implementation of Latent Dirichlet Allocation, trained on a curated subset of
     # Wikipedia, called the 'minipedia' corpus.  Return the fitted model so that it can be applied to new text.
-    lda = {'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'args': [], 'kwargs': {}}
-    lda_embeddings, lda_fit = dw.wrangle(text, text_kwargs={'model': lda, 'corpus': 'minipedia'}, return_model=True)
+    # NEW: Simplified API - just pass model names as strings or lists!
+    lda_embeddings, lda_fit = dw.wrangle(text, text_kwargs={'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'corpus': 'minipedia'}, return_model=True)
 
     # apply the minipedia-trained LDA model to new text
     new_text = 'how much wood could a wood chuck chuck if a wood chuck could check wood?'
     new_embeddings = dw.wrangle(new_text, text_kwargs={'model': lda_fit})
 
     # embed text using sentence-transformers pre-trained model
-    sentence_model = {'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}
-    sentence_embeddings = dw.wrangle(text, text_kwargs={'model': sentence_model})
+    # NEW: Simplified API - just pass the model name as a string!
+    sentence_embeddings = dw.wrangle(text, text_kwargs={'model': 'all-mpnet-base-v2'})
 
 High-performance Polars backend examples::
 

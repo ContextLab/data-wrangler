@@ -284,6 +284,120 @@ def test_wrangle_text_hugging_face_cross_backend_equivalence(text_file):
     assert_dataframes_equivalent(pandas_embeddings, polars_embeddings)
 
 
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_wrangle_text_simplified_api(text_file, backend):
+    """Test simplified text model API with backward compatibility."""
+    text = dw.io.load(text_file).split('\n')
+    
+    # Test 1: String model format (simplified API)
+    simple_string_kwargs = {'model': 'all-MiniLM-L6-v2'}
+    simple_embeddings = dw.wrangle(text, text_kwargs=simple_string_kwargs, backend=backend)
+    assert simple_embeddings.shape == (24, 384)  # all-MiniLM-L6-v2 produces 384-dim embeddings
+    assert_backend_type(simple_embeddings, backend)
+    
+    # Test 2: Partial dict format (model key only)
+    partial_dict_kwargs = {'model': {'model': 'all-MiniLM-L6-v2'}}
+    partial_embeddings = dw.wrangle(text, text_kwargs=partial_dict_kwargs, backend=backend)
+    assert partial_embeddings.shape == (24, 384)
+    assert_backend_type(partial_embeddings, backend)
+    
+    # Test 3: Full dict format (backward compatibility)
+    full_dict_kwargs = {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
+    full_embeddings = dw.wrangle(text, text_kwargs=full_dict_kwargs, backend=backend)
+    assert full_embeddings.shape == (24, 384)
+    assert_backend_type(full_embeddings, backend)
+    
+    # Test 4: Verify all formats produce equivalent results
+    simple_values = simple_embeddings.to_numpy() if hasattr(simple_embeddings, 'to_numpy') else simple_embeddings.values
+    partial_values = partial_embeddings.to_numpy() if hasattr(partial_embeddings, 'to_numpy') else partial_embeddings.values
+    full_values = full_embeddings.to_numpy() if hasattr(full_embeddings, 'to_numpy') else full_embeddings.values
+    
+    # All three formats should produce identical results
+    assert np.allclose(simple_values, partial_values, atol=1e-6)
+    assert np.allclose(simple_values, full_values, atol=1e-6)
+    assert np.allclose(partial_values, full_values, atol=1e-6)
+
+
+def test_wrangle_text_simplified_api_cross_backend_equivalence(text_file):
+    """Test that simplified API produces equivalent results across backends."""
+    text = dw.io.load(text_file).split('\n')
+    
+    # Test string format equivalence across backends
+    string_kwargs = {'model': 'all-MiniLM-L6-v2'}
+    pandas_string = dw.wrangle(text, text_kwargs=string_kwargs, backend='pandas')
+    polars_string = dw.wrangle(text, text_kwargs=string_kwargs, backend='polars')
+    assert_dataframes_equivalent(pandas_string, polars_string)
+    
+    # Test partial dict format equivalence across backends
+    partial_kwargs = {'model': {'model': 'all-MiniLM-L6-v2'}}
+    pandas_partial = dw.wrangle(text, text_kwargs=partial_kwargs, backend='pandas')
+    polars_partial = dw.wrangle(text, text_kwargs=partial_kwargs, backend='polars')
+    assert_dataframes_equivalent(pandas_partial, polars_partial)
+
+
+def test_normalize_text_model():
+    """Test the normalize_text_model utility function."""
+    # Test string normalization
+    result = dw.zoo.text.normalize_text_model('all-MiniLM-L6-v2')
+    expected = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    assert result == expected
+    
+    # Test partial dict normalization
+    result = dw.zoo.text.normalize_text_model({'model': 'all-MiniLM-L6-v2'})
+    expected = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    assert result == expected
+    
+    # Test partial dict with some args/kwargs
+    result = dw.zoo.text.normalize_text_model({'model': 'all-MiniLM-L6-v2', 'args': ['arg1']})
+    expected = {'model': 'all-MiniLM-L6-v2', 'args': ['arg1'], 'kwargs': {}}
+    assert result == expected
+    
+    # Test full dict (no change)
+    full_dict = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
+    result = dw.zoo.text.normalize_text_model(full_dict)
+    assert result == full_dict
+    
+    # Test non-dict/non-string input (passthrough)
+    result = dw.zoo.text.normalize_text_model(None)
+    assert result is None
+
+
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_wrangle_text_list_models_simplified_api(text_file, backend):
+    """Test simplified API with lists of models."""
+    text = dw.io.load(text_file).split('\n')
+    
+    # Test 1: List of string models (sklearn pipeline)
+    sklearn_list_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'corpus': 'sotus'}
+    sklearn_result = dw.wrangle(text, text_kwargs=sklearn_list_kwargs, backend=backend)
+    assert sklearn_result.shape == (24, 50)  # LDA with default 50 topics
+    assert_backend_type(sklearn_result, backend)
+    
+    # Test 2: Mixed list with string and dict models
+    mixed_list_kwargs = {
+        'model': [
+            'CountVectorizer',  # String format
+            {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 20}}  # Dict format
+        ],
+        'corpus': 'sotus'
+    }
+    mixed_result = dw.wrangle(text, text_kwargs=mixed_list_kwargs, backend=backend)
+    assert mixed_result.shape == (24, 20)  # NMF with 20 components
+    assert_backend_type(mixed_result, backend)
+    
+    # Test 3: Verify list processing maintains backward compatibility
+    old_style_kwargs = {
+        'model': [
+            {'model': 'TfidfVectorizer', 'args': [], 'kwargs': {}},
+            {'model': 'NMF', 'args': [], 'kwargs': {'n_components': 15}}
+        ],
+        'corpus': 'sotus'
+    }
+    old_style_result = dw.wrangle(text, text_kwargs=old_style_kwargs, backend=backend)
+    assert old_style_result.shape == (24, 15)
+    assert_backend_type(old_style_result, backend)
+
+
 def test_is_null():
     assert dw.zoo.is_null(None)
     assert dw.zoo.is_null('')

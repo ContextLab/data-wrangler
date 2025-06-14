@@ -36,9 +36,12 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
         - array_kwargs: passed to wrangle_array function to control how arrays are handled
         - dataframe_kwargs: passed to wrangle_dataframe function to control how dataframes are handled
         - text_kwargs: passed to wrangle_text function to control how text data are handled
-            Common text_kwargs options:
+            Common text_kwargs options (simplified API):
             - {'model': 'all-MiniLM-L6-v2'} for sentence-transformers
+            - {'model': 'CountVectorizer'} for sklearn text vectorization
             - {'model': ['CountVectorizer', 'LatentDirichletAllocation']} for sklearn pipeline
+            Also supports full dict format for advanced configuration:
+            - {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
         Any other keyword arguments are passed to all wrangle functions.
 
     Returns
