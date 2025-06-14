@@ -12,6 +12,7 @@ configparser
 dill
 Pillow
 matplotlib
+polars
 
 # Optional HuggingFace dependencies (from requirements_hf.txt)
 torch
@@ -24,7 +25,7 @@ transformers
 
 # Sphinx documentation dependencies
 Sphinx
-pydata-sphinx-theme
+renku-sphinx-theme
 nbsphinx
 nbclient
 nbconvert
