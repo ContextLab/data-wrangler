@@ -25,6 +25,17 @@ Core Concepts
    tutorials/io.ipynb
    tutorials/util.ipynb
 
+High-Performance Computing with Polars
+---------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: High-Performance Computing with Polars:
+
+   tutorials/polars_performance.ipynb
+   tutorials/polars_advanced.ipynb
+   tutorials/polars_benchmarks.ipynb
+
 Advanced Applications
 ---------------------
 
