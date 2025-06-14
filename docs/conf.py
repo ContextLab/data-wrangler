@@ -104,16 +104,16 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'insegel'
+html_theme = 'renku'
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_logo = "images/wrangler_logo.png"
-# Theme options for insegel theme
+# Theme options for renku theme
 html_theme_options = {
-    # Add insegel-specific options here if needed
+    # Add renku-specific options here if needed
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
