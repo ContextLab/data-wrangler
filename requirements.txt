@@ -12,3 +12,4 @@ configparser
 dill
 Pillow
 matplotlib
+# Note: All dependencies verified working with Polars backend (2025-06-13)
