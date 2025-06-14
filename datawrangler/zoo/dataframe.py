@@ -49,7 +49,7 @@ def is_multiindex_dataframe(x):
 
     Returns
     -------
-    :return: True if the object is a MultiIndex DataFrame (or points to a file that can be loaded into Pandas as a
+    :return: True if the object is a MultiIndex DataFrame (or points to a file that can be loaded as a
     MultiIndex DataFrame), and False otherwise.
     """
     return is_dataframe(x) and ('indexes.multi' in type(x.index).__module__)
@@ -67,12 +67,24 @@ def wrangle_dataframe(data, return_model=False, backend=None, **kwargs):
       the cleaned DataFrame.  Otherwise (if False), just return the cleaned DataFrame.  Default: False
     :param backend: str, optional
         The DataFrame backend to use ('pandas' or 'polars'). If None, preserves the input type
-    :param kwargs: passed to the DataFrame "wrangling" model (default: the constructor for pd.DataFrame or pl.DataFrame)
+    :param kwargs: passed to the DataFrame "wrangling" model (default: the constructor for pandas.DataFrame or polars.DataFrame)
 
     Returns
     -------
     :return: The "wrangled" DataFrame (if return_model is False), or the DataFrame plus a "model" for cleaning
       DataFrames (if return_model is True).
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import datawrangler as dw
+    >>> # Wrangle pandas DataFrame, preserving type
+    >>> df_pandas = pd.DataFrame({'A': [1, 2, 3]})
+    >>> cleaned_pandas = dw.wrangle(df_pandas)
+    >>> # Convert pandas DataFrame to Polars
+    >>> df_polars = dw.wrangle(df_pandas, backend='polars')
+    >>> # Load and wrangle from file
+    >>> df_from_file = dw.wrangle('data.csv')
     """
     load_kwargs = kwargs.pop('load_kwargs', {})
 

@@ -91,6 +91,7 @@ def normalize_text_model(model):
     
     Examples
     --------
+    >>> from datawrangler.zoo.text import normalize_text_model
     >>> normalize_text_model('all-MiniLM-L6-v2')
     {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
     >>> normalize_text_model('CountVectorizer')
@@ -259,6 +260,7 @@ def get_text_model(x):
         
     Examples
     --------
+    >>> from datawrangler.zoo.text import get_text_model
     >>> get_text_model('LatentDirichletAllocation')  # sklearn model
     >>> get_text_model('all-MiniLM-L6-v2')  # sentence-transformers model
     >>> get_text_model({'model': 'CountVectorizer'})  # dict format
@@ -609,7 +611,7 @@ def is_text(x):
 def to_str_list(x, encoding='utf-8'):
     """
     Internal helper function used to wrangle text data.  Handles binary strings, nested lists of strings, and arrays
-      or dataframes containing text.
+      or DataFrames containing text.
 
     Parameters
     ----------
@@ -675,8 +677,23 @@ def wrangle_text(text, return_model=False, backend=None, **kwargs):
 
     Returns
     -------
-    :return: a DataFrame (or list of DataFrames) containing the embedded text.  If return_model is True a tuple, whose
-      first element contains the embedded text and second element contains the fitted models, is returned instead.
+    :return: a DataFrame (pandas or Polars based on backend) or list of DataFrames containing the embedded text.  If 
+      return_model is True a tuple, whose first element contains the embedded text and second element contains the 
+      fitted models, is returned instead.
+
+    Examples
+    --------
+    >>> import datawrangler as dw
+    >>> # Create pandas DataFrame with sentence embeddings
+    >>> df_pandas = dw.wrangle(["Hello world", "How are you?"], 
+    ...                        text_kwargs={'model': 'all-MiniLM-L6-v2'})
+    >>> # Create Polars DataFrame with sentence embeddings  
+    >>> df_polars = dw.wrangle(["Hello world", "How are you?"],
+    ...                        text_kwargs={'model': 'all-MiniLM-L6-v2'},
+    ...                        backend='polars')
+    >>> # Use sklearn pipeline with pandas backend (default)
+    >>> df_sklearn = dw.wrangle(["This is text", "More text here"],
+    ...                         text_kwargs={'model': ['CountVectorizer', 'LatentDirichletAllocation']})
     """
     text = get_text(text)
     if type(text) is not list:

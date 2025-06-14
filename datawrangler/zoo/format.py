@@ -25,8 +25,8 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
     ----------
     :param x: data in any format. Supported datatypes:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
-        - Pandas DataFrames, dataframe-like objects, or paths to files that store dataframe-like objects  
-        - Polars DataFrames and LazyFrames
+        - DataFrames (pandas or Polars), dataframe-like objects, or paths to files that store dataframe-like objects  
+        - Polars LazyFrames
         - Text strings, lists of strings, or paths to plain text files
         - Mixed lists or nested lists of the above types
     :param return_dtype: if True, also return the auto-detected datatype(s) of each dataset. Default: False
@@ -51,9 +51,13 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
     Examples
     --------
     >>> import datawrangler as dw
-    >>> df = dw.wrangle([1, 2, 3])  # Convert array to pandas DataFrame
-    >>> df_polars = dw.wrangle([1, 2, 3], backend='polars')  # Convert array to Polars DataFrame
+    >>> # Convert array to pandas DataFrame (default)
+    >>> df = dw.wrangle([1, 2, 3])
+    >>> # Convert array to Polars DataFrame
+    >>> df_polars = dw.wrangle([1, 2, 3], backend='polars')
+    >>> # Process text with sentence-transformers model
     >>> text_df = dw.wrangle(["Hello", "World"], text_kwargs={'model': 'all-MiniLM-L6-v2'})
+    >>> # Handle mixed data types and return detected types
     >>> mixed_df, dtypes = dw.wrangle([df, text_df], return_dtype=True)
     """
 

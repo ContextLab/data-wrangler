@@ -133,6 +133,7 @@ def get_text_model(x):
         
     Examples
     --------
+    >>> from datawrangler.zoo.text_original import get_text_model
     >>> get_text_model('LatentDirichletAllocation')  # sklearn model
     >>> get_text_model('all-MiniLM-L6-v2')  # sentence-transformers model
     """

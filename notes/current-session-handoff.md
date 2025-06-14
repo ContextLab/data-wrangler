@@ -257,7 +257,41 @@ pytest tests/wrangler/test_zoo.py::test_wrangle_text_sklearn -v
 - ✅ Version bump completed and tagged
 - ✅ PyPI release successful
 
-**Current State**: Text model API simplification complete and tested
-**Next Goal**: Polished documentation and successful 0.4.0 PyPI release
+**Current State**: Colab issue fixed, ready for comprehensive documentation audit
+**Next Goal**: Complete documentation review, then 0.4.0 release
+
+## 📋 **DOCUMENTATION AUDIT PLAN (Current Priority)**
+
+### **1. API Docstring Review**
+- Check all function docstrings for pandas-specific references
+- Ensure backend-agnostic language (e.g., "DataFrame" not "pandas DataFrame")
+- Verify all parameters are documented correctly
+- Update examples to show both backends where relevant
+
+### **2. Sphinx Documentation Review**
+- **Installation Guide**: Verify all instructions work
+- **Tutorials**: Test every code example
+- **API Reference**: Check auto-generated docs are complete
+- **Migration Guide**: Ensure 0.3.0→0.4.0 guidance is accurate
+
+### **3. Tutorial Testing Checklist**
+- [ ] Basic usage examples
+- [ ] Text processing with simplified API
+- [ ] Polars backend examples
+- [ ] Decorator usage examples
+- [ ] Advanced ML model examples
+- [ ] Performance comparison examples
+
+### **4. Backend Abstraction Checklist**
+- Replace "pandas DataFrame" → "DataFrame"
+- Replace "pd.DataFrame" → "DataFrame (pandas or Polars)"
+- Add backend parameter examples where missing
+- Ensure return type descriptions are backend-aware
+
+### **5. Post-Documentation Tasks**
+1. Version bump to 0.4.0
+2. Update HISTORY.rst
+3. Create GitHub release
+4. Build and upload to PyPI
 
 **Remember**: Always verify the current date is correct! 📅

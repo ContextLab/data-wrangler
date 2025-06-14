@@ -30,7 +30,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
     ],
-    description="Wrangle messy data into pandas DataFrames, with a special focus on text data and natural language "
+    description="Wrangle messy data into DataFrames (pandas or Polars), with a special focus on text data and natural language "
                 "processing",
     install_requires=requirements,
     extras_require={'hf': hf_requirements, 'dev': test_requirements},
@@ -45,6 +45,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/ContextLab/data-wrangler',
-    version='0.3.0',
+    version='0.4.0',
     zip_safe=False,
 )

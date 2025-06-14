@@ -79,6 +79,17 @@ def wrangle_array(data, return_model=False, backend=None, **kwargs):
     Returns
     -------
     :return: The resulting DataFrame (pandas or Polars based on backend)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import datawrangler as dw
+    >>> # Create pandas DataFrame from array (default)
+    >>> df_pandas = dw.wrangle(np.array([1, 2, 3]))
+    >>> # Create Polars DataFrame from array
+    >>> df_polars = dw.wrangle(np.array([1, 2, 3]), backend='polars')
+    >>> # Create DataFrame with custom column names
+    >>> df_custom = dw.wrangle([[1, 2], [3, 4]], array_kwargs={'columns': ['A', 'B']})
     """
     def stacker(x):
         while x.ndim >= 3:

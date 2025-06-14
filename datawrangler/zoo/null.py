@@ -46,6 +46,14 @@ def wrangle_null(data, return_model=False, backend=None, model=None):
     Returns
     -------
     :return: an empty DataFrame (pandas or Polars based on backend)
+
+    Examples
+    --------
+    >>> import datawrangler as dw
+    >>> # Create empty pandas DataFrame (default)
+    >>> df_pandas = dw.wrangle(None)
+    >>> # Create empty Polars DataFrame
+    >>> df_polars = dw.wrangle(None, backend='polars')
     """
 
     # Determine default model based on backend
