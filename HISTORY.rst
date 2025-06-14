@@ -2,7 +2,7 @@
 History
 =======
 
-0.3.0 (2025-01-13)
+0.3.0 (2025-06-13)
 ------------------
 
 **Major Release: NumPy 2.0+ Compatibility & Modern ML Libraries**
