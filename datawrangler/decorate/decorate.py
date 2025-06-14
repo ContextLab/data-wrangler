@@ -227,7 +227,7 @@ def list_generalizer(f):
 
 def funnel(f):
     """
-    A decorator that coerces any data passed into the function into a pandas DataFrame or a list of DataFrames
+    A decorator that coerces any data passed into the function into a DataFrame (pandas or Polars) or a list of DataFrames
 
     Parameters
     ----------
@@ -236,13 +236,27 @@ def funnel(f):
 
     Returns
     -------
-    :return: A decorated function the supports any wrangle-able data format
+    :return: A decorated function that supports any wrangle-able data format. The decorated function accepts
+       an optional 'backend' keyword argument ('pandas' or 'polars') to specify the DataFrame backend.
+       
+    Notes
+    -----
+    The decorated function can be called with:
+    - backend='pandas': Convert inputs to pandas DataFrames (default)
+    - backend='polars': Convert inputs to Polars DataFrames for better performance
     """
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
+        # Extract backend parameter for consistent DataFrame backend
+        backend = kwargs.pop('backend', None)
+        
         wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
         for fc in format_checkers:
             wrangle_kwargs[f'{fc}_kwargs'] = kwargs.pop(f'{fc}_kwargs', {})
+        
+        # Pass backend to wrangle if specified
+        if backend is not None:
+            wrangle_kwargs['backend'] = backend
 
         return f(wrangle(data, **wrangle_kwargs), *args, **kwargs)
 
@@ -262,27 +276,61 @@ def interpolate(f):
     -------
     :return: A decorated function that supports any wrangle-able datatype.  Pass in the following keyword arguments to
     fill in missing data:
-      impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
-          {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model* function.
-      any other keywords are passed to pandas.DataFrame.interpolate; e.g. method='linear' will apply linear
-          interpolation to fill in missing values.  A full list of supported arguments may be found here:
-          https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
-          If no other keyword arguments are specified, no interpolation is performed.
+      backend: str, optional ('pandas' or 'polars')
+          Specify the DataFrame backend. If not provided, preserves input backend.
+      interp_kwargs: a dictionary containing interpolation/imputation parameters:
+          impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
+              {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model* function.
+          Any other keywords are passed to the DataFrame's interpolate method; e.g. method='linear' will apply linear
+              interpolation to fill in missing values. For pandas DataFrames, supported arguments are documented at:
+              https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+              
+    Notes
+    -----
+    Backend-specific behavior:
+    - pandas: Full interpolation support with all pandas.DataFrame.interpolate() methods
+    - Polars: Limited interpolation support; automatically converts to pandas for interpolation, then back to Polars
+    If no interpolation arguments are specified, no interpolation is performed.
     """
     @funnel
     def fill_missing(data, return_model=False, **kwargs):
+        from ..zoo.polars_dataframe import is_polars_dataframe, pandas_to_polars
+        
         impute_kwargs = kwargs.pop('impute_kwargs', {})
+        is_polars = is_polars_dataframe(data)
 
         if impute_kwargs:
             model = impute_kwargs.pop('model', eval(defaults['impute']['model']))
             imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
-            data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
+            
+            # Recreate DataFrame with appropriate backend
+            if is_polars:
+                # For Polars, convert to pandas temporarily, then back to Polars
+                import polars as pl
+                temp_df = pd.DataFrame(data=imputed_data, index=data.to_pandas().index, columns=data.columns)
+                data = pandas_to_polars(temp_df)
+            else:
+                # pandas backend
+                data = pd.DataFrame(data=imputed_data, index=data.index, columns=data.columns)
         else:
             model = None
 
         if kwargs:
             kwargs = update_dict(defaults['interpolate'], kwargs, from_config=True)
-            data = data.interpolate(**kwargs)
+            
+            # Backend-specific interpolation
+            if is_polars:
+                # Polars has limited interpolation support
+                # For now, convert to pandas, interpolate, then convert back
+                import warnings
+                warnings.warn("Polars interpolation support is limited. Converting to pandas for interpolation.", 
+                             UserWarning)
+                pandas_data = data.to_pandas()
+                interpolated_data = pandas_data.interpolate(**kwargs)
+                data = pandas_to_polars(interpolated_data)
+            else:
+                # pandas interpolation
+                data = data.interpolate(**kwargs)
 
         if return_model:
             return data, {'model': model, 'args': [], 'kwargs': kwargs}
@@ -291,7 +339,14 @@ def interpolate(f):
 
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
+        # Extract backend parameter and pass to fill_missing (remove from kwargs for user function)
+        backend = kwargs.pop('backend', None)
         interp_kwargs = kwargs.pop('interp_kwargs', {})
+        
+        # Pass backend to fill_missing if specified
+        if backend is not None:
+            interp_kwargs['backend'] = backend
+            
         return f(fill_missing(data, *args, **interp_kwargs), **kwargs)
 
     return wrapped

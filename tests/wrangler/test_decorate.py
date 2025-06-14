@@ -5,7 +5,10 @@
 import os
 import datawrangler as dw
 import pandas as pd
+import polars as pl
 import numpy as np
+import pytest
+from .conftest import assert_backend_type, assert_dataframes_equivalent
 
 
 # noinspection PyTypeChecker
@@ -19,7 +22,8 @@ def test_list_generalizer():
 
 
 # noinspection PyTypeChecker
-def test_funnel(data_file, data, img_file, text_file):
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_funnel(data_file, data, img_file, text_file, backend):
     @dw.decorate.list_generalizer
     @dw.decorate.funnel
     def g(x):
@@ -38,7 +42,7 @@ def test_funnel(data_file, data, img_file, text_file):
 
     dataframe_kwargs = {'load_kwargs': {'index_col': 0}}
     text_kwargs = {'model': 'all-MiniLM-L6-v2'}
-    wrangle_kwargs = {'return_dtype': True}
+    wrangle_kwargs = {'return_dtype': True, 'backend': backend}
     wrangled, inferred_dtypes = f([data_file, data, data.values, img_file, text_file],
                                   dataframe_kwargs=dataframe_kwargs,
                                   text_kwargs=text_kwargs,
@@ -47,24 +51,50 @@ def test_funnel(data_file, data, img_file, text_file):
     correct_dtypes = ['dataframe', 'dataframe', 'array', 'array', 'text']
     assert all([i == c for i, c in zip(inferred_dtypes, correct_dtypes)])
 
-    assert np.allclose(wrangled[0].values, wrangled[1].values)
-
-    assert np.allclose(wrangled[0].values, wrangled[2].values)
+    # Convert to numpy arrays for comparison (works with both backends)
+    wrangled_0_values = wrangled[0].to_numpy() if hasattr(wrangled[0], 'to_numpy') else wrangled[0].values
+    wrangled_1_values = wrangled[1].to_numpy() if hasattr(wrangled[1], 'to_numpy') else wrangled[1].values
+    wrangled_2_values = wrangled[2].to_numpy() if hasattr(wrangled[2], 'to_numpy') else wrangled[2].values
+    
+    assert np.allclose(wrangled_0_values, wrangled_1_values)
+    assert np.allclose(wrangled_0_values, wrangled_2_values)
 
     assert wrangled[3].shape == (1400, 5760)
-    assert np.isclose(wrangled[3].values.mean(), 152.19, atol=0.1)
+    wrangled_3_values = wrangled[3].to_numpy() if hasattr(wrangled[3], 'to_numpy') else wrangled[3].values
+    assert np.isclose(wrangled_3_values.mean(), 152.19, atol=0.1)
     assert dw.util.btwn(wrangled[3], 12, 248)
 
     assert wrangled[4].shape == (1, 384)  # all-MiniLM-L6-v2 produces 384-dim embeddings
     assert dw.util.btwn(wrangled[4], -1, 1)
-    assert np.isclose(wrangled[4].values.mean(), -0.0007741971, atol=1e-5)
+    wrangled_4_values = wrangled[4].to_numpy() if hasattr(wrangled[4], 'to_numpy') else wrangled[4].values
+    assert np.isclose(wrangled_4_values.mean(), -0.0007741971, atol=1e-5)
+    
+    # Verify backend types
+    for w in wrangled:
+        if dw.zoo.is_dataframe(w):
+            assert_backend_type(w, backend)
 
 
-def test_interpolate(data):
+@pytest.mark.parametrize("backend", ["pandas", "polars"])
+def test_interpolate(data, backend):
+    # Convert data to appropriate backend for testing
+    if backend == 'polars':
+        import polars as pl
+        data = pl.from_pandas(data)
+        
     # test imputing
-    impute_test = data.copy()
-    impute_test.loc[4, 'SecondDim'] = np.nan
-    impute_test.loc[8, 'FourthDim'] = np.nan
+    if backend == 'pandas':
+        impute_test = data.copy()
+        impute_test.loc[4, 'SecondDim'] = np.nan
+        impute_test.loc[6, 'FourthDim'] = np.nan  # Fixed index
+    else:  # polars
+        # Polars uses .clone() instead of .copy()
+        impute_test = data.clone()
+        # Polars doesn't have .loc, use different approach
+        impute_test = impute_test.with_columns([
+            pl.when(pl.int_range(pl.len()) == 4).then(None).otherwise(pl.col('SecondDim')).alias('SecondDim'),
+            pl.when(pl.int_range(pl.len()) == 6).then(None).otherwise(pl.col('FourthDim')).alias('FourthDim')  # Note: polars is 0-indexed
+        ])
 
     @dw.decorate.interpolate
     def f(x):
@@ -72,33 +102,73 @@ def test_interpolate(data):
 
     # noinspection PyCallingNonCallable
     recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
-    assert np.allclose(data, recovered_data1)
+    
+    # Convert to numpy for comparison
+    data_values = data.to_numpy() if hasattr(data, 'to_numpy') else data.values
+    recovered_1_values = recovered_data1.to_numpy() if hasattr(recovered_data1, 'to_numpy') else recovered_data1.values
+    
+    assert np.allclose(data_values, recovered_1_values)
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(recovered_data1)
+    assert_backend_type(recovered_data1, backend)
 
     # test interpolation
-    interp_test = data.copy()
-    interp_test.loc[5] = np.nan
+    if backend == 'pandas':
+        interp_test = data.copy()
+        interp_test.loc[5] = np.nan
+    else:  # polars
+        interp_test = data.clone()
+        # For Polars, set row 5 to null
+        interp_test = interp_test.with_columns([
+            pl.when(pl.int_range(pl.len()) == 5).then(None).otherwise(pl.col(col)).alias(col)
+            for col in interp_test.columns
+        ])
+    
     # noinspection PyCallingNonCallable
-    recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'})
-    assert np.allclose(data, recovered_data2)
+    recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'}, backend=backend)
+    
+    # Convert to numpy for comparison
+    recovered_2_values = recovered_data2.to_numpy() if hasattr(recovered_data2, 'to_numpy') else recovered_data2.values
+    
+    assert np.allclose(data_values, recovered_2_values)
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(recovered_data2)
+    assert_backend_type(recovered_data2, backend)
 
     # impute + interpolate
-    impute_interp_test = data.copy()
-    impute_interp_test.loc[2, 'ThirdDim'] = np.nan
-    impute_interp_test.loc[0, 'FourthDim'] = np.nan
-    impute_interp_test.loc[8, 'FifthDim'] = np.nan
-    impute_interp_test.loc[4] = np.nan
+    if backend == 'pandas':
+        impute_interp_test = data.copy()
+        impute_interp_test.loc[2, 'ThirdDim'] = np.nan
+        impute_interp_test.loc[0, 'FourthDim'] = np.nan
+        impute_interp_test.loc[6, 'FifthDim'] = np.nan  # Fixed index
+        impute_interp_test.loc[4] = np.nan
+    else:  # polars
+        impute_interp_test = data.clone()
+        # For Polars, set specific cells and entire row to null
+        impute_interp_test = impute_interp_test.with_columns([
+            pl.when(pl.int_range(pl.len()) == 2).then(None).otherwise(pl.col('ThirdDim')).alias('ThirdDim'),
+            pl.when(pl.int_range(pl.len()) == 0).then(None).otherwise(pl.col('FourthDim')).alias('FourthDim'),
+            pl.when(pl.int_range(pl.len()) == 6).then(None).otherwise(pl.col('FifthDim')).alias('FifthDim')
+        ])
+        # Set entire row 4 to null
+        impute_interp_test = impute_interp_test.with_columns([
+            pl.when(pl.int_range(pl.len()) == 4).then(None).otherwise(pl.col(col)).alias(col)
+            for col in impute_interp_test.columns
+        ])
 
     # noinspection PyCallingNonCallable
     recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
-                                                           'method': 'pchip'})
-    assert np.allclose(recovered_data3.values[~np.isnan(impute_interp_test)],
-                       data.values[~np.isnan(impute_interp_test)])
+                                                           'method': 'pchip'}, backend=backend)
+    
+    # Convert to numpy for comparison
+    recovered_3_values = recovered_data3.to_numpy() if hasattr(recovered_data3, 'to_numpy') else recovered_data3.values
+    impute_interp_values = impute_interp_test.to_numpy() if hasattr(impute_interp_test, 'to_numpy') else impute_interp_test.values
+    
+    assert np.allclose(recovered_3_values[~np.isnan(impute_interp_values)],
+                       data_values[~np.isnan(impute_interp_values)])
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(recovered_data3)
+    assert_backend_type(recovered_data3, backend)
 
 
 def test_apply_unstacked(data):
