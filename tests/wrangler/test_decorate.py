@@ -28,8 +28,9 @@ def test_funnel(data_file, data, img_file, text_file, backend):
     def g(x):
         return x.pow(2)
 
-    assert int(g(3).values) == 9
-    assert list([int(i.values) for i in g([3, 4, 5])]) == [9, 16, 25]
+    # use .item() to pull the scalar out of the 1x1 result: numpy 2.x forbids int() on an ndim>0 array
+    assert int(g(3).values.item()) == 9
+    assert list([int(i.values.item()) for i in g([3, 4, 5])]) == [9, 16, 25]
     assert g(np.array([1, 2, 3])).values.tolist() == [[1, 4, 9]]
 
     # noinspection PyShadowingNames
