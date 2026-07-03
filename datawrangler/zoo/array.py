@@ -4,7 +4,6 @@ import six
 import os
 from ..io import load
 from ..core.configurator import update_dict
-from ..util.lazy_imports import get_polars
 from .polars_dataframe import create_polars_dataframe
 
 
@@ -46,8 +45,8 @@ def is_array(x):
         try:
             if is_array(load(x)):
                 return True
-        except:
-            if type(x) == list:
+        except Exception:
+            if type(x) is list:
                 return all([is_array(i) for i in x])
             elif is_number(x):
                 return True
@@ -67,11 +66,15 @@ def wrangle_array(data, return_model=False, backend=None, **kwargs):
     :param backend: str, optional
         The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param kwargs: a list of keyword arguments:
+
        - 'model': a callable function or constructor, or a dictionary containing the following keys:
+
          - 'model': a callable function or constructor
          - 'args': a list of arguments to pass to the function (in addition to data)
          - 'kwargs': a list of keyword arguments to pass to the function
+
          default: pandas.DataFrame or polars.DataFrame (based on backend)
+
        - all other keyword arguments are passed to the model (or constructor).  These can be used to change how the
          DataFrame is created (e.g., passing columns=['one', 'two', 'three'] will change the column names of the
          resulting DataFrame).
@@ -116,7 +119,7 @@ def wrangle_array(data, return_model=False, backend=None, **kwargs):
             default_model = pd.DataFrame
     else:
         default_model = pd.DataFrame
-    
+
     model = kwargs.pop('model', default_model)
     if type(model) is dict:
         # noinspection PyArgumentList

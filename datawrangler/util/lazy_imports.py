@@ -6,28 +6,27 @@ significantly reducing import time when those dependencies aren't needed.
 """
 
 import importlib
-import sys
 from functools import wraps
 
 
 class LazyModule:
     """A placeholder for a module that hasn't been imported yet."""
-    
+
     def __init__(self, module_name):
         self._module_name = module_name
         self._module = None
-    
+
     def _load(self):
         """Load the actual module."""
         if self._module is None:
             self._module = importlib.import_module(self._module_name)
         return self._module
-    
+
     def __getattr__(self, name):
         """Load module and get attribute when accessed."""
         module = self._load()
         return getattr(module, name)
-    
+
     def __dir__(self):
         """Load module and return directory."""
         module = self._load()
@@ -37,14 +36,14 @@ class LazyModule:
 def lazy_import(module_name, attribute=None):
     """
     Create a lazy import function.
-    
+
     Parameters
     ----------
     module_name : str
         The name of the module to import
     attribute : str, optional
         Specific attribute to import from the module
-        
+
     Returns
     -------
     function
@@ -55,22 +54,22 @@ def lazy_import(module_name, attribute=None):
         if attribute:
             return getattr(module, attribute)
         return module
-    
+
     # Cache the result after first import
     _import._cached = None
-    
+
     def _cached_import():
         if _import._cached is None:
             _import._cached = _import()
         return _import._cached
-    
+
     return _cached_import
 
 
 def lazy_import_with_fallback(module_name, attribute=None, fallback_message=None):
     """
     Create a lazy import function with error handling.
-    
+
     Parameters
     ----------
     module_name : str
@@ -79,7 +78,7 @@ def lazy_import_with_fallback(module_name, attribute=None, fallback_message=None
         Specific attribute to import from the module
     fallback_message : str, optional
         Custom error message if import fails
-        
+
     Returns
     -------
     function
@@ -96,27 +95,27 @@ def lazy_import_with_fallback(module_name, attribute=None, fallback_message=None
             if fallback_message:
                 raise ImportError(fallback_message) from e
             raise
-    
+
     # Cache the result after first import
     _import._cached = None
-    
+
     def _cached_import():
         if _import._cached is None:
             _import._cached = _import()
         return _import._cached
-    
+
     return _cached_import
 
 
 def requires_import(*modules):
     """
     Decorator that ensures modules are available before function execution.
-    
+
     Parameters
     ----------
     *modules : str
         Module names that must be importable
-        
+
     Returns
     -------
     decorator

@@ -48,10 +48,10 @@ def test_wrangle_dataframe(data, data_file, backend):
 
     # Test with pandas input and specified backend
     df1 = dw.zoo.wrangle_dataframe(data, backend=backend)
-    
+
     # Convert to pandas for detailed assertions (values should be equivalent)
     df1_pandas = df1.to_pandas() if isinstance(df1, pl.DataFrame) else df1
-    
+
     # Backend-specific behavior: pandas preserves index names, Polars does not
     # This is expected due to fundamental differences in how the libraries handle row indexing
     if backend == 'pandas':
@@ -60,7 +60,7 @@ def test_wrangle_dataframe(data, data_file, backend):
         # Polars backend: index names are not preserved during conversion
         # This is documented behavior - Polars uses position-based indexing only
         pass
-    
+
     assert np.all(df1_pandas['FirstDim'] == np.arange(1, 8))
     assert np.all(df1_pandas['SecondDim'] == np.arange(2, 16, 2))
     assert np.all(df1_pandas['ThirdDim'] == np.arange(3, 24, 3))
@@ -70,7 +70,7 @@ def test_wrangle_dataframe(data, data_file, backend):
     # Test loading from file with backend
     df2 = dw.zoo.wrangle_dataframe(data_file, load_kwargs={'index_col': 0}, backend=backend)
     assert_backend_type(df2, backend)
-    
+
     # Verify equivalence between backends
     assert_dataframes_equivalent(df1, df2)
 
@@ -79,7 +79,7 @@ def test_wrangle_dataframe_cross_backend_equivalence(data):
     """Test that pandas and Polars backends produce equivalent results."""
     pandas_df = dw.zoo.wrangle_dataframe(data, backend='pandas')
     polars_df = dw.zoo.wrangle_dataframe(data, backend='polars')
-    
+
     assert_dataframes_equivalent(pandas_df, polars_df)
 
 
@@ -103,10 +103,10 @@ def test_wrangle_array(data, img_file, backend):
     assert df_img.shape == (1400, 5760)
     assert dw.zoo.is_dataframe(df_img)
     assert_backend_type(df_img, backend)
-    
+
     # Convert to numpy for value checks (works for both backends)
     df_img_values = df_img.to_numpy() if hasattr(df_img, 'to_numpy') else df_img.values
-    assert np.max(df_img_values) >= 245 # needed for GitHub actions tests
+    assert np.max(df_img_values) >= 245  # needed for GitHub actions tests
     assert np.min(df_img_values) == 12
     assert np.isclose(np.mean(df_img_values), 152.19, atol=0.1)
 
@@ -115,7 +115,7 @@ def test_wrangle_array_cross_backend_equivalence(data):
     """Test that array wrangling produces equivalent results across backends."""
     pandas_df = dw.zoo.wrangle_array(data.values, backend='pandas')
     polars_df = dw.zoo.wrangle_array(data.values, backend='polars')
-    
+
     assert_dataframes_equivalent(pandas_df, polars_df)
 
 
@@ -149,8 +149,8 @@ def test_get_corpus():
     assert sotus[-1].split('\n')[-1] == ''
     assert len(sotus) == 29
 
-    # test small hugging face corpus: cbt/raw
-    cbt = dw.zoo.text.get_corpus('cbt', 'raw')
+    # test small hugging face corpus: cam-cst/cbt (the namespaced Children's Book Test dataset)
+    cbt = dw.zoo.text.get_corpus('cam-cst/cbt', 'raw')
     assert cbt[0][:100] == 'CHAPTER I. -LCB- Chapter heading picture : p1.jpg -RCB- How the Fairies were not Invited ' \
                            'to Court . '
     assert cbt[0][-104:] == "occasionally Rosalind would say , `` I do believe , my dear , that you are really as " \
@@ -169,7 +169,7 @@ def test_wrangle_text_sklearn(text_file, backend):
     cv = dw.wrangle(text, text_kwargs=text_kwargs, backend=backend)
     assert cv.shape == (24, 1220)
     assert_backend_type(cv, backend)
-    
+
     # Convert to values for numerical checks
     cv_values = cv.to_numpy() if hasattr(cv, 'to_numpy') else cv.values
     assert dw.util.btwn(cv_values, 0, 1)
@@ -186,7 +186,7 @@ def test_wrangle_text_sklearn(text_file, backend):
     lda = dw.wrangle(text, text_kwargs=text_kwargs, backend=backend)
     assert lda.shape == (24, 50)
     assert_backend_type(lda, backend)
-    
+
     lda_values = lda.to_numpy() if hasattr(lda, 'to_numpy') else lda.values
     assert dw.util.btwn(lda_values, 0, 1)
     assert np.allclose(lda_values.sum(axis=1), 1)
@@ -197,7 +197,7 @@ def test_wrangle_text_sklearn(text_file, backend):
     nmf = dw.wrangle(text, text_kwargs=text_kwargs, backend=backend)
     assert nmf.shape == (24, 25)
     assert_backend_type(nmf, backend)
-    
+
     nmf_values = nmf.to_numpy() if hasattr(nmf, 'to_numpy') else nmf.values
     assert dw.util.btwn(nmf_values, 0, 1)
 
@@ -205,30 +205,30 @@ def test_wrangle_text_sklearn(text_file, backend):
 def test_wrangle_text_sklearn_cross_backend_equivalence(text_file):
     """Test that sklearn text processing produces equivalent results across backends."""
     import numpy as np
-    
+
     text = dw.io.load(text_file).split('\n')
-    
+
     # Test CountVectorizer equivalence - this should be deterministic
     text_kwargs = {'model': 'CountVectorizer'}
     pandas_cv = dw.wrangle(text, text_kwargs=text_kwargs, backend='pandas')
     polars_cv = dw.wrangle(text, text_kwargs=text_kwargs, backend='polars')
     assert_dataframes_equivalent(pandas_cv, polars_cv)
-    
+
     # Test LDA equivalence with fixed random seed for deterministic behavior
     # Set random seed before each backend test to ensure identical results
     np.random.seed(42)
     text_kwargs = {
         'model': [
-            'CountVectorizer', 
+            'CountVectorizer',
             {'model': 'LatentDirichletAllocation', 'args': [], 'kwargs': {'random_state': 42}}
-        ], 
+        ],
         'corpus': 'sotus'
     }
     pandas_lda = dw.wrangle(text, text_kwargs=text_kwargs, backend='pandas')
-    
+
     np.random.seed(42)  # Reset seed for second backend
     polars_lda = dw.wrangle(text, text_kwargs=text_kwargs, backend='polars')
-    
+
     assert_dataframes_equivalent(pandas_lda, polars_lda)
 
 
@@ -243,7 +243,7 @@ def test_wrangle_text_hugging_face(text_file, backend):
     assert len(sentence_embeddings) == 24
     assert all([a == b for a, b in zip([g.shape[0] for g in sentence_embeddings], [len(w) for w in words])])
     assert all(g.shape[1] == 384 for g in sentence_embeddings)  # all-MiniLM-L6-v2 produces 384-dim embeddings
-    
+
     # Convert to values for numerical checks
     embedding_means = []
     for g in sentence_embeddings:
@@ -260,15 +260,16 @@ def test_wrangle_text_hugging_face(text_file, backend):
     distilbert_embeddings = dw.wrangle(text, text_kwargs=distilbert_kwargs, backend=backend)
     assert distilbert_embeddings.shape == (24, 768)  # all-mpnet-base-v2 produces 768-dim embeddings
     assert_backend_type(distilbert_embeddings, backend)
-    
-    distilbert_values = distilbert_embeddings.to_numpy() if hasattr(distilbert_embeddings, 'to_numpy') else distilbert_embeddings.values
+
+    distilbert_values = (distilbert_embeddings.to_numpy() if hasattr(distilbert_embeddings, 'to_numpy')
+                         else distilbert_embeddings.values)
     assert np.isclose(distilbert_values.mean(axis=0).mean(axis=0), -0.000105, atol=0.0001)
 
     bert_kwargs = {'model': {'model': 'all-MiniLM-L12-v2', 'args': [], 'kwargs': {}}}
     bert_embeddings = dw.wrangle(text, text_kwargs=bert_kwargs, backend=backend)
     assert bert_embeddings.shape == (24, 384)  # all-MiniLM-L12-v2 produces 384-dim embeddings
     assert_backend_type(bert_embeddings, backend)
-    
+
     bert_values = bert_embeddings.to_numpy() if hasattr(bert_embeddings, 'to_numpy') else bert_embeddings.values
     assert np.isclose(bert_values.mean(axis=0).mean(axis=0), -0.0001967, atol=0.0001)
 
@@ -276,7 +277,7 @@ def test_wrangle_text_hugging_face(text_file, backend):
 def test_wrangle_text_hugging_face_cross_backend_equivalence(text_file):
     """Test that HuggingFace text processing produces equivalent results across backends."""
     text = dw.io.load(text_file).split('\n')
-    
+
     # Test transformer model equivalence
     model_kwargs = {'model': {'model': 'all-mpnet-base-v2', 'args': [], 'kwargs': {}}}
     pandas_embeddings = dw.wrangle(text, text_kwargs=model_kwargs, backend='pandas')
@@ -288,30 +289,31 @@ def test_wrangle_text_hugging_face_cross_backend_equivalence(text_file):
 def test_wrangle_text_simplified_api(text_file, backend):
     """Test simplified text model API with backward compatibility."""
     text = dw.io.load(text_file).split('\n')
-    
+
     # Test 1: String model format (simplified API)
     simple_string_kwargs = {'model': 'all-MiniLM-L6-v2'}
     simple_embeddings = dw.wrangle(text, text_kwargs=simple_string_kwargs, backend=backend)
     assert simple_embeddings.shape == (24, 384)  # all-MiniLM-L6-v2 produces 384-dim embeddings
     assert_backend_type(simple_embeddings, backend)
-    
+
     # Test 2: Partial dict format (model key only)
     partial_dict_kwargs = {'model': {'model': 'all-MiniLM-L6-v2'}}
     partial_embeddings = dw.wrangle(text, text_kwargs=partial_dict_kwargs, backend=backend)
     assert partial_embeddings.shape == (24, 384)
     assert_backend_type(partial_embeddings, backend)
-    
+
     # Test 3: Full dict format (backward compatibility)
     full_dict_kwargs = {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
     full_embeddings = dw.wrangle(text, text_kwargs=full_dict_kwargs, backend=backend)
     assert full_embeddings.shape == (24, 384)
     assert_backend_type(full_embeddings, backend)
-    
+
     # Test 4: Verify all formats produce equivalent results
     simple_values = simple_embeddings.to_numpy() if hasattr(simple_embeddings, 'to_numpy') else simple_embeddings.values
-    partial_values = partial_embeddings.to_numpy() if hasattr(partial_embeddings, 'to_numpy') else partial_embeddings.values
+    partial_values = (partial_embeddings.to_numpy() if hasattr(partial_embeddings, 'to_numpy')
+                      else partial_embeddings.values)
     full_values = full_embeddings.to_numpy() if hasattr(full_embeddings, 'to_numpy') else full_embeddings.values
-    
+
     # All three formats should produce identical results
     assert np.allclose(simple_values, partial_values, atol=1e-6)
     assert np.allclose(simple_values, full_values, atol=1e-6)
@@ -321,13 +323,13 @@ def test_wrangle_text_simplified_api(text_file, backend):
 def test_wrangle_text_simplified_api_cross_backend_equivalence(text_file):
     """Test that simplified API produces equivalent results across backends."""
     text = dw.io.load(text_file).split('\n')
-    
+
     # Test string format equivalence across backends
     string_kwargs = {'model': 'all-MiniLM-L6-v2'}
     pandas_string = dw.wrangle(text, text_kwargs=string_kwargs, backend='pandas')
     polars_string = dw.wrangle(text, text_kwargs=string_kwargs, backend='polars')
     assert_dataframes_equivalent(pandas_string, polars_string)
-    
+
     # Test partial dict format equivalence across backends
     partial_kwargs = {'model': {'model': 'all-MiniLM-L6-v2'}}
     pandas_partial = dw.wrangle(text, text_kwargs=partial_kwargs, backend='pandas')
@@ -341,22 +343,22 @@ def test_normalize_text_model():
     result = dw.zoo.text.normalize_text_model('all-MiniLM-L6-v2')
     expected = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
     assert result == expected
-    
+
     # Test partial dict normalization
     result = dw.zoo.text.normalize_text_model({'model': 'all-MiniLM-L6-v2'})
     expected = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
     assert result == expected
-    
+
     # Test partial dict with some args/kwargs
     result = dw.zoo.text.normalize_text_model({'model': 'all-MiniLM-L6-v2', 'args': ['arg1']})
     expected = {'model': 'all-MiniLM-L6-v2', 'args': ['arg1'], 'kwargs': {}}
     assert result == expected
-    
+
     # Test full dict (no change)
     full_dict = {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}
     result = dw.zoo.text.normalize_text_model(full_dict)
     assert result == full_dict
-    
+
     # Test non-dict/non-string input (passthrough)
     result = dw.zoo.text.normalize_text_model(None)
     assert result is None
@@ -366,13 +368,13 @@ def test_normalize_text_model():
 def test_wrangle_text_list_models_simplified_api(text_file, backend):
     """Test simplified API with lists of models."""
     text = dw.io.load(text_file).split('\n')
-    
+
     # Test 1: List of string models (sklearn pipeline)
     sklearn_list_kwargs = {'model': ['CountVectorizer', 'LatentDirichletAllocation'], 'corpus': 'sotus'}
     sklearn_result = dw.wrangle(text, text_kwargs=sklearn_list_kwargs, backend=backend)
     assert sklearn_result.shape == (24, 50)  # LDA with default 50 topics
     assert_backend_type(sklearn_result, backend)
-    
+
     # Test 2: Mixed list with string and dict models
     mixed_list_kwargs = {
         'model': [
@@ -384,7 +386,7 @@ def test_wrangle_text_list_models_simplified_api(text_file, backend):
     mixed_result = dw.wrangle(text, text_kwargs=mixed_list_kwargs, backend=backend)
     assert mixed_result.shape == (24, 20)  # NMF with 20 components
     assert_backend_type(mixed_result, backend)
-    
+
     # Test 3: Verify list processing maintains backward compatibility
     old_style_kwargs = {
         'model': [
@@ -421,8 +423,94 @@ def test_wrangle_null_cross_backend_equivalence():
     """Test that null wrangling produces equivalent results across backends."""
     pandas_df = dw.wrangle(None, backend='pandas')
     polars_df = dw.wrangle(None, backend='polars')
-    
+
     # Both should be empty DataFrames
     assert len(pandas_df) == 0
     assert len(polars_df) == 0
     assert_dataframes_equivalent(pandas_df, polars_df)
+
+
+def test_is_multiindex_dataframe_polars():
+    """Regression: is_multiindex_dataframe must not crash on Polars (which has no .index)."""
+    assert dw.zoo.is_multiindex_dataframe(pl.DataFrame({'a': [1, 2, 3]})) is False
+    assert dw.zoo.is_multiindex_dataframe(pl.DataFrame({'a': [1, 2, 3]}).lazy()) is False
+
+    # pandas behaviour is unchanged
+    mi = pd.DataFrame({'v': [1, 2]},
+                      index=pd.MultiIndex.from_tuples([('a', 0), ('a', 1)]))
+    assert dw.zoo.is_multiindex_dataframe(mi) is True
+    assert dw.zoo.is_multiindex_dataframe(pd.DataFrame({'v': [1]})) is False
+
+
+def test_return_model_contract():
+    """wrangle_* honour the {'model','args','kwargs'} contract, and the returned
+    model can be re-applied to new data to reproduce equivalent output."""
+    from datawrangler.zoo.array import wrangle_array
+    from datawrangler.zoo.null import wrangle_null
+
+    df, model = wrangle_array(np.array([[1, 2, 3], [4, 5, 6]]), return_model=True)
+    assert set(model.keys()) == {'model', 'args', 'kwargs'}
+    assert df.values.tolist() == [[1, 2, 3], [4, 5, 6]]
+
+    # re-applying the returned model to new data reproduces an equivalent DataFrame
+    df2 = wrangle_array(np.array([[7, 8, 9]]), model=model)
+    assert df2.values.tolist() == [[7, 8, 9]]
+
+    empty, null_model = wrangle_null(None, return_model=True)
+    assert set(null_model.keys()) == {'model', 'args', 'kwargs'}
+    assert len(empty) == 0
+
+
+def test_create_polars_dataframe():
+    """create_polars_dataframe dict / 1D / 2D branches and the 3D ValueError."""
+    from datawrangler.zoo.polars_dataframe import create_polars_dataframe
+
+    d = create_polars_dataframe({'a': [1, 2], 'b': [3, 4]})
+    assert d.columns == ['a', 'b']
+    assert d['a'].to_list() == [1, 2] and d['b'].to_list() == [3, 4]
+
+    one = create_polars_dataframe(np.array([1, 2, 3]))
+    assert one.shape == (3, 1)
+    assert one.to_numpy().ravel().tolist() == [1, 2, 3]
+
+    two = create_polars_dataframe(np.array([[1, 2], [3, 4]]), columns=['x', 'y'])
+    assert two.columns == ['x', 'y']
+    assert two.to_numpy().tolist() == [[1, 2], [3, 4]]
+
+    with pytest.raises(ValueError):
+        create_polars_dataframe(np.zeros((2, 2, 2)))
+
+
+def test_polars_pandas_converters():
+    """pandas<->polars conversion round-trips and rejects wrong input types."""
+    from datawrangler.zoo.polars_dataframe import (
+        pandas_to_polars, polars_to_pandas, is_polars_dataframe)
+
+    pdf = pd.DataFrame({'a': [1, 2, 3], 'b': [4.0, 5.0, 6.0]})
+    pol = pandas_to_polars(pdf)
+    assert is_polars_dataframe(pol)
+    assert np.allclose(polars_to_pandas(pol).values, pdf.values)
+    # LazyFrames are collected during conversion
+    assert np.allclose(polars_to_pandas(pol.lazy()).values, pdf.values)
+
+    with pytest.raises(TypeError):
+        pandas_to_polars([1, 2, 3])          # not a pandas DataFrame
+    with pytest.raises(TypeError):
+        polars_to_pandas(pdf)                # not a polars frame
+
+
+def test_issue30_pandas_type_detection():
+    """Regression for issue #30: type detection must not depend on pandas' internal ``__module__`` strings.
+    Under pandas 3.0 those were flattened (e.g. 'pandas.core.frame' -> 'pandas'), which broke is_dataframe /
+    is_multiindex_dataframe and cascaded into stack/unstack raising 'Unsupported datatype'. The isinstance-based
+    checks are stable across pandas 2.x and 3.0."""
+    df = pd.DataFrame(np.arange(6).reshape(3, 2), columns=['x', 'y'])
+    assert dw.zoo.is_dataframe(df) is True
+    assert dw.util.dataframe_like(df) is True
+
+    # the exact funnel -> stack/unstack cascade the issue reported broken
+    stacked = dw.stack([df, df])
+    assert dw.zoo.is_multiindex_dataframe(stacked) is True
+    frames = dw.unstack(stacked)
+    assert len(frames) == 2
+    assert np.allclose(frames[0].values, df.values)

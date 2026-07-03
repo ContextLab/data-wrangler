@@ -15,8 +15,12 @@ list of ``DataFrame`` objects.  The package provides code for easily wrangling d
 ``DataFrame`` objects, manipulating ``DataFrame`` objects in useful ways (that can be tricky to implement, but that
 apply to many analysis scenarios), and decorating Python functions to make them more flexible and/or easier to write.
 
-🚀 **New**: ``data-wrangler`` now supports **high-performance Polars DataFrames** alongside pandas, delivering 2-100x speedups 
+🚀 **New**: ``data-wrangler`` now supports **high-performance Polars DataFrames** alongside pandas, delivering 2-100x speedups
 for large datasets with zero code changes. Simply add ``backend='polars'`` to any operation!
+
+.. image:: https://raw.githubusercontent.com/ContextLab/data-wrangler/main/docs/images/demo.gif
+   :alt: data-wrangler live demo
+   :align: center
 
 The ``data-wrangler`` package supports a variety of datatypes.  There is a special emphasis on text data, whereby
 ``data-wrangler`` provides a simple API for interacting with natural language processing tools and datasets provided by
@@ -103,6 +107,7 @@ Currently supported datatypes are limited to:
   - ``array``-like objects (including images)
   - ``DataFrame``-like or ``Series``-like objects (pandas and Polars)
   - text data (text is embedded using natural language processing models)
+
 or lists of mixtures of the above.
 
 **Backend Support**: All operations support both ``pandas`` (default) and ``Polars`` (high-performance) backends. Choose the backend that best fits your performance requirements and workflow preferences.

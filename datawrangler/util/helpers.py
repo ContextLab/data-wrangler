@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
-import six
-import warnings
-import os
 
 from ..io import load
-from ..io.extension_handler import get_extension
 # Use lazy import to avoid circular dependency
+
+
 def _get_is_array():
     from ..zoo.array import is_array
     return is_array
@@ -54,8 +52,8 @@ def dataframe_like(x, debug=False):
                            'where', 'query', 'add', 'sub', 'mul', 'div', 'truediv', 'floordiv', 'mod',
                            'pow', 'dot', 'radd', 'rsub', 'rmul', 'rdiv', 'rtruediv', 'rfloordiv', 'rmod', 'rpow',
                            'lt', 'gt', 'le', 'ge', 'ne', 'eq', 'apply', 'groupby', 'rolling', 'expanding', 'abs',
-                           'filter', 'drop', 'drop_duplicates', 'backfill', 'bfill', 'ffill', 'fillna', 'interpolate',
-                           'pad', 'droplevel', 'pivot', 'pivot_table', 'squeeze', 'melt', 'join', 'merge']
+                           'filter', 'drop', 'drop_duplicates', 'bfill', 'ffill', 'fillna', 'interpolate',
+                           'droplevel', 'pivot', 'pivot_table', 'squeeze', 'melt', 'join', 'merge']
     for r in required_attributes:
         if not hasattr(x, r):
             if debug:

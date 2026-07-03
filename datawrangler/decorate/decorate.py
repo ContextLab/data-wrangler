@@ -8,7 +8,6 @@ from ..util.lazy_imports import (
     get_sklearn_decomposition,
     get_sklearn_manifold,
     get_sklearn_feature_extraction_text,
-    get_sklearn_mixture,
     get_sklearn_impute,
     lazy_import_with_fallback
 )
@@ -17,12 +16,12 @@ from ..util.lazy_imports import (
 _get_sklearn_impute = lazy_import_with_fallback('sklearn.impute')
 _get_IterativeImputer = lazy_import_with_fallback('sklearn.impute', 'IterativeImputer')
 
-from ..zoo import wrangle
-from ..zoo.text import is_sklearn_model
-from ..zoo.dataframe import is_dataframe, is_multiindex_dataframe
-from ..zoo.array import is_array
-from ..core import get_default_options, apply_defaults, update_dict
-from ..util.helpers import depth
+# These package imports follow the lazy-importer setup above to avoid import cycles (hence noqa: E402).
+from ..zoo import wrangle  # noqa: E402
+from ..zoo.text import is_sklearn_model  # noqa: E402
+from ..zoo.dataframe import is_dataframe, is_multiindex_dataframe  # noqa: E402
+from ..zoo.array import is_array  # noqa: E402
+from ..core import get_default_options, apply_defaults, update_dict  # noqa: E402
 
 
 defaults = get_default_options()
@@ -47,10 +46,10 @@ def import_sklearn_models(module):
     # Handle experimental features like IterativeImputer
     if module.__name__ == 'sklearn.impute':
         try:
-            from sklearn.experimental import enable_iterative_imputer
+            from sklearn.experimental import enable_iterative_imputer  # noqa: F401 (registers IterativeImputer)
         except ImportError:
             pass
-    
+
     models = [d for d in dir(module) if hasattr(getattr(module, d), 'fit_transform')]
     for m in models:
         exec(f'from {module.__name__} import {m}', globals())
@@ -87,29 +86,29 @@ def get_sklearn_model(x):
             # noinspection PyBroadException
             try:
                 return get_sklearn_model(eval(x))
-            except:
+            except Exception:
                 pass
-        
+
         # Check other model categories
         if x in _get_reduce_models():
             # noinspection PyBroadException
             try:
                 return get_sklearn_model(eval(x))
-            except:
+            except Exception:
                 pass
-                
+
         if x in _get_text_vectorizers():
             # noinspection PyBroadException
             try:
                 return get_sklearn_model(eval(x))
-            except:
+            except Exception:
                 pass
-        
+
         # Try direct evaluation as fallback
         # noinspection PyBroadException
         try:
             return get_sklearn_model(eval(x))
-        except:
+        except Exception:
             pass
     return None
 
@@ -121,14 +120,17 @@ def apply_sklearn_model(model, data, *args, mode='fit_transform', return_model=F
 
     Parameters
     ----------
-    :param model: a scikit-learn model (as defined in the *get_sklearn_model* description), or a list of models to be applied
+    :param model: a scikit-learn model (as defined in the *get_sklearn_model* description), or a list of models to be
+    applied
            in sequence
     :param data: a dataset (array or DataFrame)
     :param args: other arguments to pass to the model (after data)
     :param mode: one of 'fit', 'transform', or 'fit_transform' (default: 'fit_transform'); uses scikit-learn syntax
-    :param return_model: if True, both the (potentially transformed) data *and* the fitted model (or list of fitted models)
+    :param return_model: if True, both the (potentially transformed) data *and* the fitted model (or list of fitted
+    models)
           are returned.  If False, only the (potentially transformed) data is returned.  Default: False
-    :param kwargs: other keyword arguments to pass to *all* of the scikit-learn models (in addition to any model-specific
+    :param kwargs: other keyword arguments to pass to *all* of the scikit-learn models (in addition to any
+    model-specific
           keyword arguments)
 
     Returns
@@ -174,6 +176,7 @@ reduce_models = None
 text_vectorizers = None
 impute_models = None
 
+
 def _get_reduce_models():
     """Lazy initialization of reduce models."""
     global reduce_models
@@ -183,12 +186,14 @@ def _get_reduce_models():
         reduce_models.extend(import_sklearn_models(get_sklearn_manifold()))
     return reduce_models
 
+
 def _get_text_vectorizers():
     """Lazy initialization of text vectorizers."""
     global text_vectorizers
     if text_vectorizers is None:
         text_vectorizers = import_sklearn_models(get_sklearn_feature_extraction_text())
     return text_vectorizers
+
 
 def _get_impute_models():
     """Lazy initialization of impute models."""
@@ -197,19 +202,20 @@ def _get_impute_models():
         impute_models = import_sklearn_models(get_sklearn_impute())
     return impute_models
 
+
 # source: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
 interpolation_models = ['linear', 'time', 'index', 'pad', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'spline',
                         'barycentric', 'polynomial']
 
 
 def list_generalizer(f):
-    """
+    r"""
     A decorator that makes a function work for either a single object or a list of objects by calling the function on
     each element
 
     Parameters
     ----------
-    :param f: the function to decorate, of the form f(data, *args, **kwargs).
+    :param f: the function to decorate, of the form f(data, \*args, \*\*kwargs).
 
     Returns
     -------
@@ -217,7 +223,7 @@ def list_generalizer(f):
     """
     @functools.wraps(f)
     def wrapped(data, *args, **kwargs):
-        if type(data) == list:
+        if type(data) is list:
             return [f(d, *args, **kwargs) for d in data]
         else:
             return f(data, *args, **kwargs)
@@ -226,19 +232,20 @@ def list_generalizer(f):
 
 
 def funnel(f):
-    """
-    A decorator that coerces any data passed into the function into a DataFrame (pandas or Polars) or a list of DataFrames
+    r"""
+    A decorator that coerces any data passed into the function into a DataFrame (pandas or Polars) or a list of
+    DataFrames
 
     Parameters
     ----------
-    :param f: a function of the form f(data, *args, **kwargs) that assumes data is either a DataFrame or a list of
+    :param f: a function of the form f(data, \*args, \*\*kwargs) that assumes data is either a DataFrame or a list of
        DataFrames
 
     Returns
     -------
     :return: A decorated function that supports any wrangle-able data format. The decorated function accepts
        an optional 'backend' keyword argument ('pandas' or 'polars') to specify the DataFrame backend.
-       
+
     Notes
     -----
     The decorated function can be called with:
@@ -249,11 +256,11 @@ def funnel(f):
     def wrapped(data, *args, **kwargs):
         # Extract backend parameter for consistent DataFrame backend
         backend = kwargs.pop('backend', None)
-        
+
         wrangle_kwargs = kwargs.pop('wrangle_kwargs', {})
         for fc in format_checkers:
             wrangle_kwargs[f'{fc}_kwargs'] = kwargs.pop(f'{fc}_kwargs', {})
-        
+
         # Pass backend to wrangle if specified
         if backend is not None:
             wrangle_kwargs['backend'] = backend
@@ -264,27 +271,29 @@ def funnel(f):
 
 
 def interpolate(f):
-    """
+    r"""
     A decorator that fills in missing data by imputing and/or interpolating missing values
 
     Parameters
     ----------
-    :param f: a function of the form f(data, *args, **kwargs) that assumes the data are formatted as either a DataFrame or
-       a list of DataFrames, with no missing (numpy.nan) values
+    :param f: a function of the form f(data, \*args, \*\*kwargs) that assumes the data are formatted as either a
+      DataFrame or a list of DataFrames, with no missing (numpy.nan) values
 
     Returns
     -------
     :return: A decorated function that supports any wrangle-able datatype.  Pass in the following keyword arguments to
-    fill in missing data:
+      fill in missing data:
+
       backend: str, optional ('pandas' or 'polars')
-          Specify the DataFrame backend. If not provided, preserves input backend.
+        Specify the DataFrame backend. If not provided, preserves input backend.
       interp_kwargs: a dictionary containing interpolation/imputation parameters:
-          impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
-              {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model* function.
-          Any other keywords are passed to the DataFrame's interpolate method; e.g. method='linear' will apply linear
-              interpolation to fill in missing values. For pandas DataFrames, supported arguments are documented at:
-              https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
-              
+        impute_kwargs: a dictionary containing one or more scikit-learn imputation models (e.g.,
+          {'model': 'IterativeImputer'}.  The 'model' can be specified as defined in the *apply_sklearn_model*
+          function.
+        Any other keywords are passed to the DataFrame's interpolate method; e.g. method='linear' will apply linear
+          interpolation to fill in missing values. For pandas DataFrames, supported arguments are documented at:
+          https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+
     Notes
     -----
     Backend-specific behavior:
@@ -295,18 +304,17 @@ def interpolate(f):
     @funnel
     def fill_missing(data, return_model=False, **kwargs):
         from ..zoo.polars_dataframe import is_polars_dataframe, pandas_to_polars
-        
+
         impute_kwargs = kwargs.pop('impute_kwargs', {})
         is_polars = is_polars_dataframe(data)
 
         if impute_kwargs:
             model = impute_kwargs.pop('model', eval(defaults['impute']['model']))
             imputed_data, model = apply_sklearn_model(model, data, return_model=True, **impute_kwargs)
-            
+
             # Recreate DataFrame with appropriate backend
             if is_polars:
                 # For Polars, convert to pandas temporarily, then back to Polars
-                import polars as pl
                 temp_df = pd.DataFrame(data=imputed_data, index=data.to_pandas().index, columns=data.columns)
                 data = pandas_to_polars(temp_df)
             else:
@@ -317,14 +325,13 @@ def interpolate(f):
 
         if kwargs:
             kwargs = update_dict(defaults['interpolate'], kwargs, from_config=True)
-            
+
             # Backend-specific interpolation
             if is_polars:
                 # Polars has limited interpolation support
                 # For now, convert to pandas, interpolate, then convert back
-                import warnings
-                warnings.warn("Polars interpolation support is limited. Converting to pandas for interpolation.", 
-                             UserWarning)
+                warnings.warn("Polars interpolation support is limited. Converting to pandas for interpolation.",
+                              UserWarning)
                 pandas_data = data.to_pandas()
                 interpolated_data = pandas_data.interpolate(**kwargs)
                 data = pandas_to_polars(interpolated_data)
@@ -342,11 +349,11 @@ def interpolate(f):
         # Extract backend parameter and pass to fill_missing (remove from kwargs for user function)
         backend = kwargs.pop('backend', None)
         interp_kwargs = kwargs.pop('interp_kwargs', {})
-        
+
         # Pass backend to fill_missing if specified
         if backend is not None:
             interp_kwargs['backend'] = backend
-            
+
         return f(fill_missing(data, *args, **interp_kwargs), **kwargs)
 
     return wrapped
@@ -405,8 +412,8 @@ def pandas_stack(data, names=None, keys=None, verify_integrity=False, sort=False
     if keys is None:
         keys = np.arange(len(data), dtype=int)
 
-    assert is_array(keys) or (type(keys) == list), f'keys must be None or a list or array of length len(data)'
-    assert len(keys) == len(data), f'keys must be None or a list or array of length len(data)'
+    assert is_array(keys) or (type(keys) is list), 'keys must be None or a list or array of length len(data)'
+    assert len(keys) == len(data), 'keys must be None or a list or array of length len(data)'
 
     if names is None:
         names = ['ID', *[f'ID{i}' for i in range(1, len(data[0].index.names))], None]
@@ -469,7 +476,7 @@ def pandas_unstack(x):
 
 
 def apply_stacked(f):
-    """
+    r"""
     Decorate a function to adjust how it handles data as follows:
       - Wrangle the data into DataFrames (the resulting DataFrames must all have the same number of columns).
         MultiIndex DataFrames are also supported (and can represent already-stacked datasets)
@@ -480,13 +487,13 @@ def apply_stacked(f):
 
     Parameters
     ----------
-    :param f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns a
-       single DataFrame as output.
+    :param f: a function of the form f(data, \*args, \*\*kwargs) that assumes data is a single DataFrame, and that
+       returns a single DataFrame as output.
 
     Returns
     -------
     :return: a decorated function that supports any wrangle-able data types, applies the original function to the full
-    list of datasets simultaneously, and then returns the result(s) as a new DataFrame or list of DataFrames.
+      list of datasets simultaneously, and then returns the result(s) as a new DataFrame or list of DataFrames.
     """
 
     @funnel
@@ -514,7 +521,8 @@ def apply_stacked(f):
         return_model = kwargs.copy().pop('return_model', False)
         if not stack_result:
             if ('return_model' in kwargs.keys()) and kwargs['return_model']:
-                transformed[0] = pandas_unstack(transformed[0])
+                # f returned (data, model); unstack only the data half (tuples are immutable)
+                transformed = (pandas_unstack(transformed[0]), transformed[1])
             else:
                 transformed = pandas_unstack(transformed)
 
@@ -524,7 +532,7 @@ def apply_stacked(f):
 
 
 def apply_unstacked(f):
-    """
+    r"""
     Decorate a function to adjust how it handles data as follows:
       - Wrangle the data into a list of DataFrames.  MultiIndex DataFrames are also supported (and can represent stacked
         datasets)
@@ -534,13 +542,13 @@ def apply_unstacked(f):
 
     Parameters
     ----------
-    :param f: a function of the form f(data, *args, **kwargs) that assumes data is a single DataFrame, and that returns
-      a single DataFrame as output.
+    :param f: a function of the form f(data, \*args, \*\*kwargs) that assumes data is a single DataFrame, and that
+      returns a single DataFrame as output.
 
     Returns
     -------
     :return: A decorated function that supports any wrangle-able data types, applies the original function to the full
-    list of datasets separately, and then returns the result(s) as a new DataFrame or list of DataFrames.
+      list of datasets separately, and then returns the result(s) as a new DataFrame or list of DataFrames.
     """
 
     @funnel

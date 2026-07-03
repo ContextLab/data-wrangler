@@ -1,10 +1,8 @@
 import os
 import requests
 import dill
-import re
 import numpy as np
 from hashlib import blake2b as hasher
-from matplotlib import pyplot as plt
 
 from ..core.configurator import get_default_options
 from .panda_handler import load_dataframe
@@ -48,9 +46,7 @@ def load_remote(url):
 
     token = get_confirm_token(response)
     if token:
-        raise NotImplementedError('This feature is poorly implemented.  Try downloading and reading in the file locally.')
-        params['confirm'] = token  # FIXME-- what's this supposed to be doing?
-        response = session.get(url, params=params, stream=True)
+        raise NotImplementedError('Confirm-token downloads are not supported; download the file locally instead.')
 
     if get_extension(url) in ['txt']:
         return response.text
@@ -66,15 +62,18 @@ def load(x, dtype=None, **kwargs):
     ----------
     :param x: a string containing a URL or file path
     :param dtype: Optional argument for specifying how the data should be loaded; can be one of:
+
       - 'pickle': use the dill library to load in pickled objects and functions
       - 'numpy': treat the dataset as a .npy or .npz file
       - None (default): attempt to determine the filetype automatically based on the URL or file extension.  The
         following filetypes are supported:
-          - txt files: treated as plain text
-          - any filetype supported by the Pandas library:
-            https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
-          - any image filetype supported by PIL; for a full list see:
-            https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+
+        - txt files: treated as plain text
+        - any filetype supported by the Pandas library:
+          https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html
+        - any image filetype supported by PIL; for a full list see:
+          https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+
     :param kwargs: any additional keyword arguments are passed to whatever function is selected to load in the dataset.
       For example, when loading in a csv file (a Pandas-compatible format), passing the keyword argument index_col=0
       will tell Pandas to interpret the first (0) column as the resulting DataFrame's index when loading the file's
@@ -83,7 +82,7 @@ def load(x, dtype=None, **kwargs):
     Returns
     -------
     :return: the retrieved data.  Remote files will be cached (saved) locally to disk for faster loading if/when the
-    same address is used to load the file again at a later time.
+      same address is used to load the file again at a later time.
     """
     # noinspection PyShadowingNames
     def helper(fname, dtype=None, **helper_kwargs):
@@ -93,16 +92,10 @@ def load(x, dtype=None, **kwargs):
         elif dtype == 'numpy':
             if 'allow_pickle' not in helper_kwargs.keys():
                 helper_kwargs['allow_pickle'] = True
-            data = np.load(fname, **helper_kwargs)
-            try:
-                if type(data) is dict:
-                    if len(data.keys()) == 1:
-                        return data[list(data.keys())[0]]
-                return data
-            except Exception:
-                if isinstance(data, np.lib.npyio.NpzFile):
-                    data.close()
-                raise
+            # np.load returns an ndarray (.npy) or a lazy NpzFile (.npz). Callers that need a
+            # specific array out of a multi-array .npz index into the NpzFile and close it
+            # themselves (see zoo.text.get_corpus), so we return np.load's result unchanged.
+            return np.load(fname, **helper_kwargs)
         else:
             dtype = get_extension(fname)
             if dtype == 'txt':
@@ -132,7 +125,11 @@ def load(x, dtype=None, **kwargs):
             data = load_remote(x)
     else:
         return None
-    save(x, data, dtype=dtype) # FIXME: these last two lines result in a duplicated copy of each file...
+    # Cache the freshly downloaded copy to disk, then read it back through the normal
+    # extension-based dispatch. get_extension() strips URL query strings, so the cache
+    # filename (and this reload) resolve correctly even for URLs like ".../data.npz?dl=1";
+    # a later load() of the same URL finds the cached file and skips the download entirely.
+    save(x, data, dtype=dtype)
     return load(x, dtype=dtype, **kwargs)
 
 
@@ -145,12 +142,14 @@ def save(x, obj, dtype=None, **kwargs):
     :param x: the file's original path or URL (used to create a hash to define a new filename)
     :param obj: the data to store to disk
     :param dtype: optional argument specifying how to store the data; can be one of:
+
       - 'pickle': use the dill library to pickle the object
       - 'numpy': save the objects as a compressed (.npz-formatted) numpy file
       - None (default): determine the filetype automatically; if x is passed in as bytes, write x directly to disk. If
         x is a string, treat x as text.
+
     :param kwargs: any additional keyword arguments are passed to dill.dump (if dtype == 'pickle') or numpy.savez (if
-        dtype == 'numpy').  For any other datatype, additional keyword arguments are ignored.
+      dtype == 'numpy').  For any other datatype, additional keyword arguments are ignored.
 
     Returns
     -------

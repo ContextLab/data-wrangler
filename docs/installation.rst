@@ -7,8 +7,9 @@ Installation
 Requirements
 ------------
 
-- **Python 3.9+** (v0.3.0+ requires modern Python versions)
+- **Python 3.9+**
 - NumPy 2.0+ and pandas 2.0+ compatible
+- Polars 0.20+ (installed automatically; enables the high-performance ``backend='polars'`` option)
 - Optional: HuggingFace transformers for advanced text processing
 
 Stable release

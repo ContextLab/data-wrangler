@@ -3,7 +3,6 @@ import pytest
 import pandas as pd
 import polars as pl
 import numpy as np
-import datawrangler as dw
 
 
 @pytest.fixture
@@ -68,18 +67,18 @@ def assert_dataframes_equivalent(df1, df2, check_dtypes=False):
         df1_pandas = df1.to_pandas()
     else:
         df1_pandas = df1
-        
+
     if isinstance(df2, pl.DataFrame):
         df2_pandas = df2.to_pandas()
     else:
         df2_pandas = df2
-    
+
     # Check shapes
     assert df1_pandas.shape == df2_pandas.shape, f"Shape mismatch: {df1_pandas.shape} vs {df2_pandas.shape}"
-    
+
     # Check values (allowing for floating point differences)
     assert np.allclose(df1_pandas.values, df2_pandas.values, equal_nan=True), "DataFrame values not equivalent"
-    
+
     if check_dtypes:
         # Note: dtypes may differ slightly between backends, so this is optional
         pass

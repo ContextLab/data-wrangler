@@ -13,6 +13,6 @@ datawrangler.zoo.text
 
 .. autofunction:: apply_text_model
 
-.. autofunction:: text.to_str_list
+.. autofunction:: to_str_list
 
-.. autofunction:: text.get_text
+.. autofunction:: get_text

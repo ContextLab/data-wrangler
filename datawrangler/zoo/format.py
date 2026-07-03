@@ -1,12 +1,12 @@
-import six
-import numpy as np
 import pandas as pd
 
-from .dataframe import is_dataframe, is_multiindex_dataframe, wrangle_dataframe
-from .array import is_array, wrangle_array
-from .text import is_text, wrangle_text
-from .null import is_null, wrangle_null
-from ..util import array_like, depth
+# The is_<type>/wrangle_<type> functions below are resolved dynamically via eval(f'is_{fc}')/eval(f'wrangle_{fc}')
+# inside wrangle(), so they look unused to static analysis -- hence the noqa: F401.
+from .dataframe import is_dataframe, wrangle_dataframe  # noqa: F401
+from .array import is_array, wrangle_array  # noqa: F401
+from .text import is_text, wrangle_text  # noqa: F401
+from .null import is_null, wrangle_null  # noqa: F401
+from ..util import depth
 from ..core import update_dict, get_default_options
 
 # the order matters: if earlier checks pass, later checks will not run.
@@ -25,7 +25,7 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
     ----------
     :param x: data in any format. Supported datatypes:
         - Numpy Arrays, array-like objects, or paths to files that store array-like objects
-        - DataFrames (pandas or Polars), dataframe-like objects, or paths to files that store dataframe-like objects  
+        - DataFrames (pandas or Polars), dataframe-like objects, or paths to files that store dataframe-like objects
         - Polars LazyFrames
         - Text strings, lists of strings, or paths to plain text files
         - Mixed lists or nested lists of the above types
@@ -33,21 +33,26 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
     :param backend: str, optional
         The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param kwargs: control how data are wrangled:
+
         - array_kwargs: passed to wrangle_array function to control how arrays are handled
         - dataframe_kwargs: passed to wrangle_dataframe function to control how dataframes are handled
-        - text_kwargs: passed to wrangle_text function to control how text data are handled
-            Common text_kwargs options (simplified API):
-            - {'model': 'all-MiniLM-L6-v2'} for sentence-transformers
-            - {'model': 'CountVectorizer'} for sklearn text vectorization
-            - {'model': ['CountVectorizer', 'LatentDirichletAllocation']} for sklearn pipeline
-            Also supports full dict format for advanced configuration:
-            - {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
+        - text_kwargs: passed to wrangle_text function to control how text data are handled.
+          Common text_kwargs options (simplified API):
+
+          - {'model': 'all-MiniLM-L6-v2'} for sentence-transformers
+          - {'model': 'CountVectorizer'} for sklearn text vectorization
+          - {'model': ['CountVectorizer', 'LatentDirichletAllocation']} for sklearn pipeline
+
+          Also supports full dict format for advanced configuration:
+
+          - {'model': {'model': 'all-MiniLM-L6-v2', 'args': [], 'kwargs': {}}}
+
         Any other keyword arguments are passed to all wrangle functions.
 
     Returns
     -------
     :return: a DataFrame (pandas or Polars), or a list of DataFrames, containing the wrangled data
-    
+
     Examples
     --------
     >>> import datawrangler as dw
@@ -97,7 +102,7 @@ def wrangle(x, return_dtype=False, backend=None, **kwargs):
                 break
         return wrangled, dtype
 
-    if ((not is_text(x)) and (type(x) == list)) or (is_text(x) and (type(x) == list) and (depth(x) > 1)):
+    if ((not is_text(x)) and (type(x) is list)) or (is_text(x) and (type(x) is list) and (depth(x) > 1)):
         dfs = [to_dataframe(i) for i in x]
         wrangled = [d[0] for d in dfs]
         dtypes = [d[1] for d in dfs]
