@@ -497,3 +497,20 @@ def test_polars_pandas_converters():
         pandas_to_polars([1, 2, 3])          # not a pandas DataFrame
     with pytest.raises(TypeError):
         polars_to_pandas(pdf)                # not a polars frame
+
+
+def test_issue30_pandas_type_detection():
+    """Regression for issue #30: type detection must not depend on pandas' internal ``__module__`` strings.
+    Under pandas 3.0 those were flattened (e.g. 'pandas.core.frame' -> 'pandas'), which broke is_dataframe /
+    is_multiindex_dataframe and cascaded into stack/unstack raising 'Unsupported datatype'. The isinstance-based
+    checks are stable across pandas 2.x and 3.0."""
+    df = pd.DataFrame(np.arange(6).reshape(3, 2), columns=['x', 'y'])
+    assert dw.zoo.is_dataframe(df) is True
+    assert dw.util.dataframe_like(df) is True
+
+    # the exact funnel -> stack/unstack cascade the issue reported broken
+    stacked = dw.stack([df, df])
+    assert dw.zoo.is_multiindex_dataframe(stacked) is True
+    frames = dw.unstack(stacked)
+    assert len(frames) == 2
+    assert np.allclose(frames[0].values, df.values)

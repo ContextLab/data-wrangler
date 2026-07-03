@@ -66,7 +66,7 @@ def load_dataframe(x, extension=None, debug=False, **kwargs):
             if debug:
                 warnings.warn(f'cannot determine filetype: {x}')
             return None
-    elif all([d in type(x).__module__.lower() for d in ['pandas', 'frame']]):
+    elif isinstance(x, pd.DataFrame):  # already a pandas DataFrame -> pass through (stable across pandas 2.x/3.0)
         return x
     else:
         return None

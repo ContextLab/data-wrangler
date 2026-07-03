@@ -19,8 +19,12 @@ def is_dataframe(x):
     :return: True if the object is a DataFrame (pandas or Polars) or points to a file that can be loaded as a DataFrame,
       and False otherwise.
     """
-    # Check for pandas DataFrames
-    if type(x).__module__ in ['pandas.core.frame', 'modin.pandas.dataframe']:
+    # Check for pandas DataFrames. isinstance is stable across pandas 2.x/3.0, whereas the reported
+    # __module__ was flattened from 'pandas.core.frame' to 'pandas' in pandas 3.0 (see issue #30).
+    if isinstance(x, pd.DataFrame):
+        return True
+    # modin DataFrames (optional dependency; match by module to avoid importing modin)
+    if type(x).__module__ == 'modin.pandas.dataframe':
         return True
 
     # Check for Polars DataFrames
@@ -53,8 +57,9 @@ def is_multiindex_dataframe(x):
       MultiIndex DataFrame), and False otherwise.
     """
     # Polars DataFrames/LazyFrames satisfy is_dataframe() but have no ``.index``; guard for it so
-    # this returns False (rather than raising AttributeError) on non-pandas backends.
-    return is_dataframe(x) and hasattr(x, 'index') and ('indexes.multi' in type(x.index).__module__)
+    # this returns False (rather than raising AttributeError) on non-pandas backends. isinstance against
+    # pd.MultiIndex is stable across pandas 2.x/3.0 (unlike ``.__module__`` string matching -- see issue #30).
+    return is_dataframe(x) and hasattr(x, 'index') and isinstance(x.index, pd.MultiIndex)
 
 
 def wrangle_dataframe(data, return_model=False, backend=None, **kwargs):

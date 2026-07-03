@@ -3,6 +3,7 @@ from copy import copy
 import os
 import warnings
 import functools         # used when applying default options
+from importlib.metadata import version as _pkg_version, PackageNotFoundError
 import numpy as np  # noqa: F401  (referenced via eval() of config.ini expressions such as 'np.nan')
 
 # Use lazy import to avoid loading heavy dependencies at module level
@@ -16,7 +17,13 @@ def _get_SentenceTransformer():
         return None
 
 
-__version__ = '0.5.0'
+# Single source of truth for the version is the package metadata (defined by setup.py). We read it at
+# runtime so the two can never drift (issue #29). The literal fallback is only used when running from an
+# un-installed source checkout, where no distribution metadata exists; bumpversion keeps it in sync.
+try:
+    __version__ = _pkg_version('pydata-wrangler')
+except PackageNotFoundError:  # pragma: no cover - source checkout without installed metadata
+    __version__ = '0.5.0'
 
 
 def get_default_options(fname=None):

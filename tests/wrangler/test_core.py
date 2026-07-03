@@ -87,3 +87,13 @@ def test_dataframe_backend_config():
     finally:
         reset_dataframe_backend()
     assert get_dataframe_backend() == 'pandas'
+
+
+def test_version_is_single_sourced():
+    """Regression for issue #29: __version__ derives from the package metadata (single source of truth),
+    so it can never drift from setup.py's version."""
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        assert dw.__version__ == version('pydata-wrangler')
+    except PackageNotFoundError:  # uninstalled source checkout -> falls back to a literal
+        assert isinstance(dw.__version__, str) and dw.__version__
