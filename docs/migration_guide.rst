@@ -4,6 +4,17 @@ Migration Guide: v0.2 → v0.3
 
 This guide helps you migrate from data-wrangler v0.2.x to v0.3.0, which includes significant modernization and breaking changes.
 
+.. note::
+
+   This guide covers the v0.2.x → v0.3.0 migration. Later releases are **backward compatible** and
+   require no code changes:
+
+   - **v0.4.0** added the optional high-performance Polars backend
+     (``dw.wrangle(..., backend='polars')``) and a simplified text-model API
+     (e.g. ``text_kwargs={'model': 'all-MiniLM-L6-v2'}``).
+   - **v0.5.0** fixed remote-file caching for URLs with query strings (e.g. Dropbox ``?dl=1``
+     links); no API changes.
+
 .. contents:: Table of Contents
    :local:
    :depth: 2

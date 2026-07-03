@@ -33,3 +33,4 @@ nbformat
 jupyter-client
 jupyter-core
 jupyterlab-pygments
+ipython

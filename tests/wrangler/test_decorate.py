@@ -2,13 +2,12 @@
 
 """Tests for `datawrangler` package (decorate module)."""
 
-import os
 import datawrangler as dw
 import pandas as pd
 import polars as pl
 import numpy as np
 import pytest
-from .conftest import assert_backend_type, assert_dataframes_equivalent
+from .conftest import assert_backend_type
 
 
 # noinspection PyTypeChecker
@@ -55,7 +54,7 @@ def test_funnel(data_file, data, img_file, text_file, backend):
     wrangled_0_values = wrangled[0].to_numpy() if hasattr(wrangled[0], 'to_numpy') else wrangled[0].values
     wrangled_1_values = wrangled[1].to_numpy() if hasattr(wrangled[1], 'to_numpy') else wrangled[1].values
     wrangled_2_values = wrangled[2].to_numpy() if hasattr(wrangled[2], 'to_numpy') else wrangled[2].values
-    
+
     assert np.allclose(wrangled_0_values, wrangled_1_values)
     assert np.allclose(wrangled_0_values, wrangled_2_values)
 
@@ -68,7 +67,7 @@ def test_funnel(data_file, data, img_file, text_file, backend):
     assert dw.util.btwn(wrangled[4], -1, 1)
     wrangled_4_values = wrangled[4].to_numpy() if hasattr(wrangled[4], 'to_numpy') else wrangled[4].values
     assert np.isclose(wrangled_4_values.mean(), -0.0007741971, atol=1e-5)
-    
+
     # Verify backend types
     for w in wrangled:
         if dw.zoo.is_dataframe(w):
@@ -79,9 +78,8 @@ def test_funnel(data_file, data, img_file, text_file, backend):
 def test_interpolate(data, backend):
     # Convert data to appropriate backend for testing
     if backend == 'polars':
-        import polars as pl
         data = pl.from_pandas(data)
-        
+
     # test imputing
     if backend == 'pandas':
         impute_test = data.copy()
@@ -93,7 +91,8 @@ def test_interpolate(data, backend):
         # Polars doesn't have .loc, use different approach
         impute_test = impute_test.with_columns([
             pl.when(pl.int_range(pl.len()) == 4).then(None).otherwise(pl.col('SecondDim')).alias('SecondDim'),
-            pl.when(pl.int_range(pl.len()) == 6).then(None).otherwise(pl.col('FourthDim')).alias('FourthDim')  # Note: polars is 0-indexed
+            # Note: polars is 0-indexed
+            pl.when(pl.int_range(pl.len()) == 6).then(None).otherwise(pl.col('FourthDim')).alias('FourthDim')
         ])
 
     @dw.decorate.interpolate
@@ -102,11 +101,11 @@ def test_interpolate(data, backend):
 
     # noinspection PyCallingNonCallable
     recovered_data1 = f(impute_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})
-    
+
     # Convert to numpy for comparison
     data_values = data.to_numpy() if hasattr(data, 'to_numpy') else data.values
     recovered_1_values = recovered_data1.to_numpy() if hasattr(recovered_data1, 'to_numpy') else recovered_data1.values
-    
+
     assert np.allclose(data_values, recovered_1_values)
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(recovered_data1)
@@ -123,13 +122,13 @@ def test_interpolate(data, backend):
             pl.when(pl.int_range(pl.len()) == 5).then(None).otherwise(pl.col(col)).alias(col)
             for col in interp_test.columns
         ])
-    
+
     # noinspection PyCallingNonCallable
     recovered_data2 = f(interp_test, interp_kwargs={'method': 'linear'}, backend=backend)
-    
+
     # Convert to numpy for comparison
     recovered_2_values = recovered_data2.to_numpy() if hasattr(recovered_data2, 'to_numpy') else recovered_data2.values
-    
+
     assert np.allclose(data_values, recovered_2_values)
     assert dw.zoo.is_dataframe(data)
     assert dw.zoo.is_dataframe(recovered_data2)
@@ -159,11 +158,12 @@ def test_interpolate(data, backend):
     # noinspection PyCallingNonCallable
     recovered_data3 = f(impute_interp_test, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'},
                                                            'method': 'pchip'}, backend=backend)
-    
+
     # Convert to numpy for comparison
     recovered_3_values = recovered_data3.to_numpy() if hasattr(recovered_data3, 'to_numpy') else recovered_data3.values
-    impute_interp_values = impute_interp_test.to_numpy() if hasattr(impute_interp_test, 'to_numpy') else impute_interp_test.values
-    
+    impute_interp_values = (impute_interp_test.to_numpy() if hasattr(impute_interp_test, 'to_numpy')
+                            else impute_interp_test.values)
+
     assert np.allclose(recovered_3_values[~np.isnan(impute_interp_values)],
                        data_values[~np.isnan(impute_interp_values)])
     assert dw.zoo.is_dataframe(data)
@@ -226,3 +226,27 @@ def test_apply_stacked(data):
     # noinspection PyTypeChecker
     means = f([data1, data2])
     assert np.allclose(means, data.mean(axis=0))
+
+
+def test_apply_stacked_return_model(data):
+    """Regression: apply_stacked must handle a function that returns (data, model).
+
+    Previously raised ``TypeError: 'tuple' object does not support item assignment``
+    when ``return_model=True`` and the input was unstacked.
+    """
+    i = 4
+    data1 = data.iloc[:i]
+    data2 = data.iloc[i:]
+
+    @dw.decorate.apply_stacked
+    def f(x, return_model=False, **kwargs):
+        m = x.mean(axis=0)
+        return (m, {'model': 'mean'}) if return_model else m
+
+    plain = f([data1, data2])
+    out, model = f([data1, data2], return_model=True)
+
+    assert model == {'model': 'mean'}
+    # the data half matches the plain (no-model) result and the true overall mean
+    assert np.allclose(np.asarray(out), np.asarray(plain))
+    assert np.allclose(np.asarray(out), np.asarray(data.mean(axis=0)))

@@ -2,6 +2,38 @@
 History
 =======
 
+0.5.0 (2026-07-03)
+------------------
+
+**Bug-fix release: robust remote caching + correctness fixes**
+
+**Fixed: remote file caching (the headline fix):**
+
+* ``get_extension`` now strips URL query strings (``?dl=1``) and fragments (``#...``) before
+  detecting the file type. Previously, downloading a URL like ``https://.../data.npz?dl=1``
+  (Dropbox / Google Drive share links, including the built-in text corpora) cached the file under a
+  polluted name (``<hash>.npz?dl=1``). That cached copy could not be re-read by extension
+  (``ValueError: Unknown datatype: npz?dl=1``), so the dataset was effectively re-downloaded /
+  re-cached instead of reused. Remote files now cache under a clean, stable name and re-loads reuse
+  the cached copy with no additional download.
+
+**Other correctness fixes:**
+
+* ``core.configurator.apply_defaults`` no longer raises ``KeyError`` for functions/classes that have
+  no section in ``config.ini`` (this had broken sklearn models such as ``TSNE``, ``MDS``, ``Isomap``).
+* ``decorate.apply_stacked`` no longer crashes with ``TypeError`` when the wrapped function returns a
+  ``(data, model)`` tuple (``return_model=True``) on unstacked input.
+* ``zoo.is_multiindex_dataframe`` no longer raises ``AttributeError`` on Polars DataFrames/LazyFrames
+  (which have no ``.index``).
+* ``io.load`` now correctly unwraps a single-array ``.npz`` file to the underlying array.
+* Fixed missing f-string prefixes in two ``zoo.text`` error messages.
+
+**Tests & docs:**
+
+* Added regression tests for the caching fix and deeper tests for the ``return_model`` contract, the
+  Polars helpers, backend configuration, and ``io.save`` round-trips.
+* Corrected stale version strings and API-reference stubs (backend functions, the Polars module).
+
 0.4.0 (2025-06-14)
 ------------------
 
@@ -100,7 +132,7 @@ This release brings full compatibility with NumPy 2.0+ and pandas 2.0+ while mod
 * Enhanced error handling for missing dependencies
 
 **Bug Fixes:**
-* Fixed numpy.str_ deprecation that broke in NumPy 2.0+
+* Fixed ``numpy.str_`` deprecation that broke in NumPy 2.0+
 * Updated HuggingFace datasets import for API changes
 * Fixed sklearn IterativeImputer experimental import compatibility
 * Replaced deprecated matplotlib.pyplot.imread

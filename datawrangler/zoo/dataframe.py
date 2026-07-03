@@ -2,8 +2,8 @@ import pandas as pd
 
 from ..util import dataframe_like
 from ..io import load_dataframe
-from .polars_dataframe import is_polars_dataframe, is_polars_lazyframe, wrangle_polars_dataframe, pandas_to_polars, polars_to_pandas
-from ..util.lazy_imports import get_polars
+from .polars_dataframe import (is_polars_dataframe, is_polars_lazyframe, wrangle_polars_dataframe,
+                               pandas_to_polars, polars_to_pandas)
 
 
 def is_dataframe(x):
@@ -17,16 +17,16 @@ def is_dataframe(x):
     Returns
     -------
     :return: True if the object is a DataFrame (pandas or Polars) or points to a file that can be loaded as a DataFrame,
-    and False otherwise.
+      and False otherwise.
     """
     # Check for pandas DataFrames
     if type(x).__module__ in ['pandas.core.frame', 'modin.pandas.dataframe']:
         return True
-    
+
     # Check for Polars DataFrames
     if is_polars_dataframe(x) or is_polars_lazyframe(x):
         return True
-    
+
     else:
         if dataframe_like(x):
             return True
@@ -35,7 +35,7 @@ def is_dataframe(x):
         try:
             data = load_dataframe(x)
             return data is not None
-        except:
+        except Exception:
             return False
 
 
@@ -50,9 +50,11 @@ def is_multiindex_dataframe(x):
     Returns
     -------
     :return: True if the object is a MultiIndex DataFrame (or points to a file that can be loaded as a
-    MultiIndex DataFrame), and False otherwise.
+      MultiIndex DataFrame), and False otherwise.
     """
-    return is_dataframe(x) and ('indexes.multi' in type(x.index).__module__)
+    # Polars DataFrames/LazyFrames satisfy is_dataframe() but have no ``.index``; guard for it so
+    # this returns False (rather than raising AttributeError) on non-pandas backends.
+    return is_dataframe(x) and hasattr(x, 'index') and ('indexes.multi' in type(x.index).__module__)
 
 
 def wrangle_dataframe(data, return_model=False, backend=None, **kwargs):
@@ -61,13 +63,14 @@ def wrangle_dataframe(data, return_model=False, backend=None, **kwargs):
 
     Parameters
     ----------
-    :param data: a DataFrame (pandas or Polars), dataframe-like object, or a file path that points to a file that can be 
+    :param data: a DataFrame (pandas or Polars), dataframe-like object, or a file path that points to a file that can be
       loaded as a DataFrame
-    :param return_model: if True, return a function for turning the ("messy") DataFrame into a "clean" DataFrame, along with
-      the cleaned DataFrame.  Otherwise (if False), just return the cleaned DataFrame.  Default: False
+    :param return_model: if True, return a function for turning the ("messy") DataFrame into a "clean" DataFrame,
+      along with the cleaned DataFrame.  Otherwise (if False), just return the cleaned DataFrame.  Default: False
     :param backend: str, optional
         The DataFrame backend to use ('pandas' or 'polars'). If None, preserves the input type
-    :param kwargs: passed to the DataFrame "wrangling" model (default: the constructor for pandas.DataFrame or polars.DataFrame)
+    :param kwargs: passed to the DataFrame "wrangling" model (default: the constructor for pandas.DataFrame or
+      polars.DataFrame)
 
     Returns
     -------
@@ -101,12 +104,12 @@ def wrangle_dataframe(data, return_model=False, backend=None, **kwargs):
     else:
         # Load as pandas DataFrame first
         data = load_dataframe(data, **load_kwargs)
-        
+
         # Convert to Polars if requested
         if backend == 'polars':
             data = pandas_to_polars(data)
             return wrangle_polars_dataframe(data, return_model=return_model, **kwargs)
-    
+
     # Handle pandas DataFrames
     model = kwargs.pop('model', None)
     if model is None:

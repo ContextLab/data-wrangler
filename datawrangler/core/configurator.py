@@ -3,9 +3,11 @@ from copy import copy
 import os
 import warnings
 import functools         # used when applying default options
-import numpy as np
+import numpy as np  # noqa: F401  (referenced via eval() of config.ini expressions such as 'np.nan')
 
 # Use lazy import to avoid loading heavy dependencies at module level
+
+
 def _get_SentenceTransformer():
     try:
         from sentence_transformers import SentenceTransformer
@@ -14,7 +16,7 @@ def _get_SentenceTransformer():
         return None
 
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 def get_default_options(fname=None):
@@ -27,8 +29,8 @@ def get_default_options(fname=None):
 
     Returns
     -------
-    :return: A dictionary whose keys are function names and whose values are dictionaries of default arguments and keyword
-    arguments
+    :return: A dictionary whose keys are function names and whose values are dictionaries of default arguments and
+      keyword arguments
     """
     if fname is None:
         fname = os.path.join(os.path.dirname(__file__), 'config.ini')
@@ -59,7 +61,7 @@ def update_dict(template, updates, from_config=False):
     Returns
     -------
     :return: A new dictionary containing the union of the keys/values in template and updates, with preference given to
-    the updates dictionary
+      the updates dictionary
     """
     template = copy(template)
     if from_config:
@@ -110,10 +112,11 @@ def apply_defaults(f, defaults=None):
     name = get_name(f)
     if name in defaults.keys():
         default_kwargs = {k: eval(v) for k, v in dict(defaults[name]).items() if k[:2] != '__'}
+        default_args = [eval(v) for k, v in dict(defaults[name]).items() if k[:2] == '__']
     else:
+        # no config.ini section for this function/class: fall back to no injected defaults
         default_kwargs = {}
-
-    default_args = [eval(v) for k, v in dict(defaults[name]).items() if k[:2] == '__']
+        default_args = []
 
     @functools.wraps(f)
     def wrapped_function(*args, **kwargs):
@@ -121,7 +124,7 @@ def apply_defaults(f, defaults=None):
             return f(*args, **update_dict(default_kwargs, kwargs))
         else:
             return f(*default_args, **update_dict(default_kwargs, kwargs))
-    
+
     if callable(f):
         return wrapped_function
     else:
@@ -148,29 +151,29 @@ _dataframe_backend = 'pandas'  # Default backend
 def set_dataframe_backend(backend):
     """
     Set the global DataFrame backend preference.
-    
+
     Parameters
     ----------
     backend : str
         The backend to use ('pandas' or 'polars')
-        
+
     Raises
     ------
     ValueError
         If backend is not 'pandas' or 'polars'
     """
     global _dataframe_backend
-    
+
     if backend not in ['pandas', 'polars']:
         raise ValueError(f"Invalid backend: {backend}. Must be 'pandas' or 'polars'")
-    
+
     _dataframe_backend = backend
 
 
 def get_dataframe_backend():
     """
     Get the current global DataFrame backend preference.
-    
+
     Returns
     -------
     str

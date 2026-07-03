@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
-import six
-import warnings
-import os
 
 from ..io import load
-from ..io.extension_handler import get_extension
 # Use lazy import to avoid circular dependency
+
+
 def _get_is_array():
     from ..zoo.array import is_array
     return is_array

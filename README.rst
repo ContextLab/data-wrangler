@@ -103,6 +103,7 @@ Currently supported datatypes are limited to:
   - ``array``-like objects (including images)
   - ``DataFrame``-like or ``Series``-like objects (pandas and Polars)
   - text data (text is embedded using natural language processing models)
+
 or lists of mixtures of the above.
 
 **Backend Support**: All operations support both ``pandas`` (default) and ``Polars`` (high-performance) backends. Choose the backend that best fits your performance requirements and workflow preferences.

@@ -136,3 +136,5 @@ dmypy.json
 *.idea/*
 
 .vscode/*
+# oh-my-claudecode tooling state
+.omc/

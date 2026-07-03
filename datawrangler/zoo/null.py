@@ -21,7 +21,7 @@ def is_null(data):
         if np.iterable(data):
             return all([is_null(d) for d in data])
         return (data is None) or (len(data) == 0)
-    except:
+    except Exception:
         return False
 
 
@@ -38,9 +38,11 @@ def wrangle_null(data, return_model=False, backend=None, model=None):
         The DataFrame backend to use ('pandas' or 'polars'). If None, uses the default backend (pandas)
     :param model: a function or constructor that will generate an empty DataFrame.  This can also be specified as a
       dictionary with the following fields:
+
         - 'model': a function or constructor
         - 'args': a list of unnamed arguments to be passed to the given function or constructor
         - 'kwargs': a dictionary of named arguments to be passed to the given function or constructor
+
       If None, defaults to pandas.DataFrame or polars.DataFrame based on backend.
 
     Returns
@@ -64,7 +66,7 @@ def wrangle_null(data, return_model=False, backend=None, model=None):
         else:
             default_model = pd.DataFrame
         model = default_model
-    
+
     if type(model) is not dict:
         model = {'model': model, 'args': [], 'kwargs': {}}
 

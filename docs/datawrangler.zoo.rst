@@ -8,4 +8,5 @@
    datawrangler.zoo.dataframe
    datawrangler.zoo.text
    datawrangler.zoo.null
+   datawrangler.zoo.polars_dataframe
 
