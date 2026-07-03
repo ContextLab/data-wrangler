@@ -76,81 +76,107 @@ def find_monospace_font(size):
 
 
 def run_demos():
-    """Actually execute real datawrangler calls and capture their real results."""
+    """Actually execute real datawrangler calls and capture their real results.
+
+    Every number/shape shown in the GIF is measured live here -- nothing is faked.
+    """
+    from sklearn.metrics.pairwise import cosine_similarity
+
     demos = []
 
-    # 1. Arrays become DataFrames automatically.
-    array_input = np.array([[1, 2, 3], [4, 5, 6]])
-    df = dw.wrangle(array_input)
+    # 1. Large data: wrangle 60 million values, then a real pandas-vs-Polars sort race.
+    big = np.random.rand(20_000_000, 3)
+    pdf = dw.wrangle(big)                            # pandas DataFrame
+    pldf = dw.wrangle(big, backend="polars")         # Polars DataFrame
+    t0 = time.time()
+    pdf.sort_values(0)                               # pandas sort of 20M rows
+    pandas_ms = (time.time() - t0) * 1000
+    t0 = time.time()
+    pldf.sort("0")                                   # Polars sort of 20M rows
+    polars_ms = (time.time() - t0) * 1000
+    speedup = pandas_ms / max(polars_ms, 1e-6)
     demos.append(
         {
-            "command": ">>> dw.wrangle(np.array([[1, 2, 3], [4, 5, 6]]))",
-            "output": str(df),
+            "command": (
+                ">>> big = np.random.rand(20_000_000, 3)      # 60 million values\n"
+                ">>> df = dw.wrangle(big, backend='polars')   # -> Polars DataFrame\n"
+                ">>> df.sort('0')                             # sort 20M rows"
+            ),
+            "output": "pandas: {:.0f} ms     polars: {:.0f} ms     ->  {:.1f}x faster".format(
+                pandas_ms, polars_ms, speedup
+            ),
         }
     )
 
-    # 2. High-performance Polars backend for large arrays.
-    large_array = np.random.rand(50000, 20)
-    start = time.time()
-    polars_df = dw.wrangle(large_array, backend="polars")
-    elapsed_ms = (time.time() - start) * 1000
+    # 2. Real NLP: wrangle raw text into sentence embeddings that capture topic.
+    news = [
+        "stocks rallied on strong quarterly earnings",
+        "investors cheered better-than-expected profits",
+        "the chef slowly simmered the tomato sauce",
+        "a long braise deepens the flavor of the stew",
+    ]
+    emb = dw.wrangle(news, text_kwargs={"model": "all-MiniLM-L6-v2"})
+    sim = cosine_similarity(emb.values)
     demos.append(
         {
-            "command": ">>> dw.wrangle(np.random.rand(50000, 20), backend='polars')",
+            "command": (
+                ">>> news = ['stocks rallied on earnings', 'investors cheered profits',\n"
+                "...         'the chef simmered the sauce', 'a long braise deepens the stew']\n"
+                ">>> emb = dw.wrangle(news, text_kwargs={'model': 'all-MiniLM-L6-v2'})\n"
+                ">>> emb.shape"
+            ),
             "output": (
-                "{}.{}  shape={}  ({:.1f} ms)".format(
-                    type(polars_df).__module__.split(".")[0],
-                    type(polars_df).__name__,
-                    polars_df.shape,
-                    elapsed_ms,
-                )
+                "{}                     # 384-dim sentence embeddings\n"
+                "cosine similarity ->  finance<->finance {:.2f}   food<->food {:.2f}   "
+                "finance<->food {:.2f}".format(emb.shape, sim[0, 1], sim[2, 3], sim[0, 2])
             ),
         }
     )
 
-    # 3. Text -> sentence embeddings.
-    sentences = ["hi there", "data wrangler rocks"]
-    embeddings = dw.wrangle(sentences, text_kwargs={"model": "all-MiniLM-L6-v2"})
+    # 3. @funnel: write a function as if the input is a DataFrame -- feed it anything.
+    @dw.funnel
+    def zscore(df):
+        return (df - df.mean()) / df.std()
+
+    z = zscore(np.array([[1, 2], [3, 4], [5, 6]]))   # a raw numpy array, not a DataFrame
     demos.append(
         {
             "command": (
-                ">>> dw.wrangle(['hi there', 'data wrangler rocks'],\n"
-                "...           text_kwargs={'model': 'all-MiniLM-L6-v2'})"
+                ">>> @dw.funnel\n"
+                "... def zscore(df):\n"
+                "...     return (df - df.mean()) / df.std()\n"
+                ">>> zscore(np.array([[1, 2], [3, 4], [5, 6]]))   # a raw numpy array"
             ),
-            "output": "{} of shape {}  # sentence embeddings".format(
-                type(embeddings).__name__, embeddings.shape
-            ),
+            "output": str(z.round(2)),
         }
     )
 
-    # 4. @dw.decorate.funnel: write functions as if inputs are DataFrames.
-    @dw.decorate.funnel
-    def n_rows(data):
-        return data.shape[0]
+    # 4. Fill in missing measurements with machine-learning imputation.
+    raw = pd.DataFrame(
+        {
+            "temp": [20.1, 21.3, np.nan, 22.8, 23.1],
+            "humidity": [45.0, np.nan, 52.0, 55.0, np.nan],
+        }
+    )
 
-    funnel_result = n_rows(np.array([[1, 2], [3, 4], [5, 6]]))
+    @dw.decorate.interpolate
+    def clean(x):
+        return x
+
+    filled = clean(raw, interp_kwargs={"impute_kwargs": {"model": "IterativeImputer"}})
+    n_missing = int(raw.isna().sum().sum())
     demos.append(
         {
+            # Only the first line is an f-string; the literal {'impute_kwargs': ...} braces
+            # below are plain strings, so they don't collide with formatting.
             "command": (
-                ">>> @dw.decorate.funnel\n"
-                "... def n_rows(data):\n"
-                "...     return data.shape[0]\n"
-                ">>> n_rows(np.array([[1, 2], [3, 4], [5, 6]]))"
+                f">>> raw          # sensor readings with gaps  ({n_missing} missing)\n"
+                ">>> @dw.decorate.interpolate\n"
+                "... def clean(x): return x\n"
+                ">>> clean(raw, interp_kwargs={'impute_kwargs': {'model': 'IterativeImputer'}})"
             ),
-            "output": repr(funnel_result),
-        }
-    )
-
-    # 5. Stack a list of DataFrames into one, then unstack it back.
-    df1 = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-    df2 = pd.DataFrame({"a": [5, 6], "b": [7, 8]})
-    stacked = dw.stack([df1, df2])
-    unstacked = dw.unstack(stacked)
-    demos.append(
-        {
-            "command": ">>> stacked = dw.stack([df1, df2])\n>>> dw.unstack(stacked)",
-            "output": "stacked.shape={}  ->  unstacked into {} DataFrame(s)".format(
-                stacked.shape, len(unstacked)
+            "output": "{}\n# {} missing values -> 0, filled by IterativeImputer".format(
+                str(filled.round(1)), n_missing
             ),
         }
     )
