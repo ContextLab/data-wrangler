@@ -2,6 +2,20 @@
 History
 =======
 
+0.5.1 (2026-07-04)
+------------------
+
+**Bug-fix release: Windows import crash + PyPI project page**
+
+* Fixed ``import datawrangler`` crashing on Windows (issue #32). ``config.ini`` resolved the home
+  directory via ``os.getenv('HOME')``, which is unset on Windows (it uses ``USERPROFILE``), so the
+  data-cache path evaluated to ``os.path.join(None, ...)`` and raised ``TypeError`` at import time.
+  The config now uses ``os.path.expanduser('~')``, which resolves correctly on all platforms.
+  Added a regression test that imports ``datawrangler`` in a fresh subprocess with ``HOME`` /
+  ``USERPROFILE`` stripped from the environment.
+* The PyPI project page now displays the full README instead of a bare link to the documentation
+  (``setup.py`` embeds ``README.rst`` as the package's ``long_description``).
+
 0.5.0 (2026-07-03)
 ------------------
 
