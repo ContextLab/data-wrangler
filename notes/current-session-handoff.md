@@ -1,5 +1,13 @@
 # Current Session Handoff Summary
 
+> ⚠️ **SUPERSEDED (July 3, 2026).** The latest work is the **v0.5.0 release** — see
+> [`v0.5.0-release-session.md`](v0.5.0-release-session.md) for the current state.
+> v0.5.0 is live on PyPI (https://pypi.org/project/pydata-wrangler/0.5.0/) and GitHub; CI is green on
+> Python 3.9–3.12 (incl. pandas 3.0), docs build clean, ReadTheDocs building. Issues #5/#8/#29/#30 closed.
+> The notes below are the historical 0.4.0-release handoff and are kept for reference only.
+
+---
+
 **Date**: June 14, 2025  
 **Session Type**: Google Colab Warning Fix & 0.4.0 Release Preparation
 **Status**: 🔧 **Colab Issue Resolved** - Preparing for 0.4.0 release
@@ -257,10 +265,30 @@ pytest tests/wrangler/test_zoo.py::test_wrangle_text_sklearn -v
 - ✅ Version bump completed and tagged
 - ✅ PyPI release successful
 
-**Current State**: Colab issue fixed, ready for comprehensive documentation audit
-**Next Goal**: Complete documentation review, then 0.4.0 release
+**Current State**: 🎉 **v0.4.0 FULLY RELEASED!** 
+**PyPI**: https://pypi.org/project/pydata-wrangler/0.4.0/
+**GitHub**: Release v0.4.0 (June, 2025) created
+**Status**: ✅ **RELEASE COMPLETE** - All tasks finished successfully!
 
-## 📋 **DOCUMENTATION AUDIT PLAN (Current Priority)**
+## 🎉 **v0.4.0 RELEASE COMPLETE!**
+
+**All tasks successfully completed:**
+✅ Documentation audit and backend abstraction  
+✅ Version bump to 0.4.0  
+✅ Full test suite (45/45 tests passed)  
+✅ Documentation build verification  
+✅ PyPI release (https://pypi.org/project/pydata-wrangler/0.4.0/)  
+✅ GitHub release created with proper title format  
+
+**Major features released:**
+- 🚀 High-Performance Polars Backend (2-100x speedups)
+- 🎨 Simplified Text Model API (80% less verbose)
+- 🔧 Google Colab installation fix
+- 📚 Enhanced documentation with backend guidance
+
+**Status**: Project ready for users to upgrade!
+
+## 📋 **COMPLETED DOCUMENTATION AUDIT**
 
 ### **1. API Docstring Review**
 - Check all function docstrings for pandas-specific references
@@ -295,3 +323,9 @@ pytest tests/wrangler/test_zoo.py::test_wrangle_text_sklearn -v
 4. Build and upload to PyPI
 
 **Remember**: Always verify the current date is correct! 📅
+
+## 📝 **RELEASE NAMING CONVENTION**
+**GitHub Release Titles**: Use format `v<version> (<Month>, <Year>)`
+- Example: `v0.4.0 (June, 2025)`
+- Month should be full name (January, February, etc.)
+- Year should be 4 digits
