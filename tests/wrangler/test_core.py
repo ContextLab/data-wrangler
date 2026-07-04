@@ -4,6 +4,8 @@
 
 import datawrangler as dw
 import os
+import subprocess
+import sys
 
 import pytest
 from sklearn.feature_extraction.text import CountVectorizer
@@ -87,6 +89,29 @@ def test_dataframe_backend_config():
     finally:
         reset_dataframe_backend()
     assert get_dataframe_backend() == 'pandas'
+
+
+def test_import_without_home_env(tmp_path):
+    """Regression for issue #32: importing datawrangler crashed on Windows because config.ini
+    resolved the home directory via os.getenv('HOME'), which is unset there (Windows uses
+    USERPROFILE). The config now uses os.path.expanduser('~'), which resolves cross-platform.
+
+    Reproduce the failing condition in a real subprocess: strip HOME (and USERPROFILE) from the
+    environment and import datawrangler fresh. Before the fix this raised
+    TypeError: expected str, bytes or os.PathLike object, not NoneType.
+    """
+    env = {k: v for k, v in os.environ.items() if k not in ('HOME', 'USERPROFILE')}
+    if sys.platform == 'win32':
+        # on Windows, expanduser falls back to HOMEDRIVE/HOMEPATH; point it somewhere real
+        env['USERPROFILE'] = str(tmp_path)
+    result = subprocess.run(
+        [sys.executable, '-c',
+         'import datawrangler as dw; import os; '
+         "d = eval(dw.core.get_default_options()['data']['datadir']); "
+         'assert os.path.isabs(d), d; print(d)'],
+        capture_output=True, text=True, env=env)
+    assert result.returncode == 0, f'import failed without HOME set:\n{result.stderr}'
+    assert result.stdout.strip()
 
 
 def test_version_is_single_sourced():

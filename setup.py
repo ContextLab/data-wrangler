@@ -4,6 +4,9 @@
 
 from setuptools import setup, find_packages
 
+with open('README.rst', encoding='utf-8') as readme_file:
+    readme = readme_file.read()
+
 with open('requirements.txt') as requirements_file:
     requirements = requirements_file.read()
 
@@ -35,7 +38,7 @@ setup(
     install_requires=requirements,
     extras_require={'hf': hf_requirements, 'dev': test_requirements},
     license="MIT license",
-    long_description='For more information see https://data-wrangler.readthedocs.io/en/latest/',
+    long_description=readme,
     long_description_content_type='text/x-rst',
     include_package_data=True,
     keywords=['datawrangler', 'pydata-wrangler', 'python', 'pandas', 'natural language processing', 'image',
@@ -45,6 +48,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/ContextLab/data-wrangler',
-    version='0.5.0',
+    version='0.5.1',
     zip_safe=False,
 )

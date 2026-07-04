@@ -23,7 +23,7 @@ def _get_SentenceTransformer():
 try:
     __version__ = _pkg_version('pydata-wrangler')
 except PackageNotFoundError:  # pragma: no cover - source checkout without installed metadata
-    __version__ = '0.5.0'
+    __version__ = '0.5.1'
 
 
 def get_default_options(fname=None):

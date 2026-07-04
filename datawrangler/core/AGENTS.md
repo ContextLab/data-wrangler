@@ -16,7 +16,7 @@ Configuration management and global backend state for the package. Parses `confi
 ## For AI Agents
 
 ### Working In This Directory
-- **`config.ini` values are Python expressions.** Loaders `eval()` them (e.g. `np.nan`, `os.getenv('HOME')`, list literals). Keep expressions valid and side-effect-free.
+- **`config.ini` values are Python expressions.** Loaders `eval()` them (e.g. `np.nan`, `os.path.expanduser('~')`, list literals). Keep expressions valid and side-effect-free.
 - Section names map to function/class names; `apply_defaults` looks up defaults by `__name__`. Keys prefixed with `__` (e.g. `__model`) become **positional** args; other keys become keyword args.
 - Bump `__version__` here in lockstep with `setup.py` on release.
 - `set_dataframe_backend` only accepts `'pandas'` or `'polars'` (raises `ValueError` otherwise).
