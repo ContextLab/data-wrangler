@@ -138,3 +138,6 @@ dmypy.json
 .vscode/*
 # oh-my-claudecode tooling state
 .omc/
+
+# Local session notes (kept locally only; not tracked)
+notes/
